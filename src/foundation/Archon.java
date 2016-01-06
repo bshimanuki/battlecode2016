@@ -2,8 +2,13 @@ package foundation;
 
 import battlecode.common.*;
 
-class Archon {
-    public static void run(RobotController rc) {
+class Archon extends Robot {
+
+    Archon(RobotController rc) {
+        super(rc);
+    }
+
+    public void run() {
         try {
             int fate = Common.rand.nextInt(1000);
             if(rc.isCoreReady()) {
