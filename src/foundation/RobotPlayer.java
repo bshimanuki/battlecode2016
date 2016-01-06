@@ -2,9 +2,6 @@ package foundation;
 
 import battlecode.common.*;
 
-import java.util.Arrays;
-import java.util.Random;
-
 public class RobotPlayer {
 
     /**
@@ -32,56 +29,10 @@ public class RobotPlayer {
                 // This is a loop to prevent the run() method from returning. Because of the Clock.yield()
                 // at the end of it, the loop will iterate once per game round.
                 try {
-                    for(int i=100; --i >= 0;) rc.broadcastSignal(200);
-                    int fate = Common.rand.nextInt(1000);
-                    // Check if this ARCHON's core is ready
-                    if(fate % 10 == 2) {
-                        // Send a message signal containing the data (6370, 6147)
-                        rc.broadcastMessageSignal(6370, 6147, 80);
-                    }
-                    Signal[] signals = rc.emptySignalQueue();
-                    // signals = Arrays.stream(signals).filter(s -> s.getTeam() == Common.myTeam).toArray(Signal[]::new);
-                    Team myTeam = Common.myTeam;
-                    for(int i=signals.length; --i >= 0;) {
-                        if(myTeam == signals[i].getTeam()) {
-                            signals[i].getID();
-                        }
-                    }
-                    // Set an indicator string that can be viewed in the client
-                    rc.setIndicatorString(0, String.format("I received %d signals this turn!", signals.length));
-                    if(rc.isCoreReady()) {
-                        if(fate < 800) {
-                            // Choose a random direction to try to move in
-                            Direction dirToMove = Common.directions[fate % 8];
-                            // Check the rubble in that direction
-                            if(rc.senseRubble(rc.getLocation().add(dirToMove)) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
-                                // Too much rubble, so I should clear it
-                                rc.clearRubble(dirToMove);
-                                // Check if I can move in this direction
-                            } else if(rc.canMove(dirToMove)) {
-                                // Move
-                                rc.move(dirToMove);
-                            }
-                        } else {
-                            // Choose a random unit to build
-                            RobotType typeToBuild = Common.robotTypes[fate % 8];
-                            // Check for sufficient parts
-                            if(rc.hasBuildRequirements(typeToBuild)) {
-                                // Choose a random direction to try to build in
-                                Direction dirToBuild = Common.directions[Common.rand.nextInt(8)];
-                                for(int i = 0; i < 8; i++) {
-                                    // If possible, build in this direction
-                                    if(rc.canBuild(dirToBuild, typeToBuild)) {
-                                        rc.build(dirToBuild, typeToBuild);
-                                        break;
-                                    } else {
-                                        // Rotate the direction to try
-                                        dirToBuild = dirToBuild.rotateLeft();
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    Common.readSignals(rc);
+                    Archon.run(rc);
+                    int send = Jam.jam(rc, 200);
+                    rc.setIndicatorString(1, String.format("I sent %d signals this turn!", send));
 
                     Clock.yield();
                 } catch(Exception e) {

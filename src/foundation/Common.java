@@ -24,4 +24,15 @@ class Common {
             enemyTeam = myTeam.opponent();
         }
 
+        static void readSignals(RobotController rc) {
+            Signal[] signals = rc.emptySignalQueue();
+            Team myTeam = Common.myTeam;
+            for(int i=signals.length; --i >= 0;) {
+                if(myTeam == signals[i].getTeam()) {
+                    signals[i].getID();
+                }
+            }
+            rc.setIndicatorString(0, String.format("I received %d signals this turn!", signals.length));
+        }
+
 }
