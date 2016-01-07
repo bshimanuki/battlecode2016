@@ -10,7 +10,6 @@ public class RobotPlayer {
      **/
     @SuppressWarnings("unused")
     public static void run(RobotController rc) {
-        // You can instantiate variables here.
 
         final Robot robot;
         RobotType robotType = rc.getType();
@@ -24,11 +23,16 @@ public class RobotPlayer {
 
         Common.init(robot);
 
+        MapLocation loc = rc.getLocation().add(100, 100);
+        Target target = new Target(loc, Target.defaultWeights());
+
         while(true) {
             try {
                 int read = Common.readSignals(rc);
 
-                robot.run();
+                // robot.run();
+                if(rc.getType() == RobotType.ARCHON) robot.run();
+                else target.action(rc);
 
                 int send = 0;
                 // int send = Jam.jam(rc, 200);

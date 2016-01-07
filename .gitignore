@@ -16,8 +16,9 @@ workbench.xmi
 hs_err_pid*
 
 # temporary folders
-lib/
-bin/
+/lib
+/bin
+/doc
 
 # unneeded eclipse info
 .metadata/
