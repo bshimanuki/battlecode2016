@@ -1,7 +1,7 @@
 package foundation;
 
 enum HighStrategy {
-    BEGINNING,
+    OPENING,
     EXPLORE,
     ROUT,
     DEFEND,

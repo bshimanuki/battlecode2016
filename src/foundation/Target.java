@@ -42,7 +42,7 @@ class Target {
      * @return true if objective completed
      * @throws GameActionException
      */
-    boolean action(RobotController rc) throws GameActionException {
+    Boolean run(RobotController rc) throws GameActionException {
         // TODO : improve(?) sense if target destroyed
         // TODO: TURRET movement
         if(id != -1) {

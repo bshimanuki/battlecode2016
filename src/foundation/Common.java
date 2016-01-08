@@ -38,16 +38,15 @@ class Common {
     static Map<Integer, RobotType> knownTypes = new HashMap<>();
 
     // Robot vars
-    static Robot robot;
+    static RobotController rc;
     static Random rand;
     static int birthday;
     static MapLocation hometown;
     static List<MapLocation> history; // movement history
     static final int HISTORY_SIZE = 20;
 
-    static void init(Robot robot) {
-        Common.robot = robot;
-        RobotController rc = robot.rc;
+    static void init(RobotController rc) {
+        Common.rc = rc;
         rand = new Random(rc.getID());
         myTeam = rc.getTeam();
         enemyTeam = myTeam.opponent();
