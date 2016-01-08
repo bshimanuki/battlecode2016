@@ -1,7 +1,9 @@
 package foundation;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import battlecode.common.*;
@@ -16,20 +18,42 @@ class Common {
         RobotType.GUARD, RobotType.GUARD, RobotType.VIPER, RobotType.TURRET
     };
 
-    static Robot robot;
-    static Random rand;
+    // Map vars
+    // mod 100
+    static int xMin = -1;
+    static int xMax = -1;
+    static int yMin = -1;
+    static int yMax = -1;
+    // starting sides
+    static Direction myBase = null;
+    static Direction enemyBase = null;
+
+    // Team vars
     static Team myTeam;
     static Team enemyTeam;
+    static Map<Integer, RobotInfo> seenRobots = new HashMap<>();
+    static Map<Integer, Integer> seenTimes = new HashMap<>();
+    static Map<Integer, MapLocation> knownLocations = new HashMap<>();
+    static Map<Integer, Integer> knownTimes = new HashMap<>();
+    static Map<Integer, RobotType> knownTypes = new HashMap<>();
 
+    // Robot vars
+    static Robot robot;
+    static Random rand;
+    static int birthday;
+    static MapLocation hometown;
+    static List<MapLocation> history; // movement history
     static final int HISTORY_SIZE = 20;
-    static List<MapLocation> locationHistory;
 
     static void init(Robot robot) {
         Common.robot = robot;
-        rand = new Random(robot.rc.getID());
-        myTeam = robot.rc.getTeam();
+        RobotController rc = robot.rc;
+        rand = new Random(rc.getID());
+        myTeam = rc.getTeam();
         enemyTeam = myTeam.opponent();
-        locationHistory = new ArrayList<>(robot.rc.getRoundLimit());
+        history = new ArrayList<>(rc.getRoundLimit());
+        birthday = rc.getRoundNum() - rc.getType().buildTurns;
+        hometown = rc.getLocation();
     }
 
     /**
@@ -56,7 +80,7 @@ class Common {
      */
     static void move(RobotController rc, Direction dir) throws GameActionException {
         rc.move(dir);
-        locationHistory.add(rc.getLocation());
+        history.add(rc.getLocation());
     }
 
 }

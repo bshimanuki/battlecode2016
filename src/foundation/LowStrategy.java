@@ -3,7 +3,7 @@ package foundation;
 enum LowStrategy {
     TARGET,
     ATTACK,
-    SCOUT,
+    EXPLORE,
     DEFEND,
     BUILD,
     SCAVENGE,

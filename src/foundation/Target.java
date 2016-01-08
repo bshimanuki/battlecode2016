@@ -44,6 +44,7 @@ class Target {
      */
     boolean action(RobotController rc) throws GameActionException {
         // TODO : improve(?) sense if target destroyed
+        // TODO: TURRET movement
         if(id != -1) {
             if(rc.canSenseRobot(id)) {
                 targetInfo = rc.senseRobot(id);
@@ -112,7 +113,7 @@ class Target {
      */
     void move(RobotController rc) throws GameActionException {
         // TODO: path finding
-        if(!rc.isCoreReady()) return;
+        if(!rc.isCoreReady() || !rc.getType().canMove()) return;
         Direction dir = rc.getLocation().directionTo(loc);
         if(dir == Direction.OMNI) return;
         MapLocation next = rc.getLocation().add(dir);

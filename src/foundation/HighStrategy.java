@@ -1,10 +1,11 @@
 package foundation;
 
 enum HighStrategy {
+    BEGINNING,
     EXPLORE,
     ROUT,
     DEFEND,
     SURVIVE,
-    VIPER,
+    VIPER_ZOMBIE,
     ZOMBIE,
 }
