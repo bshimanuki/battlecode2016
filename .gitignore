@@ -9,6 +9,9 @@
 # vim
 .*sw?
 
+# python
+*.py?
+
 # Build
 workbench.xmi
 
