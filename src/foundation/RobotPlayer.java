@@ -28,7 +28,7 @@ public class RobotPlayer {
 
         while(true) {
             try {
-                int read = Common.readSignals(rc);
+                int read = Signals.readSignals(rc);
 
                 // robot.run();
                 if(rc.getType() == RobotType.ARCHON) robot.run();
