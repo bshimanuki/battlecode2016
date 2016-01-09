@@ -17,13 +17,15 @@ class Common {
         RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SOLDIER,
         RobotType.GUARD, RobotType.GUARD, RobotType.VIPER, RobotType.TURRET
     };
+    final static int MAP_NONE = 100;
+    final static int MAP_MOD = 101;
 
     // Map vars
     // mod 100
-    static int xMin = -1;
-    static int xMax = -1;
-    static int yMin = -1;
-    static int yMax = -1;
+    static int xMin = MAP_NONE;
+    static int xMax = MAP_NONE;
+    static int yMin = MAP_NONE;
+    static int yMax = MAP_NONE;
     // starting sides
     static Direction myBase = null;
     static Direction enemyBase = null;
@@ -80,6 +82,31 @@ class Common {
     static void move(RobotController rc, Direction dir) throws GameActionException {
         rc.move(dir);
         history.add(rc.getLocation());
+    }
+
+    /**
+     * Complete coordinates.
+     * @param x
+     * @param y
+     * @return
+     */
+    static MapLocation expandPoint(int x, int y) {
+        x += hometown.x % MAP_NONE;
+        y += hometown.y % MAP_NONE;
+        x = _getCoordinate(x, xMin, xMax);
+        y = _getCoordinate(y, yMin, yMax);
+        return new MapLocation(x, y);
+    }
+
+    private static int _getCoordinate(int x, int xMin, int xMax) {
+        if(xMin != MAP_NONE) {
+            if(x < xMin) x += MAP_NONE;
+            else if(x >= xMin + MAP_NONE) x -= MAP_NONE;
+        } else if(xMax != MAP_NONE) {
+            if(x > xMax) x -= MAP_NONE;
+            else if(x <= xMax - MAP_NONE) x += MAP_NONE;
+        }
+        return x;
     }
 
 }

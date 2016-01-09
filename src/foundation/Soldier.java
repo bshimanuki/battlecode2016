@@ -5,7 +5,7 @@ import battlecode.common.*;
 class Soldier implements Model {
 
     @Override
-    public void run(RobotController rc) throws GameActionException {
+    public boolean run(RobotController rc) throws GameActionException {
         int myAttackRange = rc.getType().attackRadiusSquared;
         int fate = Common.rand.nextInt(1000);
 
@@ -52,6 +52,7 @@ class Soldier implements Model {
                 }
             }
         }
+        return false;
     }
 
 }

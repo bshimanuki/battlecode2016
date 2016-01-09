@@ -5,7 +5,7 @@ import battlecode.common.*;
 class Archon implements Model {
 
     @Override
-    public void run(RobotController rc) throws GameActionException {
+    public boolean run(RobotController rc) throws GameActionException {
         int fate = Common.rand.nextInt(1000);
         if(rc.isCoreReady()) {
             if(fate < 800) {
@@ -40,6 +40,7 @@ class Archon implements Model {
                 }
             }
         }
+        return false;
     }
 
 }

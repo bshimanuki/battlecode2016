@@ -5,7 +5,7 @@ import java.util.Map;
 
 import battlecode.common.*;
 
-class Target {
+class Target implements Model {
     Map<TargetType, TargetType.Level> weights;
     // target is either loc or id;
     MapLocation loc;
@@ -35,6 +35,10 @@ class Target {
         this.loc = loc;
         this.id = id;
     }
+    Target(MapLocation loc) {
+        this.weights = defaultWeights();
+        this.loc = loc;
+    }
 
     /**
      * Move/attack towards target.
@@ -42,7 +46,8 @@ class Target {
      * @return true if objective completed
      * @throws GameActionException
      */
-    Boolean run(RobotController rc) throws GameActionException {
+    @Override
+    public boolean run(RobotController rc) throws GameActionException {
         // TODO : improve(?) sense if target destroyed
         // TODO: TURRET movement
         if(id != -1) {
