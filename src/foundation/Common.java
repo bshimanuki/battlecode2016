@@ -17,8 +17,6 @@ class Common {
         RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SOLDIER,
         RobotType.GUARD, RobotType.GUARD, RobotType.VIPER, RobotType.TURRET
     };
-    final static int SIG_NONE = 100;
-    final static int SIG_MOD = 101;
     final static int MAP_NONE = -1;
     final static int MAP_MOD = 100;
 

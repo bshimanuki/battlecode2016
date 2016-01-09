@@ -8,7 +8,7 @@ import battlecode.common.*;
 /**
  * Helper class to send and receive signals. @see Jam for use in jamming.
  */
-class Signals {
+class SignalCompressed {
 
     final static int CONTROL_BIT = 1 << 31;
     final static int BUFFER = -1;
@@ -78,13 +78,7 @@ class Signals {
     }
 
     static void addBounds(RobotController rc) throws GameActionException {
-        addBoundsLow(rc);
-        addBoundsHigh(rc);
-    }
-    static void addBoundsLow(RobotController rc) throws GameActionException {
         new SignalCompressedLocation(SignalCompressedLocation.LocationType.MAP_LOW, new MapLocation(Common.xMin, Common.yMin)).add();
-    }
-    static void addBoundsHigh(RobotController rc) throws GameActionException {
         new SignalCompressedLocation(SignalCompressedLocation.LocationType.MAP_HIGH, new MapLocation(Common.xMax, Common.yMax)).add();
     }
 
