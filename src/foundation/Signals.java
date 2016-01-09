@@ -13,7 +13,7 @@ class Signals {
     static final int CONTROL_BIT = 1 << 31;
     static final int BUFFER = -1;
     static List<Integer> halfSignals = new ArrayList<>();
-    static List<SignalLocation> locs = new ArrayList<>();
+    static List<SignalCompressedLocation> locs = new ArrayList<>();
     static List<MapLocation> enemies = new ArrayList<>();
     static List<MapLocation> targets = new ArrayList<>();
 
@@ -43,12 +43,12 @@ class Signals {
     static void extract(Signal s) {
         int first = s.getMessage()[0];
         int second = s.getMessage()[1];
-        SignalLocations signalLocations;
+        SignalCompressedLocations signalLocations;
         if((first & CONTROL_BIT) != 0) {
-            signalLocations = new SignalLocations(first);
+            signalLocations = new SignalCompressedLocations(first);
             signalLocations.read();
             if((second & CONTROL_BIT) != 0 && second != BUFFER) {
-                signalLocations = new SignalLocations(second);
+                signalLocations = new SignalCompressedLocations(second);
                 signalLocations.read();
             } else {
             }
@@ -64,10 +64,10 @@ class Signals {
      * @throws GameActionException
      */
     static int sendQueue(RobotController rc, int radius) throws GameActionException {
-        if(locs.size() % 2 == 1) locs.add(new SignalLocation());
+        if(locs.size() % 2 == 1) locs.add(new SignalCompressedLocation());
         int size = locs.size();
         for(int i=0; i<size; i+=2)
-            new SignalLocations(locs.get(i), locs.get(i+1)).add();
+            new SignalCompressedLocations(locs.get(i), locs.get(i+1)).add();
         locs.clear();
         if(halfSignals.size() % 2 == 1) halfSignals.add(BUFFER);
         size = halfSignals.size();
@@ -78,8 +78,8 @@ class Signals {
     }
 
     static void addBounds(RobotController rc) throws GameActionException {
-        new SignalLocation(LocationType.MAP_LOW, new MapLocation(Common.xMin, Common.yMin)).add();
-        new SignalLocation(LocationType.MAP_HIGH, new MapLocation(Common.xMax, Common.yMax)).add();
+        new SignalCompressedLocation(SignalCompressedLocation.LocationType.MAP_LOW, new MapLocation(Common.xMin, Common.yMin)).add();
+        new SignalCompressedLocation(SignalCompressedLocation.LocationType.MAP_HIGH, new MapLocation(Common.xMax, Common.yMax)).add();
     }
 
 }

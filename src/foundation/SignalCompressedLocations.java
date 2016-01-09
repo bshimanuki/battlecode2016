@@ -1,16 +1,16 @@
 package foundation;
 
 
-class SignalLocations {
-    SignalLocation first, second;
+class SignalCompressedLocations {
+    SignalCompressedLocation first, second;
 
-    SignalLocations(SignalLocation first, SignalLocation second) {
+    SignalCompressedLocations(SignalCompressedLocation first, SignalCompressedLocation second) {
         this.first = first;
         this.second = second;
     }
-    SignalLocations(int value) {
-        LocationType firstType = LocationType.get((value >>> 29) % 4);
-        LocationType secondType = LocationType.get((value >>> 27) % 4);
+    SignalCompressedLocations(int value) {
+        SignalCompressedLocation.LocationType firstType = SignalCompressedLocation.LocationType.get((value >>> 29) % 4);
+        SignalCompressedLocation.LocationType secondType = SignalCompressedLocation.LocationType.get((value >>> 27) % 4);
         value &= -1 >>> 5;
         int secondY = value % Common.SIG_MOD;
         value /= Common.SIG_MOD;
@@ -19,8 +19,8 @@ class SignalLocations {
         int firstY = value % Common.SIG_MOD;
         value /= Common.SIG_MOD;
         int firstX = value;
-        this.first = new SignalLocation(firstType, firstX, firstY);
-        this.second = new SignalLocation(secondType, secondX, secondY);
+        this.first = new SignalCompressedLocation(firstType, firstX, firstY);
+        this.second = new SignalCompressedLocation(secondType, secondX, secondY);
     }
 
     int toInt() {

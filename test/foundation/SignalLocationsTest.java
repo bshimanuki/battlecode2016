@@ -16,11 +16,11 @@ public class SignalLocationsTest {
 
 	@Test
 	public void toIntTest() {
-        SignalLocation first = new SignalLocation(LocationType.MAP_LOW, 26, 93);
-        SignalLocation second = new SignalLocation(LocationType.TARGET, 16, 36);
-        SignalLocations s = new SignalLocations(first, second);
+        SignalCompressedLocation first = new SignalCompressedLocation(SignalCompressedLocation.LocationType.MAP_LOW, 26, 93);
+        SignalCompressedLocation second = new SignalCompressedLocation(SignalCompressedLocation.LocationType.TARGET, 16, 36);
+        SignalCompressedLocations s = new SignalCompressedLocations(first, second);
         int value = s.toInt();
-        SignalLocations t = new SignalLocations(value);
+        SignalCompressedLocations t = new SignalCompressedLocations(value);
         System.err.println("Sent: " + s);
         System.err.println("Received: " + t);
         System.err.println("Value: " + value);
@@ -34,11 +34,11 @@ public class SignalLocationsTest {
 
 	@Test
 	public void toIntTest2() {
-        SignalLocation first = new SignalLocation(LocationType.MAP_LOW, new MapLocation(Common.MAP_NONE, 93));
-        SignalLocation second = new SignalLocation(LocationType.TARGET, new MapLocation(16, Common.MAP_NONE));
-        SignalLocations s = new SignalLocations(first, second);
+        SignalCompressedLocation first = new SignalCompressedLocation(SignalCompressedLocation.LocationType.MAP_LOW, new MapLocation(Common.MAP_NONE, 93));
+        SignalCompressedLocation second = new SignalCompressedLocation(SignalCompressedLocation.LocationType.TARGET, new MapLocation(16, Common.MAP_NONE));
+        SignalCompressedLocations s = new SignalCompressedLocations(first, second);
         int value = s.toInt();
-        SignalLocations t = new SignalLocations(value);
+        SignalCompressedLocations t = new SignalCompressedLocations(value);
         System.err.println("Sent: " + s);
         System.err.println("Received: " + t);
         System.err.println("Value: " + value);

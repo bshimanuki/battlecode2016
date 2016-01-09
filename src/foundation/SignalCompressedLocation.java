@@ -2,14 +2,14 @@ package foundation;
 
 import battlecode.common.*;
 
-class SignalLocation {
+class SignalCompressedLocation {
     LocationType type;
     int x, y;
-    SignalLocation() {
+    SignalCompressedLocation() {
         // also acts as BUFFER
         this(LocationType.MAP_LOW, Common.SIG_NONE, Common.SIG_NONE);
     }
-    SignalLocation(LocationType type, MapLocation loc) {
+    SignalCompressedLocation(LocationType type, MapLocation loc) {
         this.type = type;
         if(loc.x == Common.MAP_NONE) this.x = Common.SIG_NONE;
         else this.x = loc.x % Common.MAP_MOD;
@@ -17,7 +17,7 @@ class SignalLocation {
         else this.y = loc.y % Common.MAP_MOD;
     }
 
-    SignalLocation(LocationType type, int x, int y) {
+    SignalCompressedLocation(LocationType type, int x, int y) {
         this.type = type;
         this.x = x;
         this.y = y;
@@ -90,6 +90,17 @@ class SignalLocation {
     @Override
     public String toString() {
         return type.toString() + " " + x + " " + y;
+    }
+
+    enum LocationType {
+        // can only contain 4 types
+        TARGET,
+        ENEMY,
+        MAP_LOW,
+        MAP_HIGH,
+        ;
+        static LocationType get(int value) {return values[value];}
+        static LocationType[] values = LocationType.values();
     }
 
 }
