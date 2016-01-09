@@ -17,8 +17,10 @@ class Common {
         RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SOLDIER,
         RobotType.GUARD, RobotType.GUARD, RobotType.VIPER, RobotType.TURRET
     };
-    final static int MAP_NONE = 100;
-    final static int MAP_MOD = 101;
+    final static int SIG_NONE = 100;
+    final static int SIG_MOD = 101;
+    final static int MAP_NONE = -1;
+    final static int MAP_MOD = 100;
 
     // Map vars
     // mod 100
@@ -46,6 +48,7 @@ class Common {
     static MapLocation hometown;
     static List<MapLocation> history; // movement history
     static final int HISTORY_SIZE = 20;
+    static int straightSight;
 
     static void init(RobotController rc) {
         Common.rc = rc;
@@ -55,6 +58,39 @@ class Common {
         history = new ArrayList<>(rc.getRoundLimit());
         birthday = rc.getRoundNum() - rc.getType().buildTurns;
         hometown = rc.getLocation();
+        straightSight = (int) Math.sqrt(rc.getType().sensorRadiusSquared);
+    }
+
+    /**
+     * Code to run every turn.
+     * @param rc
+     */
+    static void run(RobotController rc) throws GameActionException {
+        updateMap(rc);
+    }
+
+    static void updateMap(RobotController rc) throws GameActionException {
+        MapLocation loc = rc.getLocation();
+        if(xMin == MAP_NONE && !rc.onTheMap(loc.add(-straightSight, 0))) {
+            int x = -straightSight;
+            while(!rc.onTheMap(loc.add(++x, 0)));
+            xMin = loc.x + x;
+        }
+        if(xMax == MAP_NONE && !rc.onTheMap(loc.add(straightSight, 0))) {
+            int x = straightSight;
+            while(!rc.onTheMap(loc.add(--x, 0)));
+            xMax = loc.x + x;
+        }
+        if(yMin == MAP_NONE && !rc.onTheMap(loc.add(0, -straightSight))) {
+            int y = -straightSight;
+            while(!rc.onTheMap(loc.add(0, ++y)));
+            yMin = loc.y + y;
+        }
+        if(yMax == MAP_NONE && !rc.onTheMap(loc.add(0, straightSight))) {
+            int y = straightSight;
+            while(!rc.onTheMap(loc.add(0, --y)));
+            yMax = loc.y + y;
+        }
     }
 
     /**
@@ -82,31 +118,6 @@ class Common {
     static void move(RobotController rc, Direction dir) throws GameActionException {
         rc.move(dir);
         history.add(rc.getLocation());
-    }
-
-    /**
-     * Complete coordinates.
-     * @param x
-     * @param y
-     * @return
-     */
-    static MapLocation expandPoint(int x, int y) {
-        x += hometown.x % MAP_NONE;
-        y += hometown.y % MAP_NONE;
-        x = _getCoordinate(x, xMin, xMax);
-        y = _getCoordinate(y, yMin, yMax);
-        return new MapLocation(x, y);
-    }
-
-    private static int _getCoordinate(int x, int xMin, int xMax) {
-        if(xMin != MAP_NONE) {
-            if(x < xMin) x += MAP_NONE;
-            else if(x >= xMin + MAP_NONE) x -= MAP_NONE;
-        } else if(xMax != MAP_NONE) {
-            if(x > xMax) x -= MAP_NONE;
-            else if(x <= xMax - MAP_NONE) x += MAP_NONE;
-        }
-        return x;
     }
 
 }

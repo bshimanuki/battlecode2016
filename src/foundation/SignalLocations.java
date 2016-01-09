@@ -1,5 +1,6 @@
 package foundation;
 
+
 class SignalLocations {
     SignalLocation first, second;
 
@@ -11,12 +12,12 @@ class SignalLocations {
         LocationType firstType = LocationType.get((value >>> 29) % 4);
         LocationType secondType = LocationType.get((value >>> 27) % 4);
         value &= -1 >>> 5;
-        int secondY = value % Common.MAP_MOD;
-        value /= Common.MAP_MOD;
-        int secondX = value % Common.MAP_MOD;
-        value /= Common.MAP_MOD;
-        int firstY = value % Common.MAP_MOD;
-        value /= Common.MAP_MOD;
+        int secondY = value % Common.SIG_MOD;
+        value /= Common.SIG_MOD;
+        int secondX = value % Common.SIG_MOD;
+        value /= Common.SIG_MOD;
+        int firstY = value % Common.SIG_MOD;
+        value /= Common.SIG_MOD;
         int firstX = value;
         this.first = new SignalLocation(firstType, firstX, firstY);
         this.second = new SignalLocation(secondType, secondX, secondY);
@@ -24,11 +25,11 @@ class SignalLocations {
 
     int toInt() {
         int value = first.x;
-        value *= Common.MAP_MOD;
+        value *= Common.SIG_MOD;
         value += first.y;
-        value *= Common.MAP_MOD;
+        value *= Common.SIG_MOD;
         value += second.x;
-        value *= Common.MAP_MOD;
+        value *= Common.SIG_MOD;
         value += second.y;
         value |= second.type.ordinal() << 27;
         value |= first.type.ordinal() << 29;
@@ -43,6 +44,11 @@ class SignalLocations {
     void read() {
         first.read();
         second.read();
+    }
+
+    @Override
+    public String toString() {
+        return first.toString() + " " + second.toString();
     }
 
 }

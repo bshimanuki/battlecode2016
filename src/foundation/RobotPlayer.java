@@ -37,6 +37,8 @@ public class RobotPlayer {
             try {
                 int read = Signals.readSignals(rc);
 
+                Common.run(rc);
+
                 if(model.run(rc)) {
                     System.out.println("Finished " + model);
                     model = models.pop();

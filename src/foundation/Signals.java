@@ -77,4 +77,9 @@ class Signals {
         return size / 2;
     }
 
+    static void addBounds(RobotController rc) throws GameActionException {
+        new SignalLocation(LocationType.MAP_LOW, new MapLocation(Common.xMin, Common.yMin)).add();
+        new SignalLocation(LocationType.MAP_HIGH, new MapLocation(Common.xMax, Common.yMax)).add();
+    }
+
 }
