@@ -38,13 +38,13 @@ class SignalCompressedLocation {
                     int newx = x + Common.hometown.x / Common.MAP_MOD * Common.MAP_MOD;
                     if(newx > Common.hometown.x) newx -= Common.MAP_MOD;
                     Common.xMin = newx;
-                    Signals.addBoundsLow(Common.rc);
+                    if(Common.rc.getType().canMessageSignal()) Signals.addBoundsLow(Common.rc);
                 }
                 if(Common.yMin == Common.MAP_NONE && y != SIG_NONE) {
                     int newy = y + Common.hometown.y / Common.MAP_MOD * Common.MAP_MOD;
                     if(newy > Common.hometown.y) newy -= Common.MAP_MOD;
                     Common.yMin = newy;
-                    Signals.addBoundsLow(Common.rc);
+                    if(Common.rc.getType().canMessageSignal()) Signals.addBoundsLow(Common.rc);
                 }
                 break;
             case MAP_HIGH:
@@ -52,13 +52,13 @@ class SignalCompressedLocation {
                     int newx = x + Common.hometown.x / Common.MAP_MOD * Common.MAP_MOD;
                     if(newx < Common.hometown.x) newx += Common.MAP_MOD;
                     Common.xMax = newx;
-                    Signals.addBoundsHigh(Common.rc);
+                    if(Common.rc.getType().canMessageSignal()) Signals.addBoundsHigh(Common.rc);
                 }
                 if(Common.yMax == Common.MAP_NONE && y != SIG_NONE) {
                     int newy = y + Common.hometown.y / Common.MAP_MOD * Common.MAP_MOD;
                     if(newy < Common.hometown.y) newy += Common.MAP_MOD;
                     Common.yMax = newy;
-                    Signals.addBoundsHigh(Common.rc);
+                    if(Common.rc.getType().canMessageSignal()) Signals.addBoundsHigh(Common.rc);
                 }
                 break;
             case ENEMY:

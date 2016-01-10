@@ -21,7 +21,7 @@ class SignalCompressed {
      * Read Signal queue.
      * @param rc
      */
-    static int readSignals(RobotController rc) {
+    static int readSignals(RobotController rc) throws GameActionException {
         // TODO: skip large queue
         Signal[] signals = rc.emptySignalQueue();
         int num = signals.length;
@@ -40,7 +40,7 @@ class SignalCompressed {
      * Assumed to be a message signal by own team.
      * @param s
      */
-    static void extract(Signal s) {
+    static void extract(Signal s) throws GameActionException {
         int first = s.getMessage()[0];
         int second = s.getMessage()[1];
         SignalCompressedLocations signalLocations;

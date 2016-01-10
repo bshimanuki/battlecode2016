@@ -6,11 +6,16 @@ import java.util.List;
 import battlecode.common.*;
 
 /**
- * Helper class to send and receive signals. @see Jam for use in jamming.
+ * Helper class to send and receive signals. @see Jam for use in jamming (deprecated by bc 0.0.4).
+ *
+ * Message codes:
+ *  00.. (Unused)
+ *  01.. Unit
+ *  1... Locations
  */
 class Signals {
 
-    final static int CONTROL_BIT = 1 << 31;
+    final static int CONTROL_SHIFT = 30; // 2 control bits
     final static int BUFFER = -1;
     static List<Integer> halfSignals = new ArrayList<>();
     static List<SignalCompressedLocation> locs = new ArrayList<>();
@@ -21,16 +26,28 @@ class Signals {
      * Read Signal queue.
      * @param rc
      */
-    static int readSignals(RobotController rc) {
+    static int readSignals(RobotController rc) throws GameActionException {
         // TODO: skip large queue
         Signal[] signals = rc.emptySignalQueue();
         int num = signals.length;
         Team myTeam = Common.myTeam;
         enemies.clear();
         targets.clear();
-        for(int i=num; --i >= 0;) {
-            if(myTeam == signals[i].getTeam()) {
-                if(signals[i].getMessage() != null) extract(signals[i]);
+        boolean scanAll = num < 200;
+        // for(int i=num; --i >= 0;) {
+        if(scanAll) {
+            for(int i=0; i<num; ++i) {
+                if(myTeam == signals[i].getTeam()) {
+                    extract(signals[i]);
+                } else {
+                    Common.addInfo(signals[i].getTeam(), signals[i].getRobotID(), signals[i].getLocation());
+                }
+            }
+        } else {
+            for(int i=0; i<num; ++i) {
+                if(myTeam == signals[i].getTeam()) {
+                    extract(signals[i]);
+                }
             }
         }
         return num;
@@ -40,18 +57,29 @@ class Signals {
      * Assumed to be a message signal by own team.
      * @param s
      */
-    static void extract(Signal s) {
-        int first = s.getMessage()[0];
-        int second = s.getMessage()[1];
-        SignalCompressedLocations signalLocations;
-        if((first & CONTROL_BIT) != 0) {
-            signalLocations = new SignalCompressedLocations(first);
-            signalLocations.read();
-            if((second & CONTROL_BIT) != 0 && second != BUFFER) {
-                signalLocations = new SignalCompressedLocations(second);
-                signalLocations.read();
+    static void extract(Signal s) throws GameActionException {
+        if(s.getMessage() != null) {
+            int first = s.getMessage()[0];
+            int second = s.getMessage()[1];
+            if(first >>> CONTROL_SHIFT != 0) {
+                extract(first);
+                extract(second);
             } else {
             }
+        }
+    }
+
+    static void extract(int value) throws GameActionException {
+        switch(value >>> CONTROL_SHIFT) {
+            case 1:
+                new SignalUnit(value).read();
+                break;
+            case 2:
+            case 3:
+                new SignalCompressedLocations(value).read();
+                break;
+            default:
+                break;
         }
     }
 

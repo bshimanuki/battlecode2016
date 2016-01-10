@@ -1,5 +1,6 @@
 package foundation;
 
+import battlecode.common.*;
 
 class SignalCompressedLocations {
     SignalCompressedLocation first, second;
@@ -41,7 +42,7 @@ class SignalCompressedLocations {
         Signals.halfSignals.add(toInt());
     }
 
-    void read() {
+    void read() throws GameActionException {
         first.read();
         second.read();
     }

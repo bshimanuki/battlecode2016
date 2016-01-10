@@ -19,6 +19,7 @@ class Common {
     };
     final static int MAP_NONE = -1;
     final static int MAP_MOD = 100;
+    final static MapLocation MAP_EMPTY = new MapLocation(MAP_NONE, MAP_NONE);
 
     // Map vars
     // mod 100
@@ -33,11 +34,13 @@ class Common {
     // Team vars
     static Team myTeam;
     static Team enemyTeam;
-    static Map<Integer, RobotInfo> seenRobots = new HashMap<>();
     static Map<Integer, Integer> seenTimes = new HashMap<>();
-    static Map<Integer, MapLocation> knownLocations = new HashMap<>();
-    static Map<Integer, Integer> knownTimes = new HashMap<>();
+    static Map<Integer, RobotInfo> seenRobots = new HashMap<>();
+    static Map<Integer, Team> knownTeams = new HashMap<>();
     static Map<Integer, RobotType> knownTypes = new HashMap<>();
+    static Map<Integer, Integer> knownTimes = new HashMap<>();
+    static Map<Integer, MapLocation> knownLocations = new HashMap<>();
+    static List<Integer> typeSignals = new ArrayList<>();
 
     // Robot vars
     static RobotController rc;
@@ -116,6 +119,46 @@ class Common {
     static void move(RobotController rc, Direction dir) throws GameActionException {
         rc.move(dir);
         history.add(rc.getLocation());
+    }
+
+    static void addInfo(RobotInfo info) throws GameActionException {
+        seenRobots.put(info.ID, info);
+        seenTimes.put(info.ID, rc.getRoundNum());
+        addInfo(info.team, info.type, info.ID, info.location);
+    }
+
+    static void addInfo(Team team, int id, MapLocation loc) {
+        // not regular update since RobotType unknown
+        knownTeams.put(id, team);
+        knownTimes.put(id, rc.getRoundNum());
+        knownLocations.put(id, loc);
+    }
+
+    static void addInfo(Team team, RobotType robotType, int id) throws GameActionException {
+        addInfo(team, robotType, id, null);
+    }
+
+    static void addInfo(Team team, RobotType robotType, int id, MapLocation loc) throws GameActionException {
+        boolean newLoc = false;
+        //use knownTypes because team, time, and location can come from intercepting signals
+        boolean newRobot = knownTypes.get(id) == null;
+        knownTeams.put(id, team);
+        knownTypes.put(id, robotType);
+        if(loc != null && loc.x != MAP_NONE) { // loc.y assumed
+            if(knownLocations.get(id) == null) newLoc = true;
+            knownTimes.put(id, rc.getRoundNum());
+            knownLocations.put(id, loc);
+        }
+        if(rc.getType().canMessageSignal() && (newRobot || newLoc)) {
+            if(robotType == RobotType.ARCHON
+                    || robotType == RobotType.ZOMBIEDEN
+                    || robotType == RobotType.BIGZOMBIE
+                    || robotType == RobotType.VIPER && team == myTeam)
+            {
+                new SignalUnit(team, robotType, id, loc).add();
+                if(newRobot) typeSignals.add(new SignalUnit(team, robotType, id).toInt());
+            }
+        }
     }
 
 }
