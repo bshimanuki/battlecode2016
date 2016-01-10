@@ -80,7 +80,7 @@ class SignalUnit {
         else robotType = normalTypes[value % TYPE_MOD];
         value /= TYPE_MOD;
         id = value % ID_MOD;
-        value = ID_MOD;
+        value /= ID_MOD;
         int x = value % Signals.SIG_MOD;
         int y = value / Signals.SIG_MOD;
         loc = Signals.expandPoint(x, y);
