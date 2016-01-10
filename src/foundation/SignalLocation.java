@@ -2,101 +2,83 @@ package foundation;
 
 import battlecode.common.*;
 
-/**
- * Not completed, not being used. Using mod 100 since need to have a none field anyway.
- */
 class SignalLocation {
-    final static int SIG_MOD = 128;
-    final static int SIG_NONE = 127;
 
-    private class Location {
-        final static int BUFFER = 16383; // 128 * 128 - 1
-        int x, y;
-        Location() {
-            this(SIG_NONE, SIG_NONE);
-        }
-        Location(int x, int y) {
-            this.x = x;
-            this.y = y;
-        }
-        @Override
-        public String toString() {
-            return "(" + x + ", " + y + ")";
-        }
+    LocationType type;
+    int x, y;
+    SignalLocation() {
+        // also acts as BUFFER
+        this(LocationType.MAP_LOW, Signals.SIG_NONE, Signals.SIG_NONE);
     }
-
-    int type;
-    Location first, second;
-
-    private SignalLocation(int type, Location first, Location second) {
+    SignalLocation(LocationType type, MapLocation loc) {
         this.type = type;
-        this.first = first;
-        this.second = second;
-    }
-    SignalLocation(int value) {
-        int secondY = value % SIG_MOD;
-        value /= SIG_MOD;
-        int secondX = value % SIG_MOD;
-        value /= SIG_MOD;
-        int firstY = value % SIG_MOD;
-        value /= SIG_MOD;
-        int firstX = value % SIG_MOD;
-        value /= SIG_MOD;
-        this.type = value;
-        this.first = new Location(firstX, firstY);
-        this.second = new Location(secondX, secondY);
+        this.x = Signals.reduceCoordinate(loc.x);
+        this.y = Signals.reduceCoordinate(loc.y);
     }
 
-    int toInt() {
-        int value = type;
-        value *= SIG_MOD;
-        value += first.x;
-        value *= SIG_MOD;
-        value += first.y;
-        value *= SIG_MOD;
-        value += second.x;
-        value *= SIG_MOD;
-        value += second.y;
-        return value;
+    SignalLocation(LocationType type, int x, int y) {
+        this.type = type;
+        this.x = x;
+        this.y = y;
     }
 
     void add() {
-        Signals.halfSignals.add(toInt());
+        Signals.locs.add(this);
     }
 
-    void read() {
-        // first.read();
-        // second.read();
-    }
-
-    /**
-     * Complete coordinates.
-     * @param x
-     * @param y
-     * @return
-     */
-    static MapLocation expandPoint(int x, int y) {
-        x += Common.hometown.x / Common.MAP_MOD * Common.MAP_MOD;
-        y += Common.hometown.y / Common.MAP_MOD * Common.MAP_MOD;
-        x = _getCoordinate(x, Common.xMin, Common.xMax);
-        y = _getCoordinate(y, Common.yMin, Common.yMax);
-        return new MapLocation(x, y);
-    }
-
-    private static int _getCoordinate(int x, int xMin, int xMax) {
-        if(xMin != Common.MAP_NONE) {
-            if(x < xMin) x += Common.MAP_MOD;
-            else if(x >= xMin + Common.MAP_MOD) x -= Common.MAP_MOD;
-        } else if(xMax != Common.MAP_NONE) {
-            if(x > xMax) x -= Common.MAP_MOD;
-            else if(x <= xMax - Common.MAP_MOD) x += Common.MAP_MOD;
+    void read() throws GameActionException {
+        switch(type) {
+            case MAP_LOW:
+                if(Common.xMin == Common.MAP_NONE && x != Signals.SIG_NONE) {
+                    int newx = x + Common.hometown.x / Common.MAP_MOD * Common.MAP_MOD;
+                    if(newx > Common.hometown.x) newx -= Common.MAP_MOD;
+                    Common.xMin = newx;
+                    if(Common.rc.getType().canMessageSignal()) Signals.addBoundsLow(Common.rc);
+                }
+                if(Common.yMin == Common.MAP_NONE && y != Signals.SIG_NONE) {
+                    int newy = y + Common.hometown.y / Common.MAP_MOD * Common.MAP_MOD;
+                    if(newy > Common.hometown.y) newy -= Common.MAP_MOD;
+                    Common.yMin = newy;
+                    if(Common.rc.getType().canMessageSignal()) Signals.addBoundsLow(Common.rc);
+                }
+                break;
+            case MAP_HIGH:
+                if(Common.xMax == Common.MAP_NONE && x != Signals.SIG_NONE) {
+                    int newx = x + Common.hometown.x / Common.MAP_MOD * Common.MAP_MOD;
+                    if(newx < Common.hometown.x) newx += Common.MAP_MOD;
+                    Common.xMax = newx;
+                    if(Common.rc.getType().canMessageSignal()) Signals.addBoundsHigh(Common.rc);
+                }
+                if(Common.yMax == Common.MAP_NONE && y != Signals.SIG_NONE) {
+                    int newy = y + Common.hometown.y / Common.MAP_MOD * Common.MAP_MOD;
+                    if(newy < Common.hometown.y) newy += Common.MAP_MOD;
+                    Common.yMax = newy;
+                    if(Common.rc.getType().canMessageSignal()) Signals.addBoundsHigh(Common.rc);
+                }
+                break;
+            case ENEMY:
+                Signals.enemies.add(Signals.expandPoint(x, y));
+                break;
+            case TARGET:
+                Signals.targets.add(Signals.expandPoint(x, y));
+                break;
         }
-        return x;
     }
 
     @Override
     public String toString() {
-        return first.toString() + " " + second.toString();
+        return type.toString() + " " + x + " " + y;
+    }
+
+    enum LocationType {
+        // can only contain 4 types
+        TARGET,
+        ENEMY,
+        MAP_LOW,
+        MAP_HIGH,
+        ;
+        static LocationType get(int value) {return values[value];}
+        static LocationType[] values = LocationType.values();
     }
 
 }

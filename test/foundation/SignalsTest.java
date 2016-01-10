@@ -7,11 +7,6 @@ import org.junit.Test;
 
 import battlecode.common.*;
 
-class SignalsTest {
+public class SignalsTest {
 
-    @Test
-    public void extractTest() {
-        // TODO
-        fail("Not yet implemented");
-    }
 }

@@ -68,6 +68,10 @@ class Common {
      */
     static void run(RobotController rc) throws GameActionException {
         updateMap(rc);
+        RobotInfo[] infos = rc.senseNearbyRobots();
+        for(RobotInfo info : infos) {
+            addInfo(info);
+        }
     }
 
     static void updateMap(RobotController rc) throws GameActionException {

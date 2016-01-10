@@ -83,13 +83,13 @@ class SignalUnit {
         value = ID_MOD;
         int x = value % Signals.SIG_MOD;
         int y = value / Signals.SIG_MOD;
-        loc = new MapLocation(x, y);
+        loc = Signals.expandPoint(x, y);
     }
 
     int toInt() {
-        int value = loc.y;
+        int value = Signals.reduceCoordinate(loc.y);
         value *= Signals.SIG_MOD;
-        value += loc.x;
+        value += Signals.reduceCoordinate(loc.x);
         value *= ID_MOD;
         value += id;
         value *= TYPE_MOD;
@@ -106,6 +106,12 @@ class SignalUnit {
 
     void read() throws GameActionException {
         Common.addInfo(team, robotType, id, loc);
+        Common.rc.setIndicatorString(2, String.format("Robot %d is at %s", id, loc));
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%d %s %s %s", id, team, robotType, loc);
     }
 
 }

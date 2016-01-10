@@ -23,7 +23,7 @@ class Signals {
     final static int SIG_MOD = 101;
 
     static List<Integer> halfSignals = new ArrayList<>();
-    static List<SignalCompressedLocation> locs = new ArrayList<>();
+    static List<SignalLocation> locs = new ArrayList<>();
     static List<MapLocation> enemies = new ArrayList<>();
     static List<MapLocation> targets = new ArrayList<>();
 
@@ -81,7 +81,7 @@ class Signals {
                 break;
             case 2:
             case 3:
-                if(value != BUFFER) new SignalCompressedLocations(value).read();
+                if(value != BUFFER) new SignalLocations(value).read();
                 break;
             default:
                 break;
@@ -97,10 +97,10 @@ class Signals {
      * @throws GameActionException
      */
     static int sendQueue(RobotController rc, int radius) throws GameActionException {
-        if(locs.size() % 2 == 1) locs.add(new SignalCompressedLocation());
+        if(locs.size() % 2 == 1) locs.add(new SignalLocation());
         int size = locs.size();
         for(int i=0; i<size; i+=2)
-            new SignalCompressedLocations(locs.get(i), locs.get(i+1)).add();
+            new SignalLocations(locs.get(i), locs.get(i+1)).add();
         locs.clear();
         if(halfSignals.size() % 2 == 1) halfSignals.add(BUFFER);
         size = halfSignals.size();
@@ -115,10 +115,48 @@ class Signals {
         addBoundsHigh(rc);
     }
     static void addBoundsLow(RobotController rc) throws GameActionException {
-        new SignalCompressedLocation(SignalCompressedLocation.LocationType.MAP_LOW, new MapLocation(Common.xMin, Common.yMin)).add();
+        new SignalLocation(SignalLocation.LocationType.MAP_LOW, new MapLocation(Common.xMin, Common.yMin)).add();
     }
     static void addBoundsHigh(RobotController rc) throws GameActionException {
-        new SignalCompressedLocation(SignalCompressedLocation.LocationType.MAP_HIGH, new MapLocation(Common.xMax, Common.yMax)).add();
+        new SignalLocation(SignalLocation.LocationType.MAP_HIGH, new MapLocation(Common.xMax, Common.yMax)).add();
+    }
+
+    static int reduceCoordinate(int x) {
+        if(x == Common.MAP_NONE) return SIG_NONE;
+        return x % Common.MAP_MOD;
+    }
+
+    /**
+     * Complete coordinates.
+     * @param x
+     * @param y
+     * @return
+     */
+    static MapLocation expandPoint(int x, int y) {
+        if(x == SIG_NONE) {
+            x = Common.MAP_NONE;
+        } else {
+            x += Common.hometown.x / Common.MAP_MOD * Common.MAP_MOD;
+            x = _getCoordinate(x, Common.xMin, Common.xMax);
+        }
+        if(y == SIG_NONE) {
+            y = Common.MAP_NONE;
+        } else {
+            y += Common.hometown.y / Common.MAP_MOD * Common.MAP_MOD;
+            y = _getCoordinate(y, Common.yMin, Common.yMax);
+        }
+        return new MapLocation(x, y);
+    }
+
+    private static int _getCoordinate(int x, int xMin, int xMax) {
+        if(xMin != Common.MAP_NONE) {
+            if(x < xMin) x += Common.MAP_MOD;
+            else if(x >= xMin + Common.MAP_MOD) x -= Common.MAP_MOD;
+        } else if(xMax != Common.MAP_NONE) {
+            if(x > xMax) x -= Common.MAP_MOD;
+            else if(x <= xMax - Common.MAP_MOD) x += Common.MAP_MOD;
+        }
+        return x;
     }
 
 }

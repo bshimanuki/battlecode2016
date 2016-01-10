@@ -2,16 +2,16 @@ package foundation;
 
 import battlecode.common.*;
 
-class SignalCompressedLocations {
-    SignalCompressedLocation first, second;
+class SignalLocations {
+    SignalLocation first, second;
 
-    SignalCompressedLocations(SignalCompressedLocation first, SignalCompressedLocation second) {
+    SignalLocations(SignalLocation first, SignalLocation second) {
         this.first = first;
         this.second = second;
     }
-    SignalCompressedLocations(int value) {
-        SignalCompressedLocation.LocationType firstType = SignalCompressedLocation.LocationType.get((value >>> 29) % 4);
-        SignalCompressedLocation.LocationType secondType = SignalCompressedLocation.LocationType.get((value >>> 27) % 4);
+    SignalLocations(int value) {
+        SignalLocation.LocationType firstType = SignalLocation.LocationType.get((value >>> 29) % 4);
+        SignalLocation.LocationType secondType = SignalLocation.LocationType.get((value >>> 27) % 4);
         value &= -1 >>> 5;
         int secondY = value % Signals.SIG_MOD;
         value /= Signals.SIG_MOD;
@@ -20,8 +20,8 @@ class SignalCompressedLocations {
         int firstY = value % Signals.SIG_MOD;
         value /= Signals.SIG_MOD;
         int firstX = value;
-        this.first = new SignalCompressedLocation(firstType, firstX, firstY);
-        this.second = new SignalCompressedLocation(secondType, secondX, secondY);
+        this.first = new SignalLocation(firstType, firstX, firstY);
+        this.second = new SignalLocation(secondType, secondX, secondY);
     }
 
     int toInt() {
