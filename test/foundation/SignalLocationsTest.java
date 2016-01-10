@@ -49,7 +49,7 @@ public class SignalLocationsTest {
         assertEquals(s.second.x, t.second.x);
         assertEquals(16, t.second.x);
         assertEquals(s.second.y, t.second.y);
-        assertEquals(SignalCompressedLocation.SIG_NONE, t.second.y);
+        assertEquals(Signals.SIG_NONE, t.second.y);
     }
 
 }

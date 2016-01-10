@@ -42,7 +42,7 @@ class SignalUnit {
     final static int TYPE_MOD = normalTypes.length; // 6
     final static Team[] teams = Team.values();
     final static int TEAM_MOD = teams.length; // 4
-    // MAP_MOD from Common.MAP_MOD
+    // SIG_MOD from Signals
     // ID_MOD dependent on current bc implementation:
     //   should be larger than total number of robots
     //   upper bounded built robots at 2*4*300 = 2400
@@ -81,14 +81,14 @@ class SignalUnit {
         value /= TYPE_MOD;
         id = value % ID_MOD;
         value = ID_MOD;
-        int x = value % Common.MAP_MOD;
-        int y = value / Common.MAP_MOD;
+        int x = value % Signals.SIG_MOD;
+        int y = value / Signals.SIG_MOD;
         loc = new MapLocation(x, y);
     }
 
     int toInt() {
         int value = loc.y;
-        value *= Common.MAP_MOD;
+        value *= Signals.SIG_MOD;
         value += loc.x;
         value *= ID_MOD;
         value += id;

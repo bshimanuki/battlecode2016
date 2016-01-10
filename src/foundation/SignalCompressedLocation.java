@@ -4,20 +4,17 @@ import battlecode.common.*;
 
 class SignalCompressedLocation {
 
-    final static int SIG_NONE = 100;
-    final static int SIG_MOD = 101;
-
     LocationType type;
     int x, y;
     SignalCompressedLocation() {
         // also acts as BUFFER
-        this(LocationType.MAP_LOW, SIG_NONE, SIG_NONE);
+        this(LocationType.MAP_LOW, Signals.SIG_NONE, Signals.SIG_NONE);
     }
     SignalCompressedLocation(LocationType type, MapLocation loc) {
         this.type = type;
-        if(loc.x == Common.MAP_NONE) this.x = SIG_NONE;
+        if(loc.x == Common.MAP_NONE) this.x = Signals.SIG_NONE;
         else this.x = loc.x % Common.MAP_MOD;
-        if(loc.y == Common.MAP_NONE) this.y = SIG_NONE;
+        if(loc.y == Common.MAP_NONE) this.y = Signals.SIG_NONE;
         else this.y = loc.y % Common.MAP_MOD;
     }
 
@@ -34,13 +31,13 @@ class SignalCompressedLocation {
     void read() throws GameActionException {
         switch(type) {
             case MAP_LOW:
-                if(Common.xMin == Common.MAP_NONE && x != SIG_NONE) {
+                if(Common.xMin == Common.MAP_NONE && x != Signals.SIG_NONE) {
                     int newx = x + Common.hometown.x / Common.MAP_MOD * Common.MAP_MOD;
                     if(newx > Common.hometown.x) newx -= Common.MAP_MOD;
                     Common.xMin = newx;
                     if(Common.rc.getType().canMessageSignal()) Signals.addBoundsLow(Common.rc);
                 }
-                if(Common.yMin == Common.MAP_NONE && y != SIG_NONE) {
+                if(Common.yMin == Common.MAP_NONE && y != Signals.SIG_NONE) {
                     int newy = y + Common.hometown.y / Common.MAP_MOD * Common.MAP_MOD;
                     if(newy > Common.hometown.y) newy -= Common.MAP_MOD;
                     Common.yMin = newy;
@@ -48,13 +45,13 @@ class SignalCompressedLocation {
                 }
                 break;
             case MAP_HIGH:
-                if(Common.xMax == Common.MAP_NONE && x != SIG_NONE) {
+                if(Common.xMax == Common.MAP_NONE && x != Signals.SIG_NONE) {
                     int newx = x + Common.hometown.x / Common.MAP_MOD * Common.MAP_MOD;
                     if(newx < Common.hometown.x) newx += Common.MAP_MOD;
                     Common.xMax = newx;
                     if(Common.rc.getType().canMessageSignal()) Signals.addBoundsHigh(Common.rc);
                 }
-                if(Common.yMax == Common.MAP_NONE && y != SIG_NONE) {
+                if(Common.yMax == Common.MAP_NONE && y != Signals.SIG_NONE) {
                     int newy = y + Common.hometown.y / Common.MAP_MOD * Common.MAP_MOD;
                     if(newy < Common.hometown.y) newy += Common.MAP_MOD;
                     Common.yMax = newy;

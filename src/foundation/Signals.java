@@ -17,6 +17,11 @@ class Signals {
 
     final static int CONTROL_SHIFT = 30; // 2 control bits
     final static int BUFFER = -1;
+
+    // for locations
+    final static int SIG_NONE = 100;
+    final static int SIG_MOD = 101;
+
     static List<Integer> halfSignals = new ArrayList<>();
     static List<SignalCompressedLocation> locs = new ArrayList<>();
     static List<MapLocation> enemies = new ArrayList<>();
@@ -37,10 +42,10 @@ class Signals {
         // for(int i=num; --i >= 0;) {
         if(scanAll) {
             for(int i=0; i<num; ++i) {
+                Common.addInfo(signals[i].getTeam(), signals[i].getRobotID(), signals[i].getLocation());
                 if(myTeam == signals[i].getTeam()) {
                     extract(signals[i]);
                 } else {
-                    Common.addInfo(signals[i].getTeam(), signals[i].getRobotID(), signals[i].getLocation());
                 }
             }
         } else {
@@ -76,7 +81,7 @@ class Signals {
                 break;
             case 2:
             case 3:
-                new SignalCompressedLocations(value).read();
+                if(value != BUFFER) new SignalCompressedLocations(value).read();
                 break;
             default:
                 break;
