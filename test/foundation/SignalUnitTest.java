@@ -13,6 +13,9 @@ public class SignalUnitTest {
     public void initiate() {
         Common.hometown = new MapLocation(123, 456);
         Common.xMax = 156;
+        RobotControllerMock rc = new RobotControllerMock();
+        rc.location = new MapLocation(118, 400);
+        Common.rc = rc;
     }
 
     @Test

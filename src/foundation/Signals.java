@@ -137,24 +137,27 @@ class Signals {
             x = Common.MAP_NONE;
         } else {
             x += Common.hometown.x / Common.MAP_MOD * Common.MAP_MOD;
-            x = _getCoordinate(x, Common.xMin, Common.xMax);
+            x = _getCoordinate(x, Common.xMin, Common.xMax, (Common.rc.getLocation().x + Common.hometown.x) / 2);
         }
         if(y == SIG_NONE) {
             y = Common.MAP_NONE;
         } else {
             y += Common.hometown.y / Common.MAP_MOD * Common.MAP_MOD;
-            y = _getCoordinate(y, Common.yMin, Common.yMax);
+            y = _getCoordinate(y, Common.yMin, Common.yMax, (Common.rc.getLocation().y + Common.hometown.y) / 2);
         }
         return new MapLocation(x, y);
     }
 
-    private static int _getCoordinate(int x, int xMin, int xMax) {
+    private static int _getCoordinate(int x, int xMin, int xMax, int xMid) {
         if(xMin != Common.MAP_NONE) {
             if(x < xMin) x += Common.MAP_MOD;
             else if(x >= xMin + Common.MAP_MOD) x -= Common.MAP_MOD;
         } else if(xMax != Common.MAP_NONE) {
             if(x > xMax) x -= Common.MAP_MOD;
             else if(x <= xMax - Common.MAP_MOD) x += Common.MAP_MOD;
+        } else {
+            if(x < xMid - Common.MAP_MOD / 2) x += Common.MAP_MOD;
+            else if(x > xMid + Common.MAP_MOD / 2) x -= Common.MAP_MOD;
         }
         return x;
     }
