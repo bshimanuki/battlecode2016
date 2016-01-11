@@ -42,18 +42,20 @@ class Signals {
         // for(int i=num; --i >= 0;) {
         if(rc.getRoundNum() < Common.MIN_BUILD_TIME) {
             for(int i=0; i<num; ++i) {
-                if(myTeam == signals[i].getTeam()) {
-                    Common.addInfo(signals[i].getRobotID(), signals[i].getTeam(), RobotType.ARCHON, signals[i].getLocation());
-                    extract(signals[i]);
+                Signal s = signals[i];
+                if(myTeam == s.getTeam()) {
+                    Common.addInfo(s.getRobotID(), s.getTeam(), RobotType.ARCHON, s.getLocation());
+                    extract(s);
                 } else {
-                    Common.addInfo(signals[i].getRobotID(), signals[i].getTeam(), RobotType.ARCHON, signals[i].getLocation());
+                    Common.addInfo(s.getRobotID(), s.getTeam(), RobotType.ARCHON, s.getLocation());
                 }
             }
         } else if(scanAll) {
             for(int i=0; i<num; ++i) {
-                Common.addInfo(signals[i].getRobotID(), signals[i].getTeam(), signals[i].getLocation());
-                if(myTeam == signals[i].getTeam()) {
-                    extract(signals[i]);
+                Signal s = signals[i];
+                Common.addInfo(s.getRobotID(), s.getTeam(), s.getLocation());
+                if(myTeam == s.getTeam()) {
+                    extract(s);
                 } else {
                 }
             }

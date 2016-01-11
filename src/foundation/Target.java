@@ -28,10 +28,12 @@ class Target implements Model {
         }
     }
 
+   final static int ID_NONE = -1;
+
     Map<TargetType, TargetType.Level> weights;
     // target is either loc or id;
     MapLocation loc;
-    int id = -1;
+    int id = ID_NONE;
     RobotInfo targetInfo;
     int lastSight = -1; // last turn target was seen
     double rubbleLevel; // max rubble to clear
@@ -72,7 +74,7 @@ class Target implements Model {
     public boolean run(RobotController rc) throws GameActionException {
         // TODO : improve(?) sense if target destroyed
         // TODO: TURRET movement
-        if(id != -1) {
+        if(id != ID_NONE) {
             if(rc.canSenseRobot(id)) {
                 targetInfo = rc.senseRobot(id);
                 loc = targetInfo.location;
@@ -104,11 +106,11 @@ class Target implements Model {
         if(weights.get(TargetType.ATTACK) == TargetType.Level.ACTIVE)
             attack(rc);
 
-        if(id == -1) {
+        if(id == ID_NONE) {
             if(weights.get(TargetType.MOVE) == TargetType.Level.INACTIVE) {
                 if(rc.canSense(loc)) return true;
             } else { // ACTIVE
-                if(rc.getLocation() == loc) return true;
+                if(rc.getLocation().equals(loc)) return true;
             }
         }
         return false;
