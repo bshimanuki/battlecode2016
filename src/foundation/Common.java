@@ -1,9 +1,5 @@
 package foundation;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 import battlecode.common.*;
@@ -21,6 +17,8 @@ class Common {
     final static int MAP_MOD = 100;
     final static MapLocation MAP_EMPTY = new MapLocation(MAP_NONE, MAP_NONE);
     final static int MIN_BUILD_TIME = 10;
+    final static int MAX_ID = 65536;
+    final static int TIME_NONE = -1;
 
     // Map vars
     // mod 100
@@ -35,13 +33,14 @@ class Common {
     // Team vars
     static Team myTeam;
     static Team enemyTeam;
-    static Map<Integer, Integer> seenTimes = new HashMap<>();
-    static Map<Integer, RobotInfo> seenRobots = new HashMap<>();
-    static Map<Integer, Team> knownTeams = new HashMap<>();
-    static Map<Integer, RobotType> knownTypes = new HashMap<>();
-    static Map<Integer, Integer> knownTimes = new HashMap<>();
-    static Map<Integer, MapLocation> knownLocations = new HashMap<>();
-    static List<Integer> typeSignals = new ArrayList<>();
+    static int[] seenTimes = new int[MAX_ID];
+    static RobotInfo[] seenRobots = new RobotInfo[MAX_ID];
+    static Team[] knownTeams = new Team[MAX_ID];
+    static RobotType[] knownTypes = new RobotType[MAX_ID];
+    static int[] knownTimes = new int[MAX_ID];
+    static MapLocation[] knownLocations = new MapLocation[MAX_ID];
+    static int[] typeSignals = new int[MAX_ID]; // way larger than necessary, but whatever
+    static int typeSignalsSize = 0;
     static int numArchons = 1;
 
     // Robot vars
@@ -49,7 +48,8 @@ class Common {
     static Random rand;
     static int birthday;
     static MapLocation hometown;
-    static List<MapLocation> history; // movement history
+    static MapLocation[] history; // movement history
+    static int historySize = 0;
     static final int HISTORY_SIZE = 20;
     static int straightSight;
     static RobotType robotType;
@@ -70,7 +70,7 @@ class Common {
         rand = new Random(rc.getID());
         myTeam = rc.getTeam();
         enemyTeam = myTeam.opponent();
-        history = new ArrayList<>(rc.getRoundLimit());
+        history = new MapLocation[rc.getRoundLimit()];
         robotType = rc.getType();
         birthday = rc.getRoundNum() - robotType.buildTurns;
         hometown = rc.getLocation();
@@ -160,20 +160,20 @@ class Common {
      */
     static void move(RobotController rc, Direction dir) throws GameActionException {
         rc.move(dir);
-        history.add(rc.getLocation());
+        history[historySize++] = rc.getLocation();
     }
 
     static void addInfo(RobotInfo info) throws GameActionException {
-        seenRobots.put(info.ID, info);
-        seenTimes.put(info.ID, rc.getRoundNum());
+        seenRobots[info.ID] = info;
+        seenTimes[info.ID] = rc.getRoundNum();
         addInfo(info.ID, info.team, info.type, info.location);
     }
 
     static void addInfo(int id, Team team, MapLocation loc) {
         // not regular update since RobotType unknown
-        knownTeams.put(id, team);
-        knownTimes.put(id, rc.getRoundNum());
-        knownLocations.put(id, loc);
+        knownTeams[id] = team;
+        knownTimes[id] = rc.getRoundNum();
+        knownLocations[id] = loc;
     }
 
     static void addInfo(int id, Team team, RobotType robotType) throws GameActionException {
@@ -183,13 +183,13 @@ class Common {
     static void addInfo(int id, Team team, RobotType robotType, MapLocation loc) throws GameActionException {
         boolean newLoc = false;
         //use knownTypes because team, time, and location can come from intercepting signals
-        boolean newRobot = knownTypes.get(id) == null;
-        knownTeams.put(id, team);
-        knownTypes.put(id, robotType);
+        boolean newRobot = knownTypes[id] == null;
+        knownTeams[id] = team;
+        knownTypes[id] = robotType;
         if(loc != null && loc.x != MAP_NONE) { // loc.y assumed
-            if(knownLocations.get(id) == null) newLoc = true;
-            knownTimes.put(id, rc.getRoundNum());
-            knownLocations.put(id, loc);
+            if(knownLocations[id] == null) newLoc = true;
+            knownTimes[id] = rc.getRoundNum();
+            knownLocations[id] = loc;
         }
         if(rc.getType().canMessageSignal() && (newRobot || newLoc)) {
             if(robotType == RobotType.ARCHON
@@ -199,7 +199,7 @@ class Common {
             {
                 SignalUnit s = new SignalUnit(id, team, robotType, loc);
                 // s.add();
-                if(newRobot) typeSignals.add(s.toInt());
+                if(newRobot) typeSignals[typeSignalsSize++] = s.toInt();
             }
         }
     }
