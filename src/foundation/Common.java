@@ -9,11 +9,11 @@ import java.util.Random;
 import battlecode.common.*;
 
 class Common {
-    final static Direction[] directions = {
+    final static Direction[] DIRECTIONS = {
         Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST,
         Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST
     };
-    final static RobotType[] robotTypes = {
+    final static RobotType[] ROBOT_TYPES = {
         RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SOLDIER,
         RobotType.GUARD, RobotType.GUARD, RobotType.VIPER, RobotType.TURRET
     };
@@ -41,6 +41,7 @@ class Common {
     static Map<Integer, Integer> knownTimes = new HashMap<>();
     static Map<Integer, MapLocation> knownLocations = new HashMap<>();
     static List<Integer> typeSignals = new ArrayList<>();
+    static int numArchons = 1;
 
     // Robot vars
     static RobotController rc;

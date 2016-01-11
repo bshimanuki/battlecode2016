@@ -39,7 +39,7 @@ class Soldier implements Model {
             if(rc.isCoreReady()) {
                 if(fate < 600) {
                     // Choose a random direction to try to move in
-                    Direction dirToMove = Common.directions[fate % 8];
+                    Direction dirToMove = Common.DIRECTIONS[fate % 8];
                     // Check the rubble in that direction
                     if(rc.senseRubble(rc.getLocation().add(dirToMove)) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
                         // Too much rubble, so I should clear it
