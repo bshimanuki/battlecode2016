@@ -43,9 +43,7 @@ public class RobotPlayer {
 
         while(true) {
             try {
-                int read = Signals.readSignals(rc);
-
-                Common.run(rc);
+                Common.runBefore(rc);
 
                 if(model.run(rc)) {
                     System.out.println("Finished " + model);
@@ -55,8 +53,7 @@ public class RobotPlayer {
                 // if(rc.getType() == RobotType.ARCHON) robot.run(rc);
                 // else target.run(rc);
 
-                int send = Signals.sendQueue(rc, 2 * rc.getType().sensorRadiusSquared);
-                rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d archons %d", send, read, Common.xMin, Common.yMin, Common.xMax, Common.yMax, Common.numArchons));
+                Common.runAfter(rc);
 
                 Clock.yield();
             } catch(Exception e) {

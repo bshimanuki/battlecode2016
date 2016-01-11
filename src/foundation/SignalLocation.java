@@ -27,37 +27,34 @@ class SignalLocation {
     }
 
     void read() throws GameActionException {
-        boolean updated = false;
         switch(type) {
             case MAP_LOW:
                 if(Common.xMin == Common.MAP_NONE && x != Signals.SIG_NONE) {
                     int newx = x + Common.hometown.x / Common.MAP_MOD * Common.MAP_MOD;
                     if(newx > Common.hometown.x) newx -= Common.MAP_MOD;
                     Common.xMin = newx;
-                    updated = true;
+                    if(Common.canMessageSignal) Common.sendBoundariesLow = true;
                 }
                 if(Common.yMin == Common.MAP_NONE && y != Signals.SIG_NONE) {
                     int newy = y + Common.hometown.y / Common.MAP_MOD * Common.MAP_MOD;
                     if(newy > Common.hometown.y) newy -= Common.MAP_MOD;
                     Common.yMin = newy;
-                    updated = true;
+                    if(Common.canMessageSignal) Common.sendBoundariesLow = true;
                 }
-                if(updated && Common.rc.getType().canMessageSignal()) Signals.addBoundsLow(Common.rc);
                 break;
             case MAP_HIGH:
                 if(Common.xMax == Common.MAP_NONE && x != Signals.SIG_NONE) {
                     int newx = x + Common.hometown.x / Common.MAP_MOD * Common.MAP_MOD;
                     if(newx < Common.hometown.x) newx += Common.MAP_MOD;
                     Common.xMax = newx;
-                    updated = true;
+                    if(Common.canMessageSignal) Common.sendBoundariesHigh = true;
                 }
                 if(Common.yMax == Common.MAP_NONE && y != Signals.SIG_NONE) {
                     int newy = y + Common.hometown.y / Common.MAP_MOD * Common.MAP_MOD;
                     if(newy < Common.hometown.y) newy += Common.MAP_MOD;
                     Common.yMax = newy;
-                    updated = true;
+                    if(Common.canMessageSignal) Common.sendBoundariesHigh = true;
                 }
-                if(updated && Common.rc.getType().canMessageSignal()) Signals.addBoundsHigh(Common.rc);
                 break;
             case ENEMY:
                 Signals.enemies.add(Signals.expandPoint(x, y));

@@ -24,7 +24,7 @@ public class SignalUnitTest {
         RobotType robotType = RobotType.BIGZOMBIE;
         int id = 2222;
         MapLocation loc = new MapLocation(144, 423);
-        SignalUnit s = new SignalUnit(team, robotType, id, loc);
+        SignalUnit s = new SignalUnit(id, team, robotType, loc);
         int value = s.toInt();
         SignalUnit t = new SignalUnit(value);
         System.err.println("Sent: " + s);
@@ -46,7 +46,7 @@ public class SignalUnitTest {
         RobotType robotType = RobotType.GUARD;
         int id = 1234;
         MapLocation loc = new MapLocation(105, 398);
-        SignalUnit s = new SignalUnit(team, robotType, id, loc);
+        SignalUnit s = new SignalUnit(id, team, robotType, loc);
         int value = s.toInt();
         SignalUnit t = new SignalUnit(value);
         System.err.println("Sent: " + s);

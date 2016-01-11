@@ -61,11 +61,11 @@ class SignalUnit {
         loc = info.location;
     }
 
-    SignalUnit(Team team, RobotType robotType, int id) {
-        this(team, robotType, id, null);
+    SignalUnit(int id, Team team, RobotType robotType) {
+        this(id, team, robotType, null);
     }
 
-    SignalUnit(Team team, RobotType robotType, int id, MapLocation loc) {
+    SignalUnit(int id, Team team, RobotType robotType, MapLocation loc) {
         this.team = team;
         this.robotType = robotType;
         this.id = id % ID_MOD;
@@ -105,7 +105,7 @@ class SignalUnit {
     }
 
     void read() throws GameActionException {
-        Common.addInfo(team, robotType, id, loc);
+        Common.addInfo(id, team, robotType, loc);
         Common.rc.setIndicatorString(2, String.format("Robot %d is at %s", id, loc));
     }
 

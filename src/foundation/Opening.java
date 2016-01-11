@@ -17,11 +17,13 @@ class Opening implements Model {
         int y = loc.y;
         switch(round) {
             case 0:
-                Signals.addBounds(rc);
+                Common.sendBoundariesLow = true;
+                Common.sendBoundariesHigh = true;
+                Common.sendRadius = 30 * Common.sightRadius;
                 break;
             case 1:
-                // Relies on each archon creating a unit on round 0, and uses cheaper round than Math.round
-                Common.numArchons = (int) ((1 + GameConstants.PART_INCOME_UNIT_PENALTY - (rc.getTeamParts() % 1)) / (2*GameConstants.PART_INCOME_UNIT_PENALTY));
+                // Relies on each archon creating no units round 0, and uses cheaper round than Math.round
+                Common.numArchons = (int) ((1 + 0.5*GameConstants.PART_INCOME_UNIT_PENALTY - (rc.getTeamParts() % 1)) / GameConstants.PART_INCOME_UNIT_PENALTY);
 
                 if(Common.xMin != Common.MAP_NONE) ++x;
                 if(Common.xMax != Common.MAP_NONE) --x;
@@ -31,7 +33,7 @@ class Opening implements Model {
                 if(buildDir == Direction.OMNI) buildDir = Common.DIRECTIONS[Common.rand.nextInt(Common.DIRECTIONS.length)];
                 if(rc.canBuild(buildDir, RobotType.SCOUT)) rc.build(buildDir, RobotType.SCOUT);
                 else {
-                    for(int i=0; i<8; ++i) {
+                    for(int i=0; i<7; ++i) {
                         buildDir.rotateLeft();
                         if(rc.canBuild(buildDir, RobotType.SCOUT)) {
                             rc.build(buildDir, RobotType.SCOUT);

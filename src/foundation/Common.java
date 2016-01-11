@@ -20,6 +20,7 @@ class Common {
     final static int MAP_NONE = -1;
     final static int MAP_MOD = 100;
     final static MapLocation MAP_EMPTY = new MapLocation(MAP_NONE, MAP_NONE);
+    final static int MIN_BUILD_TIME = 10;
 
     // Map vars
     // mod 100
@@ -51,6 +52,18 @@ class Common {
     static List<MapLocation> history; // movement history
     static final int HISTORY_SIZE = 20;
     static int straightSight;
+    static RobotType robotType;
+    static int sightRadius;
+    static boolean canMessageSignal;
+
+    // Message vars
+    static boolean sendBoundariesLow;
+    static boolean sendBoundariesHigh;
+    static int sendRadius;
+
+    // Debug vars
+    static int read;
+    static int send;
 
     static void init(RobotController rc) {
         Common.rc = rc;
@@ -58,21 +71,41 @@ class Common {
         myTeam = rc.getTeam();
         enemyTeam = myTeam.opponent();
         history = new ArrayList<>(rc.getRoundLimit());
-        birthday = rc.getRoundNum() - rc.getType().buildTurns;
+        robotType = rc.getType();
+        birthday = rc.getRoundNum() - robotType.buildTurns;
         hometown = rc.getLocation();
-        straightSight = (int) Math.sqrt(rc.getType().sensorRadiusSquared);
+        sightRadius = robotType.sensorRadiusSquared;
+        straightSight = (int) Math.sqrt(sightRadius);
+        canMessageSignal = robotType.canMessageSignal();
     }
 
     /**
      * Code to run every turn.
      * @param rc
      */
-    static void run(RobotController rc) throws GameActionException {
+    static void runBefore(RobotController rc) throws GameActionException {
+        read = Signals.readSignals(rc);
+
+        if(canMessageSignal) {
+            sendRadius = 2 * sightRadius;
+            sendBoundariesLow = false;
+            sendBoundariesHigh = false;
+        }
+
         updateMap(rc);
         RobotInfo[] infos = rc.senseNearbyRobots();
         for(RobotInfo info : infos) {
             addInfo(info);
         }
+    }
+
+    static void runAfter(RobotController rc) throws GameActionException {
+        if(canMessageSignal) {
+            if(sendBoundariesLow) Signals.addBoundsLow(rc);
+            if(sendBoundariesHigh) Signals.addBoundsHigh(rc);
+        }
+        int send = Signals.sendQueue(rc, sendRadius);
+        rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d archons %d", send, read, xMin, yMin, xMax, yMax, numArchons));
     }
 
     static void updateMap(RobotController rc) throws GameActionException {
@@ -81,21 +114,25 @@ class Common {
             int x = -straightSight;
             while(!rc.onTheMap(loc.add(++x, 0)));
             xMin = loc.x + x;
+            sendBoundariesLow = true;
         }
         if(xMax == MAP_NONE && !rc.onTheMap(loc.add(straightSight, 0))) {
             int x = straightSight;
             while(!rc.onTheMap(loc.add(--x, 0)));
             xMax = loc.x + x;
+            sendBoundariesHigh = true;
         }
         if(yMin == MAP_NONE && !rc.onTheMap(loc.add(0, -straightSight))) {
             int y = -straightSight;
             while(!rc.onTheMap(loc.add(0, ++y)));
             yMin = loc.y + y;
+            sendBoundariesLow = true;
         }
         if(yMax == MAP_NONE && !rc.onTheMap(loc.add(0, straightSight))) {
             int y = straightSight;
             while(!rc.onTheMap(loc.add(0, --y)));
             yMax = loc.y + y;
+            sendBoundariesHigh = true;
         }
     }
 
@@ -129,21 +166,21 @@ class Common {
     static void addInfo(RobotInfo info) throws GameActionException {
         seenRobots.put(info.ID, info);
         seenTimes.put(info.ID, rc.getRoundNum());
-        addInfo(info.team, info.type, info.ID, info.location);
+        addInfo(info.ID, info.team, info.type, info.location);
     }
 
-    static void addInfo(Team team, int id, MapLocation loc) {
+    static void addInfo(int id, Team team, MapLocation loc) {
         // not regular update since RobotType unknown
         knownTeams.put(id, team);
         knownTimes.put(id, rc.getRoundNum());
         knownLocations.put(id, loc);
     }
 
-    static void addInfo(Team team, RobotType robotType, int id) throws GameActionException {
-        addInfo(team, robotType, id, null);
+    static void addInfo(int id, Team team, RobotType robotType) throws GameActionException {
+        addInfo(id, team, robotType, null);
     }
 
-    static void addInfo(Team team, RobotType robotType, int id, MapLocation loc) throws GameActionException {
+    static void addInfo(int id, Team team, RobotType robotType, MapLocation loc) throws GameActionException {
         boolean newLoc = false;
         //use knownTypes because team, time, and location can come from intercepting signals
         boolean newRobot = knownTypes.get(id) == null;
@@ -160,8 +197,9 @@ class Common {
                     || robotType == RobotType.BIGZOMBIE
                     || robotType == RobotType.VIPER && team == myTeam)
             {
-                new SignalUnit(team, robotType, id, loc).add();
-                if(newRobot) typeSignals.add(new SignalUnit(team, robotType, id).toInt());
+                SignalUnit s = new SignalUnit(id, team, robotType, loc);
+                // s.add();
+                if(newRobot) typeSignals.add(s.toInt());
             }
         }
     }
