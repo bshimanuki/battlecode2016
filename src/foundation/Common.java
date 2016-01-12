@@ -19,8 +19,11 @@ class Common {
     final static int MIN_BUILD_TIME = 10;
     final static int MAX_ID = 65536;
     final static int TIME_NONE = -1;
+    final static int BUILD_LAG = 1; // Delay between built and first turn
 
     // Map vars
+    static int[][] mapParts = new int[MAP_MOD][MAP_MOD];
+    static int[][] mapRubble = new int[MAP_MOD][MAP_MOD];
     // mod 100
     static int xMin = MAP_NONE;
     static int xMax = MAP_NONE;
@@ -46,7 +49,9 @@ class Common {
     // Robot vars
     static RobotController rc;
     static Random rand;
+    static int id;
     static int birthday;
+    static int enrollment;
     static MapLocation hometown;
     static MapLocation[] history; // movement history
     static int historySize = 0;
@@ -68,11 +73,13 @@ class Common {
     static void init(RobotController rc) {
         Common.rc = rc;
         rand = new Random(rc.getID());
+        id = rc.getID();
         myTeam = rc.getTeam();
         enemyTeam = myTeam.opponent();
         history = new MapLocation[rc.getRoundLimit()];
         robotType = rc.getType();
-        birthday = rc.getRoundNum() - robotType.buildTurns;
+        enrollment = rc.getRoundNum();
+        if(robotType != RobotType.ARCHON) birthday = enrollment - robotType.buildTurns - BUILD_LAG;
         hometown = rc.getLocation();
         sightRadius = robotType.sensorRadiusSquared;
         straightSight = (int) Math.sqrt(sightRadius);
@@ -182,7 +189,7 @@ class Common {
 
     static void addInfo(int id, Team team, RobotType robotType, MapLocation loc) throws GameActionException {
         boolean newLoc = false;
-        //use knownTypes because team, time, and location can come from intercepting signals
+        // use knownTypes because team, time, and location can come from intercepting signals
         boolean newRobot = knownTypes[id] == null;
         knownTeams[id] = team;
         knownTypes[id] = robotType;
@@ -198,7 +205,7 @@ class Common {
                     || robotType == RobotType.VIPER && team == myTeam)
             {
                 SignalUnit s = new SignalUnit(id, team, robotType, loc);
-                // s.add();
+                s.add();
                 if(newRobot) typeSignals[typeSignalsSize++] = s.toInt();
             }
         }

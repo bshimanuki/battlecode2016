@@ -39,7 +39,7 @@ class SignalLocations {
     }
 
     void add() {
-        Signals.halfSignals.add(toInt());
+        Signals.halfSignals[Signals.halfSignalsSize++] = toInt();
     }
 
     void read() throws GameActionException {

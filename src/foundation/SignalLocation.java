@@ -23,7 +23,7 @@ class SignalLocation {
     }
 
     void add() {
-        Signals.locs.add(this);
+        Signals.locs[Signals.locsSize++] = this;
     }
 
     void read() throws GameActionException {
@@ -57,10 +57,10 @@ class SignalLocation {
                 }
                 break;
             case ENEMY:
-                Signals.enemies.add(Signals.expandPoint(x, y));
+                Signals.enemies[Signals.enemiesSize++] = Signals.expandPoint(x, y);
                 break;
             case TARGET:
-                Signals.targets.add(Signals.expandPoint(x, y));
+                Signals.targets[Signals.targetsSize++] = Signals.expandPoint(x, y);
                 break;
         }
     }

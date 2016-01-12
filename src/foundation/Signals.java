@@ -1,8 +1,5 @@
 package foundation;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import battlecode.common.*;
 
 /**
@@ -17,15 +14,23 @@ class Signals {
 
     final static int CONTROL_SHIFT = 30; // 2 control bits
     final static int BUFFER = -1;
+    final static int MAX_QUEUE = 4000;
 
     // for locations
     final static int SIG_NONE = 100;
     final static int SIG_MOD = 101;
 
-    static List<Integer> halfSignals = new ArrayList<>();
-    static List<SignalLocation> locs = new ArrayList<>();
-    static List<MapLocation> enemies = new ArrayList<>();
-    static List<MapLocation> targets = new ArrayList<>();
+    // Send queues
+    static int[] halfSignals = new int[MAX_QUEUE];
+    static int halfSignalsSize = 0;
+    static SignalLocation[] locs = new SignalLocation[MAX_QUEUE];
+    static int locsSize = 0;
+
+    // Receive queues
+    static MapLocation[] enemies = new MapLocation[MAX_QUEUE];
+    static int enemiesSize = 0;
+    static MapLocation[] targets = new MapLocation[MAX_QUEUE];
+    static int targetsSize = 0;
 
     /**
      * Read Signal queue.
@@ -36,8 +41,8 @@ class Signals {
         Signal[] signals = rc.emptySignalQueue();
         int num = signals.length;
         Team myTeam = Common.myTeam;
-        enemies.clear();
-        targets.clear();
+        enemiesSize = 0; // clear enemies queue
+        targetsSize = 0; // clear targets queue
         boolean scanAll = num < 200;
         // for(int i=num; --i >= 0;) {
         if(rc.getRoundNum() < Common.MIN_BUILD_TIME) {
@@ -108,16 +113,16 @@ class Signals {
      * @throws GameActionException
      */
     static int sendQueue(RobotController rc, int radius) throws GameActionException {
-        if(locs.size() % 2 == 1) locs.add(new SignalLocation());
-        int size = locs.size();
+        if(locsSize % 2 == 1) locs[locsSize++] = new SignalLocation();
+        int size = locsSize;
         for(int i=0; i<size; i+=2)
-            new SignalLocations(locs.get(i), locs.get(i+1)).add();
-        locs.clear();
-        if(halfSignals.size() % 2 == 1) halfSignals.add(BUFFER);
-        size = halfSignals.size();
+            new SignalLocations(locs[i], locs[i+1]).add();
+        locsSize = 0; // clear locs queue
+        if(halfSignalsSize % 2 == 1) addRandomType(rc);
+        size = Math.min(halfSignalsSize, 2*GameConstants.MESSAGE_SIGNALS_PER_TURN);
         for(int i=0; i<size; i+=2)
-            rc.broadcastMessageSignal(halfSignals.get(i), halfSignals.get(i+1), radius);
-        halfSignals.clear();
+            rc.broadcastMessageSignal(halfSignals[i], halfSignals[i+1], radius);
+        halfSignalsSize = 0; // clear halfSignals queue
         return size / 2;
     }
 
@@ -130,6 +135,9 @@ class Signals {
     }
     static void addBoundsHigh(RobotController rc) throws GameActionException {
         new SignalLocation(SignalLocation.LocationType.MAP_HIGH, new MapLocation(Common.xMax, Common.yMax)).add();
+    }
+    static void addRandomType(RobotController rc) throws GameActionException {
+        halfSignals[halfSignalsSize++] = Common.typeSignals[Common.rand.nextInt(Common.typeSignalsSize)];
     }
 
     static int reduceCoordinate(int x) {

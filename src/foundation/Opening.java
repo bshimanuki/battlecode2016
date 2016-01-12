@@ -20,6 +20,7 @@ class Opening implements Model {
                 Common.sendBoundariesLow = true;
                 Common.sendBoundariesHigh = true;
                 Common.sendRadius = 30 * Common.sightRadius;
+                Common.addInfo(rc.senseRobot(Common.id));
                 break;
             case 1:
                 // Relies on each archon creating no units round 0, and uses cheaper round than Math.round
