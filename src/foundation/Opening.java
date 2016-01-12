@@ -19,8 +19,13 @@ class Opening implements Model {
             case 0:
                 Common.sendBoundariesLow = true;
                 Common.sendBoundariesHigh = true;
-                Common.sendRadius = 30 * Common.sightRadius;
                 Common.addInfo(rc.senseRobot(Common.id));
+                // send a signal for map bounds and then ensure no more are sent
+                Signals.locsSize = 0;
+                Signals.halfSignalsSize = 0;
+                Signals.addBounds(rc);
+                Signals.sendQueue(rc, 30 * Common.sightRadius);
+                Signals.maxMessages = 0;
                 break;
             case 1:
                 // Relies on each archon creating no units round 0, and uses cheaper round than Math.round

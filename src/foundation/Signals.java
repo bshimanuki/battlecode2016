@@ -25,6 +25,7 @@ class Signals {
     static int halfSignalsSize = 0;
     static SignalLocation[] locs = new SignalLocation[MAX_QUEUE];
     static int locsSize = 0;
+    static int maxMessages; // reset to GameConstants.MESSAGE_SIGNALS_PER_TURN each turn
 
     // Receive queues
     static MapLocation[] enemies = new MapLocation[MAX_QUEUE];
@@ -119,7 +120,7 @@ class Signals {
             new SignalLocations(locs[i], locs[i+1]).add();
         locsSize = 0; // clear locs queue
         if(halfSignalsSize % 2 == 1) addRandomType(rc);
-        size = Math.min(halfSignalsSize, 2*GameConstants.MESSAGE_SIGNALS_PER_TURN);
+        size = Math.min(halfSignalsSize, 2*maxMessages);
         for(int i=0; i<size; i+=2)
             rc.broadcastMessageSignal(halfSignals[i], halfSignals[i+1], radius);
         halfSignalsSize = 0; // clear halfSignals queue

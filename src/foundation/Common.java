@@ -22,8 +22,12 @@ class Common {
     final static int BUILD_LAG = 1; // Delay between built and first turn
 
     // Map vars
-    static int[][] mapParts = new int[MAP_MOD][MAP_MOD];
-    static int[][] mapRubble = new int[MAP_MOD][MAP_MOD];
+    static double[][] mapParts = new double[MAP_MOD][MAP_MOD];
+    static int[][] partsTimes = new int[MAP_MOD][MAP_MOD];
+    static MapLocation[] partLocations = new MapLocation[MAX_ID];
+    static int partLocationsSize = 0;
+    static double[][] mapRubble = new double[MAP_MOD][MAP_MOD];
+    static int[][] rubbleTimes = new int[MAP_MOD][MAP_MOD];
     // mod 100
     static int xMin = MAP_NONE;
     static int xMax = MAP_NONE;
@@ -45,6 +49,13 @@ class Common {
     static int[] typeSignals = new int[MAX_ID]; // way larger than necessary, but whatever
     static int typeSignalsSize = 0;
     static int numArchons = 1;
+
+    static int[] neutralIds = new int[MAX_ID];
+    static int neutralIdsSize = 0;
+    static RobotType[] neutralTypes = new RobotType[MAX_ID];
+    static int neutralTypesSize = 0;
+    static MapLocation[] neutralLocations = new MapLocation[MAX_ID];
+    static int neutralLocationsSize = 0;
 
     // Robot vars
     static RobotController rc;
@@ -91,7 +102,11 @@ class Common {
      * @param rc
      */
     static void runBefore(RobotController rc) throws GameActionException {
+        Signals.maxMessages = GameConstants.MESSAGE_SIGNALS_PER_TURN;
         read = Signals.readSignals(rc);
+
+        // Sense rubble a little after construction
+        if(rc.getRoundNum() == enrollment + 2) senseRubble(rc);
 
         if(canMessageSignal) {
             sendRadius = 2 * sightRadius;
@@ -168,6 +183,60 @@ class Common {
     static void move(RobotController rc, Direction dir) throws GameActionException {
         rc.move(dir);
         history[historySize++] = rc.getLocation();
+        int roundNum = rc.getRoundNum();
+        MapLocation loc = rc.getLocation();
+        switch(dir) {
+            case NORTH_EAST:
+            case EAST:
+            case SOUTH_EAST:
+                for(int y=-straightSight; y<=straightSight; ++y) {
+                    MapLocation senseLocation = loc.add(straightSight, y);
+                    if(rc.canSense(senseLocation)) {
+                        rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
+                        mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
+                    }
+                }
+                break;
+            case SOUTH_WEST:
+            case WEST:
+            case NORTH_WEST:
+                for(int y=-straightSight; y<=straightSight; ++y) {
+                    MapLocation senseLocation = loc.add(-straightSight, y);
+                    if(rc.canSense(senseLocation)) {
+                        rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
+                        mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+        switch(dir) {
+            case NORTH_WEST:
+            case NORTH:
+            case NORTH_EAST:
+                for(int x=-straightSight; x<=straightSight; ++x) {
+                    MapLocation senseLocation = loc.add(x, straightSight);
+                    if(rc.canSense(senseLocation)) {
+                        rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
+                        mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
+                    }
+                }
+                break;
+            case SOUTH_EAST:
+            case SOUTH:
+            case SOUTH_WEST:
+                for(int x=-straightSight; x<=straightSight; ++x) {
+                    MapLocation senseLocation = loc.add(x, -straightSight);
+                    if(rc.canSense(senseLocation)) {
+                        rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
+                        mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
+                    }
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     static void addInfo(RobotInfo info) throws GameActionException {
@@ -204,10 +273,44 @@ class Common {
                     || robotType == RobotType.BIGZOMBIE
                     || robotType == RobotType.VIPER && team == myTeam)
             {
+                new SignalUnit(id, team, robotType, loc).add();
+                if(newRobot) typeSignals[typeSignalsSize++] = new SignalUnit(id, team, robotType).toInt();
+            } else if(team == Team.NEUTRAL) { // logically first case, but these are disjoint
                 SignalUnit s = new SignalUnit(id, team, robotType, loc);
                 s.add();
-                if(newRobot) typeSignals[typeSignalsSize++] = s.toInt();
+                typeSignals[typeSignalsSize++] = s.toInt();
+                neutralIds[neutralIdsSize++] = id;
+                neutralTypes[neutralTypesSize++] = robotType;
+                neutralLocations[neutralLocationsSize++] = loc;
             }
+        }
+    }
+
+    /**
+     * Expensive method. Should call upon initialization only.
+     * @param rc
+     * @throws GameActionException
+     */
+    static void senseRubble(RobotController rc) throws GameActionException {
+        int roundNum = rc.getRoundNum();
+        for(int x=-straightSight; x<=straightSight; ++x) {
+            for(int y=-straightSight; y<=straightSight; ++y) {
+                MapLocation loc = rc.getLocation().add(x, y);
+                if(rc.canSense(loc)) {
+                    rubbleTimes[loc.x%MAP_MOD][loc.y%MAP_MOD] = roundNum;
+                    mapRubble[loc.x%MAP_MOD][loc.y%MAP_MOD] = rc.senseRubble(loc);
+                }
+            }
+        }
+    }
+
+    static void senseParts(RobotController rc) throws GameActionException {
+        int roundNum = rc.getRoundNum();
+        for(MapLocation loc : rc.sensePartLocations(sightRadius)) {
+            if(partsTimes[loc.x%MAP_MOD][loc.y%MAP_MOD] == 0)
+                partLocations[partLocationsSize++] = loc;
+            mapParts[loc.x%MAP_MOD][loc.y%MAP_MOD] = rc.senseParts(loc);
+            partsTimes[loc.x%MAP_MOD][loc.y%MAP_MOD] = roundNum;
         }
     }
 
