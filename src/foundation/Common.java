@@ -9,6 +9,11 @@ class Common {
         Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST,
         Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST
     };
+    final static Direction[][] CARDINAL_DIRECTIONS = {
+        {Direction.NORTH_WEST, Direction.WEST, Direction.SOUTH_WEST},
+        {Direction.NORTH, Direction.OMNI, Direction.SOUTH},
+        {Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST}
+    };
     final static RobotType[] ROBOT_TYPES = {
         RobotType.SCOUT, RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SOLDIER,
         RobotType.GUARD, RobotType.GUARD, RobotType.VIPER, RobotType.TURRET
@@ -312,6 +317,11 @@ class Common {
             mapParts[loc.x%MAP_MOD][loc.y%MAP_MOD] = rc.senseParts(loc);
             partsTimes[loc.x%MAP_MOD][loc.y%MAP_MOD] = roundNum;
         }
+    }
+
+    static Direction Direction(int dx, int dy) {
+        if(dx * dx <= 1 && dy * dy <= 1) return CARDINAL_DIRECTIONS[dx+1][dy+1];
+        return Direction.NONE;
     }
 
 }

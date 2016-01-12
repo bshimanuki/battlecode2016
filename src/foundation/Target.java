@@ -31,8 +31,9 @@ class Target implements Model {
    final static int ID_NONE = -1;
 
     Map<TargetType, TargetType.Level> weights;
-    // target is either loc or id;
+    // target is either loc, dir, or id;
     MapLocation loc;
+    Direction dir;
     int id = ID_NONE;
     RobotInfo targetInfo;
     int lastSight = -1; // last turn target was seen
@@ -46,8 +47,20 @@ class Target implements Model {
     }
 
     // weights copied by reference
+    Target(Direction dir, Map<TargetType, TargetType.Level> weights) {
+        this.weights = weights;
+        this.dir = dir;
+    }
+    Target(Direction dir) {
+        this.weights = defaultWeights();
+        this.dir = dir;
+    }
     Target(MapLocation loc, Map<TargetType, TargetType.Level> weights) {
         this.weights = weights;
+        this.loc = loc;
+    }
+    Target(MapLocation loc) {
+        this.weights = defaultWeights();
         this.loc = loc;
     }
     Target(int id, Map<TargetType, TargetType.Level> weights) {
@@ -58,10 +71,6 @@ class Target implements Model {
         this.weights = weights;
         this.loc = loc;
         this.id = id;
-    }
-    Target(MapLocation loc) {
-        this.weights = defaultWeights();
-        this.loc = loc;
     }
 
     /**
@@ -74,6 +83,7 @@ class Target implements Model {
     public boolean run(RobotController rc) throws GameActionException {
         // TODO : improve(?) sense if target destroyed
         // TODO: TURRET movement
+        MapLocation curLocation = rc.getLocation();
         if(id != ID_NONE) {
             if(rc.canSenseRobot(id)) {
                 targetInfo = rc.senseRobot(id);
@@ -88,7 +98,7 @@ class Target implements Model {
                         return true;
                     }
                 }
-            } else if(lastSight == rc.getRoundNum() - 1 && loc.distanceSquaredTo(rc.getLocation()) <= 10) {
+            } else if(lastSight == rc.getRoundNum() - 1 && loc.distanceSquaredTo(curLocation) <= 10) {
                 // can't sense and previous location within contracted sight => died
                 return true;
             }
@@ -97,7 +107,7 @@ class Target implements Model {
         if(loc == null) {
             // should not get here
             System.out.println(String.format("Robot %d not found when targeting", id));
-            loc = rc.getLocation();
+            loc = curLocation;
         }
 
         if(weights.get(TargetType.ATTACK) == TargetType.Level.PRIORITY)
@@ -107,10 +117,29 @@ class Target implements Model {
             attack(rc);
 
         if(id == ID_NONE) {
-            if(weights.get(TargetType.MOVE) == TargetType.Level.INACTIVE) {
-                if(rc.canSense(loc)) return true;
-            } else { // ACTIVE
-                if(rc.getLocation().equals(loc)) return true;
+            if(loc != null) {
+                if(weights.get(TargetType.MOVE) == TargetType.Level.INACTIVE) {
+                    if(rc.canSense(loc)) return true;
+                } else { // ACTIVE
+                    if(curLocation.equals(loc)) return true;
+                }
+            } else { // dir != null
+                int dx = dir.dx;
+                int dy = dir.dy;
+                if(weights.get(TargetType.MOVE) == TargetType.Level.INACTIVE) {
+                    // check if edge of map is within sight
+                    if(Common.xMin != Common.MAP_NONE && Common.xMin > curLocation.x + Common.straightSight * dir.dx) dx = 0;
+                    if(Common.xMax != Common.MAP_NONE && Common.xMax < curLocation.x + Common.straightSight * dir.dx) dx = 0;
+                    if(Common.yMin != Common.MAP_NONE && Common.yMin > curLocation.y + Common.straightSight * dir.dx) dy = 0;
+                    if(Common.yMax != Common.MAP_NONE && Common.yMax < curLocation.y + Common.straightSight * dir.dx) dy = 0;
+                } else { // ACTIVE
+                    if(Common.xMin != Common.MAP_NONE && Common.xMin == curLocation.x) dx = 0;
+                    if(Common.xMax != Common.MAP_NONE && Common.xMax == curLocation.x) dx = 0;
+                    if(Common.yMin != Common.MAP_NONE && Common.yMin == curLocation.y) dy = 0;
+                    if(Common.yMax != Common.MAP_NONE && Common.yMax == curLocation.y) dy = 0;
+                }
+                dir = Common.Direction(dx, dy);
+                if(dir == Direction.NONE) return true;
             }
         }
         return false;
@@ -143,16 +172,16 @@ class Target implements Model {
     void move(RobotController rc) throws GameActionException {
         // TODO: path finding
         if(!rc.isCoreReady() || !rc.getType().canMove()) return;
-        Direction dir = rc.getLocation().directionTo(loc);
-        if(dir == Direction.OMNI) return;
-        MapLocation next = rc.getLocation().add(dir);
+        Direction moveDirection = dir == null ? rc.getLocation().directionTo(loc) : dir;
+        if(moveDirection == Direction.OMNI) return;
+        MapLocation next = rc.getLocation().add(moveDirection);
         double rubble = rc.senseRubble(next);
         if(weights.get(TargetType.RUBBLE) == TargetType.Level.INACTIVE) {
-            if(rc.canMove(dir)) Common.move(rc, dir);
-            else if(rubble > 0) rc.clearRubble(dir);
+            if(rc.canMove(moveDirection)) Common.move(rc, moveDirection);
+            else if(rubble > 0) rc.clearRubble(moveDirection);
         } else { // ACTIVE
-            if(rubble >= GameConstants.RUBBLE_SLOW_THRESH) rc.clearRubble(dir);
-            else if(rc.canMove(dir)) Common.move(rc, dir);
+            if(rubble >= GameConstants.RUBBLE_SLOW_THRESH) rc.clearRubble(moveDirection);
+            else if(rc.canMove(moveDirection)) Common.move(rc, moveDirection);
         }
     }
 

@@ -48,6 +48,21 @@ class Opening implements Model {
                     }
                 }
                 break;
+            case 2:
+                // full rubble scan being done in Common.runBefore
+                break;
+            case 3:
+                if(Common.xMin != Common.MAP_NONE) --x;
+                if(Common.xMax != Common.MAP_NONE) ++x;
+                if(Common.yMin != Common.MAP_NONE) --y;
+                if(Common.yMax != Common.MAP_NONE) ++y;
+                Common.myBase = loc.directionTo(new MapLocation(x, y));
+                if(Common.myBase == Direction.OMNI) {
+                    Common.myBase = null;
+                } else {
+                    Common.enemyBase = Common.myBase.opposite();
+                }
+                break;
             case 15:
                 return true;
             default:
