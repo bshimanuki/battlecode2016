@@ -4,11 +4,30 @@ import battlecode.common.*;
 
 class Archon implements Model {
 
+    Target target;
+
     @Override
     public boolean run(RobotController rc) throws GameActionException {
         int fate = Common.rand.nextInt(1000);
         if(rc.isCoreReady()) {
+            if(fate < 200) {
+                for(int i=0; i<Common.partLocationsSize; ++i) {
+                    MapLocation loc = Common.partLocations[i];
+                    if(Common.mapParts[loc.x%Common.MAP_MOD][loc.y%Common.MAP_MOD] != 0) {
+                        target = new Target(loc);
+                        target.weights.put(Target.TargetType.MOVE, Target.TargetType.Level.PRIORITY);
+                        break;
+                    }
+                }
+                rc.setIndicatorLine(rc.getLocation(), target.loc, 0,255,0);
+            }
             if(fate < 800) {
+                if(target != null) {
+                    rc.setIndicatorString(1, "Targeting " + target.loc);
+                    if(target.run(rc)) target = null;
+                    return false;
+                }
+                rc.setIndicatorString(1, "Running fate");
                 // Choose a random direction to try to move in
                 Direction dirToMove = Common.DIRECTIONS[fate % 8];
                 // Check the rubble in that direction

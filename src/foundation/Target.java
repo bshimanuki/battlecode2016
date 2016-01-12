@@ -10,7 +10,7 @@ class Target implements Model {
     enum TargetType {
         MOVE(Level.INACTIVE), // within sight, on target
         ATTACK(Level.ACTIVE), // no attack, attack when extra action, always attack
-        RUBBLE(Level.INACTIVE), // clear to move, full clear to move
+        RUBBLE(Level.INACTIVE), // clear to move, full clear to move, clear even if scout (though not full clear)
         ZOMBIE_ATTACK(Level.ACTIVE), // ignore zombies, attack zombies
         ZOMBIE_KAMIKAZE(Level.INACTIVE),
         ZOMBIE_LEAD(Level.INACTIVE),
@@ -29,6 +29,13 @@ class Target implements Model {
     }
 
    final static int ID_NONE = -1;
+   final static Map<TargetType, TargetType.Level> defaultWeights;
+   static {
+        Map<TargetType, TargetType.Level> weights = new EnumMap<>(TargetType.class);
+        for(TargetType type : TargetType.values())
+            weights.put(type, type.defaultLevel);
+        defaultWeights = weights;
+    }
 
     Map<TargetType, TargetType.Level> weights;
     // target is either loc, dir, or id;
@@ -39,20 +46,13 @@ class Target implements Model {
     int lastSight = -1; // last turn target was seen
     double rubbleLevel; // max rubble to clear
 
-    static Map<TargetType, TargetType.Level> defaultWeights () {
-        Map<TargetType, TargetType.Level> weights = new EnumMap<>(TargetType.class);
-        for(TargetType type : TargetType.values())
-            weights.put(type, type.defaultLevel);
-        return weights;
-    }
-
     // weights copied by reference
     Target(Direction dir, Map<TargetType, TargetType.Level> weights) {
         this.weights = weights;
         this.dir = dir;
     }
     Target(Direction dir) {
-        this.weights = defaultWeights();
+        this.weights = new EnumMap<>(defaultWeights);
         this.dir = dir;
     }
     Target(MapLocation loc, Map<TargetType, TargetType.Level> weights) {
@@ -60,7 +60,7 @@ class Target implements Model {
         this.loc = loc;
     }
     Target(MapLocation loc) {
-        this.weights = defaultWeights();
+        this.weights = new EnumMap<>(defaultWeights);
         this.loc = loc;
     }
     Target(int id, Map<TargetType, TargetType.Level> weights) {
@@ -176,12 +176,19 @@ class Target implements Model {
         if(moveDirection == Direction.OMNI) return;
         MapLocation next = rc.getLocation().add(moveDirection);
         double rubble = rc.senseRubble(next);
-        if(weights.get(TargetType.RUBBLE) == TargetType.Level.INACTIVE) {
-            if(rc.canMove(moveDirection)) Common.move(rc, moveDirection);
-            else if(rubble > 0) rc.clearRubble(moveDirection);
-        } else { // ACTIVE
-            if(rubble >= GameConstants.RUBBLE_SLOW_THRESH) rc.clearRubble(moveDirection);
-            else if(rc.canMove(moveDirection)) Common.move(rc, moveDirection);
+        switch(weights.get(TargetType.RUBBLE)) {
+            case INACTIVE:
+                if(rc.canMove(moveDirection)) Common.move(rc, moveDirection);
+                else if(rubble > 0) rc.clearRubble(moveDirection);
+                break;
+            case ACTIVE:
+                if(rubble >= GameConstants.RUBBLE_SLOW_THRESH) rc.clearRubble(moveDirection);
+                else if(rc.canMove(moveDirection)) Common.move(rc, moveDirection);
+                break;
+            case PRIORITY:
+                if(rubble >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) rc.clearRubble(moveDirection);
+                else if(rc.canMove(moveDirection)) Common.move(rc, moveDirection);
+                break;
         }
     }
 

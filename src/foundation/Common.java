@@ -117,6 +117,7 @@ class Common {
             sendRadius = 2 * sightRadius;
             sendBoundariesLow = false;
             sendBoundariesHigh = false;
+            senseParts(rc);
         }
 
         updateMap(rc);
