@@ -50,6 +50,10 @@ class Signals {
             for(int i=0; i<num; ++i) {
                 Signal s = signals[i];
                 if(myTeam == s.getTeam()) {
+                    if(Common.knownTypes[s.getRobotID()] == null) {
+                        Common.archonIds[Common.archonIdsSize] = s.getID();
+                        Common.archonHometowns[Common.archonIdsSize++] = s.getLocation();
+                    }
                     Common.addInfo(s.getRobotID(), s.getTeam(), RobotType.ARCHON, s.getLocation());
                     extract(s);
                 } else {

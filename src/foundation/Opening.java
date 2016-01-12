@@ -17,6 +17,8 @@ class Opening implements Model {
         int y = loc.y;
         switch(round) {
             case 0:
+                Common.archonIds[Common.archonIdsSize] = Common.id;
+                Common.archonHometowns[Common.archonIdsSize++] = Common.hometown;
                 Common.sendBoundariesLow = true;
                 Common.sendBoundariesHigh = true;
                 Common.addInfo(rc.senseRobot(Common.id));

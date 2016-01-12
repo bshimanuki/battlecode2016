@@ -54,6 +54,9 @@ class Common {
     static int[] typeSignals = new int[MAX_ID]; // way larger than necessary, but whatever
     static int typeSignalsSize = 0;
     static int numArchons = 1;
+    static int[] archonIds = new int[4];
+    static int archonIdsSize = 0;
+    static MapLocation[] archonHometowns = new MapLocation[4];
 
     static int[] neutralIds = new int[MAX_ID];
     static int neutralIdsSize = 0;
@@ -61,6 +64,7 @@ class Common {
     static int neutralTypesSize = 0;
     static MapLocation[] neutralLocations = new MapLocation[MAX_ID];
     static int neutralLocationsSize = 0;
+    static RobotInfo[] robotInfos;
 
     // Robot vars
     static RobotController rc;
@@ -121,8 +125,8 @@ class Common {
         }
 
         updateMap(rc);
-        RobotInfo[] infos = rc.senseNearbyRobots();
-        for(RobotInfo info : infos) {
+        robotInfos = rc.senseNearbyRobots();
+        for(RobotInfo info : robotInfos) {
             addInfo(info);
         }
     }
@@ -323,6 +327,21 @@ class Common {
     static Direction Direction(int dx, int dy) {
         if(dx * dx <= 1 && dy * dy <= 1) return CARDINAL_DIRECTIONS[dx+1][dy+1];
         return Direction.NONE;
+    }
+
+    static RobotInfo closestRobot(RobotInfo[] infos) {
+        if(infos.length == 0) return null;
+        MapLocation curLocation = rc.getLocation();
+        RobotInfo closest = infos[0];
+        int dist = 2 * Common.sightRadius; // to be replaced
+        for(RobotInfo info : infos) {
+            int newdist = curLocation.distanceSquaredTo(info.location);
+            if(newdist < dist) {
+                closest = info;
+                dist = newdist;
+            }
+        }
+        return closest;
     }
 
 }
