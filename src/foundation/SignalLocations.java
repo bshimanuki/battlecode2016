@@ -5,6 +5,9 @@ import battlecode.common.*;
 class SignalLocations {
     SignalLocation first, second;
 
+    SignalLocations(SignalLocation first) {
+        this(first, new SignalLocation());
+    }
     SignalLocations(SignalLocation first, SignalLocation second) {
         this.first = first;
         this.second = second;

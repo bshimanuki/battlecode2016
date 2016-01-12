@@ -111,7 +111,8 @@ class Common {
      * @param rc
      */
     static void runBefore(RobotController rc) throws GameActionException {
-        Signals.maxMessages = GameConstants.MESSAGE_SIGNALS_PER_TURN;
+        // -2 for build signals
+        Signals.maxMessages = GameConstants.MESSAGE_SIGNALS_PER_TURN - 2;
         read = Signals.readSignals(rc);
 
         // Sense rubble a little after construction

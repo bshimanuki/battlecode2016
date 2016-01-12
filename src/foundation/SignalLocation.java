@@ -4,6 +4,17 @@ import battlecode.common.*;
 
 class SignalLocation {
 
+    enum LocationType {
+        // can only contain 4 types
+        TARGET,
+        ENEMY,
+        MAP_LOW,
+        MAP_HIGH,
+        ;
+        static LocationType get(int value) {return values[value];}
+        static LocationType[] values = LocationType.values();
+    }
+
     LocationType type;
     int x, y;
     SignalLocation() {
@@ -68,17 +79,6 @@ class SignalLocation {
     @Override
     public String toString() {
         return type.toString() + " " + x + " " + y;
-    }
-
-    enum LocationType {
-        // can only contain 4 types
-        TARGET,
-        ENEMY,
-        MAP_LOW,
-        MAP_HIGH,
-        ;
-        static LocationType get(int value) {return values[value];}
-        static LocationType[] values = LocationType.values();
     }
 
 }

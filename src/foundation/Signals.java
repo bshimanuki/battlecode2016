@@ -6,13 +6,16 @@ import battlecode.common.*;
  * Helper class to send and receive signals. @see Jam for use in jamming (deprecated by bc 0.0.4).
  *
  * Message codes:
- *  00.. (Unused)
+ *  000. (Unused)
+ *  001. Strategy
  *  01.. Unit
  *  1... Locations
  */
 class Signals {
 
-    final static int CONTROL_SHIFT = 30; // 2 control bits
+    final static int CONTROL_SHIFT_LOCATION = 31; // 1 control bit
+    final static int CONTROL_SHIFT_UNIT = 30; // 2 control bits
+    final static int CONTROL_SHIFT_STRATEGY = 29; // 3 control bits
     final static int BUFFER = -1;
     final static int MAX_QUEUE = 4000;
 
@@ -87,16 +90,18 @@ class Signals {
         if(s.getMessage() != null) {
             int first = s.getMessage()[0];
             int second = s.getMessage()[1];
-            if(first >>> CONTROL_SHIFT != 0) {
+            if(first >>> CONTROL_SHIFT_UNIT != 0) {
                 extract(first);
                 extract(second);
+            } else if(first >>> CONTROL_SHIFT_STRATEGY != 0) {
+                new SignalStrategy(first, second).read();
             } else {
             }
         }
     }
 
     static void extract(int value) throws GameActionException {
-        switch(value >>> CONTROL_SHIFT) {
+        switch(value >>> CONTROL_SHIFT_UNIT) {
             case 1:
                 new SignalUnit(value).read();
                 break;
@@ -136,10 +141,19 @@ class Signals {
         addBoundsHigh(rc);
     }
     static void addBoundsLow(RobotController rc) throws GameActionException {
-        new SignalLocation(SignalLocation.LocationType.MAP_LOW, new MapLocation(Common.xMin, Common.yMin)).add();
+        getBoundsLow(rc).add();
     }
     static void addBoundsHigh(RobotController rc) throws GameActionException {
-        new SignalLocation(SignalLocation.LocationType.MAP_HIGH, new MapLocation(Common.xMax, Common.yMax)).add();
+        getBoundsHigh(rc).add();
+    }
+    static SignalLocation getBoundsLow(RobotController rc) throws GameActionException {
+        return new SignalLocation(SignalLocation.LocationType.MAP_LOW, new MapLocation(Common.xMin, Common.yMin));
+    }
+    static SignalLocation getBoundsHigh(RobotController rc) throws GameActionException {
+        return new SignalLocation(SignalLocation.LocationType.MAP_HIGH, new MapLocation(Common.xMax, Common.yMax));
+    }
+    static SignalLocations getBounds(RobotController rc) throws GameActionException {
+        return new SignalLocations(getBoundsLow(rc), getBoundsHigh(rc));
     }
     static void addRandomType(RobotController rc) throws GameActionException {
         halfSignals[halfSignalsSize++] = Common.typeSignals[Common.rand.nextInt(Common.typeSignalsSize)];
