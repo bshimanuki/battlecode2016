@@ -5,7 +5,7 @@ import java.util.Map;
 
 import battlecode.common.*;
 
-class Target implements Model {
+class Target extends Model {
 
     enum TargetType {
         MOVE(Level.INACTIVE), // within sight, on target
@@ -86,7 +86,7 @@ class Target implements Model {
      * @throws GameActionException
      */
     @Override
-    public boolean run(RobotController rc) throws GameActionException {
+    public boolean runInner(RobotController rc) throws GameActionException {
         // TODO : improve(?) sense if target destroyed
         // TODO: TURRET movement
         MapLocation curLocation = rc.getLocation();

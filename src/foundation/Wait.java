@@ -4,13 +4,12 @@ import java.util.function.Function;
 
 import battlecode.common.*;
 
-class Wait implements Model {
+class Wait extends Model {
 
-    Function<RobotController, Boolean> trigger;
     int turn;
 
     Wait(Function<RobotController, Boolean> trigger, int turn) {
-        this.trigger = trigger;
+        setTrigger(trigger);
         this.turn = turn;
     }
     Wait(Function<RobotController, Boolean> trigger) {
@@ -27,8 +26,7 @@ class Wait implements Model {
     }
 
     @Override
-    public boolean run(RobotController rc) throws GameActionException {
-        if(trigger != null) if(trigger.apply(rc)) return true;
+    public boolean runInner(RobotController rc) throws GameActionException {
         return rc.getRoundNum() >= turn;
     }
 

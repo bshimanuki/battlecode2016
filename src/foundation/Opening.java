@@ -2,7 +2,7 @@ package foundation;
 
 import battlecode.common.*;
 
-class Opening implements Model {
+class Opening extends Model {
 
     static Target target;
 
@@ -10,7 +10,8 @@ class Opening implements Model {
      * @param rc
      * @return true if opening phase is over
      */
-    public boolean run(RobotController rc) throws GameActionException {
+    @Override
+    public boolean runInner(RobotController rc) throws GameActionException {
         int round = rc.getRoundNum();
         MapLocation loc = rc.getLocation();
         int x = loc.x;
@@ -64,6 +65,15 @@ class Opening implements Model {
                 } else {
                     Common.enemyBase = Common.myBase.opposite();
                 }
+                x = 0;
+                y = 0;
+                for(MapLocation archonLoc : Common.archonHometowns) {
+                    x += archonLoc.x;
+                    y += archonLoc.y;
+                }
+                x /= Common.archonIdsSize;
+                y /= Common.archonIdsSize;
+                Archon.base = new Target(new MapLocation(x, y));
                 break;
             case 15:
                 return true;

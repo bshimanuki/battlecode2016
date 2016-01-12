@@ -2,12 +2,13 @@ package foundation;
 
 import battlecode.common.*;
 
-class Archon implements Model {
+class Archon extends Model {
 
     Target target;
+    static Target base;
 
     @Override
-    public boolean run(RobotController rc) throws GameActionException {
+    public boolean runInner(RobotController rc) throws GameActionException {
         int fate = Common.rand.nextInt(1000);
         if(rc.isCoreReady()) {
             if(fate < 200) {
@@ -25,6 +26,11 @@ class Archon implements Model {
                 if(target != null) {
                     rc.setIndicatorString(1, "Targeting " + target.loc);
                     if(target.run(rc)) target = null;
+                    return false;
+                }
+                if(base != null && rc.getLocation().distanceSquaredTo(base.loc) >= Common.sightRadius) {
+                    rc.setIndicatorString(1, "Targeting base at " + base.loc);
+                    base.run(rc);
                     return false;
                 }
                 rc.setIndicatorString(1, "Running fate");

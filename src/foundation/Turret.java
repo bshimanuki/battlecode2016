@@ -2,10 +2,10 @@ package foundation;
 
 import battlecode.common.*;
 
-class Turret implements Model {
+class Turret extends Model {
 
     @Override
-    public boolean run(RobotController rc) throws GameActionException {
+    public boolean runInner(RobotController rc) throws GameActionException {
         int myAttackRange = rc.getType().attackRadiusSquared;
         // If this robot type can attack, check for enemies within range and attack one
         if(rc.isWeaponReady()) {

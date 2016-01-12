@@ -2,10 +2,10 @@ package foundation;
 
 import battlecode.common.*;
 
-class Soldier implements Model {
+class Soldier extends Model {
 
     @Override
-    public boolean run(RobotController rc) throws GameActionException {
+    public boolean runInner(RobotController rc) throws GameActionException {
         int myAttackRange = rc.getType().attackRadiusSquared;
         int fate = Common.rand.nextInt(1000);
 
