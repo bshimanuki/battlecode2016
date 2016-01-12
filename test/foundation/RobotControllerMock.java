@@ -369,4 +369,10 @@ class RobotControllerMock implements RobotController {
         // TODO Auto-generated method stub
 
     }
+
+    @Override
+    public MapLocation[] sensePartLocations(int radiussquared) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }
