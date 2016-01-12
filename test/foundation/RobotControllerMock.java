@@ -2,7 +2,7 @@ package foundation;
 
 import battlecode.common.*;
 
-class RobotControllerMock implements RobotController {
+public class RobotControllerMock implements RobotController {
 
     MapLocation location;
 

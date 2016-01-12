@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" path="test"/>
+	<classpathentry kind="src" output="bin/test" path="test"/>
 	<classpathentry kind="lib" path=".ivy/ivy-2.4.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/battlecode-javadoc.jar"/>
 	<classpathentry kind="lib" path="lib/battlecode-mapeditor.jar"/>
@@ -19,6 +19,5 @@
 	<classpathentry kind="lib" path="lib/scala-reflect.jar"/>
 	<classpathentry kind="lib" path="lib/scala-xml_2.11.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="output" path="bin"/>
-	<classpathentry kind="output" path="bin/test"/>
+	<classpathentry kind="output" path="bin/main"/>
 </classpath>
