@@ -13,8 +13,8 @@ class SignalLocations {
         this.second = second;
     }
     SignalLocations(int value) {
-        SignalLocation.LocationType firstType = SignalLocation.LocationType.get((value >>> 29) % 4);
-        SignalLocation.LocationType secondType = SignalLocation.LocationType.get((value >>> 27) % 4);
+        SignalLocation.LocationType firstType = SignalLocation.LocationType.values[(value >>> 29) % 4];
+        SignalLocation.LocationType secondType = SignalLocation.LocationType.values[(value >>> 27) % 4];
         value &= -1 >>> 5;
         int secondY = value % Signals.SIG_MOD;
         value /= Signals.SIG_MOD;

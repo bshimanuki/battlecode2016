@@ -14,7 +14,9 @@ class Target extends Model {
         ZOMBIE_ATTACK(Level.ACTIVE), // ignore zombies, attack zombies
         ZOMBIE_KAMIKAZE(Level.INACTIVE),
         ZOMBIE_LEAD(Level.INACTIVE),
+        NONE(Level.INACTIVE),
         ;
+        final static TargetType[] values = TargetType.values();
 
         enum Level {
             INACTIVE,
@@ -77,6 +79,17 @@ class Target extends Model {
         this.weights = weights;
         this.loc = loc;
         this.id = id;
+    }
+    Target(TargetType targetType, MapLocation loc) {
+        this.loc = loc;
+        switch(targetType) {
+            case ZOMBIE_LEAD:
+                weights = new EnumMap<>(defaultZombieLeadWeights);
+                break;
+            default:
+                weights = new EnumMap<>(defaultWeights);
+                break;
+        }
     }
 
     /**

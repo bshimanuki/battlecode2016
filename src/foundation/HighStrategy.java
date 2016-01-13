@@ -8,4 +8,7 @@ enum HighStrategy {
     SURVIVE,
     VIPER_ZOMBIE,
     ZOMBIE,
+    NONE,
+    ;
+    final static HighStrategy[] values = HighStrategy.values();
 }

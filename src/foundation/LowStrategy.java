@@ -9,4 +9,7 @@ enum LowStrategy {
     SCAVENGE,
     JAM,
     SPECIAL,
+    NONE,
+    ;
+    final static LowStrategy[] values = LowStrategy.values();
 }

@@ -96,7 +96,7 @@ class SignalUnit {
         value += typeSignal.get(robotType);
         value *= TEAM_MOD;
         value += team.ordinal();
-        value |= CONTROL_BITS << Signals.CONTROL_SHIFT;
+        value |= CONTROL_BITS << Signals.CONTROL_SHIFT_UNIT;
         return value;
     }
 

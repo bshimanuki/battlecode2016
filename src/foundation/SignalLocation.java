@@ -11,8 +11,7 @@ class SignalLocation {
         MAP_LOW,
         MAP_HIGH,
         ;
-        static LocationType get(int value) {return values[value];}
-        static LocationType[] values = LocationType.values();
+        final static LocationType[] values = LocationType.values();
     }
 
     LocationType type;

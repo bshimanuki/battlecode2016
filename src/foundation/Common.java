@@ -23,7 +23,6 @@ class Common {
     final static MapLocation MAP_EMPTY = new MapLocation(MAP_NONE, MAP_NONE);
     final static int MIN_BUILD_TIME = 10;
     final static int MAX_ID = 65536;
-    final static int TIME_NONE = -1;
     final static int BUILD_LAG = 1; // Delay between built and first turn
 
     // Map vars
@@ -80,6 +79,11 @@ class Common {
     static RobotType robotType;
     static int sightRadius;
     static boolean canMessageSignal;
+    static HighStrategy highStrategy;
+    static LowStrategy lowStrategy;
+    static Target.TargetType targetType;
+    static Target[] targets;
+    static int targetsSize = 0;
 
     // Message vars
     static boolean sendBoundariesLow;
@@ -104,6 +108,7 @@ class Common {
         sightRadius = robotType.sensorRadiusSquared;
         straightSight = (int) Math.sqrt(sightRadius);
         canMessageSignal = robotType.canMessageSignal();
+        targets = new Target[rc.getRoundLimit()];
     }
 
     /**
