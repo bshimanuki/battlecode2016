@@ -67,9 +67,9 @@ class Opening extends Model {
                 }
                 x = 0;
                 y = 0;
-                for(MapLocation archonLoc : Common.archonHometowns) {
-                    x += archonLoc.x;
-                    y += archonLoc.y;
+                for(int i=0; i<Common.archonIdsSize; ++i) {
+                    x += Common.archonHometowns[i].x;
+                    y += Common.archonHometowns[i].y;
                 }
                 x /= Common.archonIdsSize;
                 y /= Common.archonIdsSize;

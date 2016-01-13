@@ -12,6 +12,7 @@ class Archon extends Model {
         int fate = Common.rand.nextInt(1000);
         if(rc.isCoreReady()) {
             if(fate < 200) {
+                target = null;
                 for(int i=0; i<Common.partLocationsSize; ++i) {
                     MapLocation loc = Common.partLocations[i];
                     if(Common.mapParts[loc.x%Common.MAP_MOD][loc.y%Common.MAP_MOD] != 0) {
@@ -20,7 +21,7 @@ class Archon extends Model {
                         break;
                     }
                 }
-                rc.setIndicatorLine(rc.getLocation(), target.loc, 0,255,0);
+                if(target != null) rc.setIndicatorLine(rc.getLocation(), target.loc, 0,255,0);
             }
             if(fate < 800) {
                 if(target != null) {
@@ -55,7 +56,7 @@ class Archon extends Model {
                     for(int i = 0; i < 8; i++) {
                         // If possible, build in this direction
                         if(rc.canBuild(dirToBuild, typeToBuild)) {
-                            rc.build(dirToBuild, typeToBuild);
+                            Common.build(rc, dirToBuild, typeToBuild, LowStrategy.NONE, Target.TargetType.MOVE, rc.getLocation().add(10,10));
                             break;
                         } else {
                             // Rotate the direction to try

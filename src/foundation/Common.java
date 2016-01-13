@@ -1,5 +1,6 @@
 package foundation;
 
+import java.util.LinkedList;
 import java.util.Random;
 
 import battlecode.common.*;
@@ -82,8 +83,7 @@ class Common {
     static HighStrategy highStrategy;
     static LowStrategy lowStrategy;
     static Target.TargetType targetType;
-    static Target[] targets;
-    static int targetsSize = 0;
+    static LinkedList<Model> models = new LinkedList<>();
 
     // Message vars
     static boolean sendBoundariesLow;
@@ -108,7 +108,6 @@ class Common {
         sightRadius = robotType.sensorRadiusSquared;
         straightSight = (int) Math.sqrt(sightRadius);
         canMessageSignal = robotType.canMessageSignal();
-        targets = new Target[rc.getRoundLimit()];
     }
 
     /**
@@ -120,8 +119,19 @@ class Common {
         Signals.maxMessages = GameConstants.MESSAGE_SIGNALS_PER_TURN - 2;
         read = Signals.readSignals(rc);
 
-        // Sense rubble a little after construction
-        if(rc.getRoundNum() == enrollment + 2) senseRubble(rc);
+        switch(rc.getRoundNum() - enrollment) {
+            case 0:
+                if(targetType != null && Signals.targetsSize > 0) {
+                    models.addFirst(new Target(targetType, Signals.targets[0]));
+                }
+                break;
+            case 2:
+                // Sense rubble a little after construction
+                senseRubble(rc);
+                break;
+            default:
+                break;
+        }
 
         if(canMessageSignal) {
             sendRadius = 2 * sightRadius;
@@ -198,9 +208,9 @@ class Common {
      */
     static void move(RobotController rc, Direction dir) throws GameActionException {
         rc.move(dir);
-        history[historySize++] = rc.getLocation();
-        int roundNum = rc.getRoundNum();
         MapLocation loc = rc.getLocation();
+        history[historySize++] = loc;
+        int roundNum = rc.getRoundNum();
         switch(dir) {
             case NORTH_EAST:
             case EAST:
@@ -253,6 +263,16 @@ class Common {
             default:
                 break;
         }
+        if(robotType == RobotType.ARCHON) mapParts[loc.x%MAP_MOD][loc.y%MAP_MOD] = 0;
+    }
+
+    static void build(RobotController rc, Direction dir, RobotType robotType, LowStrategy lowStrategy) throws GameActionException {
+        rc.build(dir, robotType);
+        Signals.sendBuilt(rc, lowStrategy);
+    }
+    static void build(RobotController rc, Direction dir, RobotType robotType, LowStrategy lowStrategy, Target.TargetType targetType, MapLocation targetLocation) throws GameActionException {
+        rc.build(dir, robotType);
+        Signals.sendBuilt(rc, lowStrategy, targetType, targetLocation);
     }
 
     static void addInfo(RobotInfo info) throws GameActionException {

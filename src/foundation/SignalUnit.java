@@ -106,7 +106,6 @@ class SignalUnit {
 
     void read() throws GameActionException {
         Common.addInfo(id, team, robotType, loc);
-        Common.rc.setIndicatorString(2, String.format("Robot %d is at %s", id, loc));
     }
 
     @Override

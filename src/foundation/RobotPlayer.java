@@ -1,7 +1,5 @@
 package foundation;
 
-import java.util.LinkedList;
-
 import battlecode.common.*;
 
 public class RobotPlayer {
@@ -14,13 +12,11 @@ public class RobotPlayer {
 
         final Model robot;
 
-        LinkedList<Model> models = new LinkedList<>();
-
         RobotType robotType = rc.getType();
         switch(robotType) {
             case ARCHON:
                 robot = new Archon();
-                models.add(new Opening());
+                Common.models.add(new Opening());
                 break;
             case SCOUT:
                 robot = new Scout();
@@ -32,22 +28,22 @@ public class RobotPlayer {
                 robot = new Soldier();
                 break;
         }
-        models.add(robot);
+        Common.highStrategy = HighStrategy.NONE;
+        Common.lowStrategy = LowStrategy.NONE;
+        Common.models.add(robot);
 
         Common.init(rc);
 
         // MapLocation loc = rc.getLocation().add(100, 100);
         // Target target = new Target(loc, Target.defaultWeights());
 
-        Model model = models.pop();
-
         while(true) {
             try {
                 Common.runBefore(rc);
 
-                if(model.run(rc)) {
-                    System.out.println("Finished " + model);
-                    model = models.pop();
+                if(Common.models.getFirst().run(rc)) {
+                    if(!(Common.models.getFirst() instanceof Target)) System.out.println("Finished " + Common.models.getFirst());
+                    Common.models.removeFirst();
                 }
                 // robot.run(rc);
                 // if(rc.getType() == RobotType.ARCHON) robot.run(rc);

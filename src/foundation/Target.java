@@ -258,4 +258,10 @@ class Target extends Model {
         return true;
     }
 
+    @Override
+    public String toString() {
+        if(loc != null) return String.format("Target<%d,%d>", loc.x, loc.y);
+        return "Target<>";
+    }
+
 }

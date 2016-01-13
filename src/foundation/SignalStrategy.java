@@ -6,7 +6,8 @@ class SignalStrategy {
 
     // starts with 0010 or 0011
     final static int CONTROL_SHIFT_STRATEGY_INNER = 28;
-    final static int ID_NONE = -1;
+    final static int ID_NONE = SignalUnit.ID_MOD;
+    final static int ID_MOD = ID_NONE + 1;
 
     int id = ID_NONE;
     int numArchons;
@@ -14,10 +15,11 @@ class SignalStrategy {
     HighStrategy highStrategy;
     LowStrategy lowStrategy;
     Target.TargetType targetType;
+    // int numTargets = 0; // numTargets has 4-5 bits
     SignalLocations locations;
 
     boolean forNewRobot() {
-        return archonIds == null;
+        return archonIds != null;
     }
 
     SignalStrategy(HighStrategy highStrategy, LowStrategy lowStrategy, Target.TargetType targetType, SignalLocations locations, int id) {
@@ -25,6 +27,7 @@ class SignalStrategy {
         this.highStrategy = highStrategy;
         this.lowStrategy = lowStrategy;
         this.targetType = targetType;
+        // this.numTargets = numTargets;
         this.locations = locations;
     }
 
@@ -32,6 +35,7 @@ class SignalStrategy {
         this.highStrategy = highStrategy;
         this.lowStrategy = lowStrategy;
         this.targetType = targetType;
+        // this.numTargets = numTargets;
         this.locations = locations;
     }
 
@@ -40,6 +44,7 @@ class SignalStrategy {
         this.lowStrategy = lowStrategy;
         this.targetType = targetType;
         this.numArchons = numArchons;
+        // this.numTargets = numTargets;
         this.archonIds = archonIds;
     }
 
@@ -53,37 +58,44 @@ class SignalStrategy {
             value /= 4;
             archonIds = new int[4];
             // archonIds[0] is archon sending message
-            archonIds[1] = (int) (value % SignalUnit.ID_MOD);
-            value /= SignalUnit.ID_MOD;
-            archonIds[2] = (int) (value % SignalUnit.ID_MOD);
-            value /= SignalUnit.ID_MOD;
-            archonIds[3] = (int) (value % SignalUnit.ID_MOD);
-            value /= SignalUnit.ID_MOD;
+            archonIds[1] = (int) (value % ID_MOD);
+            value /= ID_MOD;
+            archonIds[2] = (int) (value % ID_MOD);
+            value /= ID_MOD;
+            archonIds[3] = (int) (value % ID_MOD);
+            value /= ID_MOD;
         } else { // first >> CONTROL_SHIFT_STRATEGY_INNER == 2
             // strategy change
             locations = new SignalLocations(second);
             value = first & (-1 >>> 4);
+            id = (int) (value % ID_MOD);
+            value /= ID_MOD;
         }
         highStrategy = HighStrategy.values[(int) (value % HighStrategy.values.length)];
         value /= HighStrategy.values.length;
         lowStrategy = LowStrategy.values[(int) (value % LowStrategy.values.length)];
         value /= LowStrategy.values.length;
         targetType = Target.TargetType.values[(int) (value % Target.TargetType.values.length)];
+        // value /= Target.TargetType.values.length;
+        // numTargets = (int) value;
     }
 
     void send(RobotController rc, int radius) throws GameActionException {
         int first, second;
-        long value = targetType.ordinal();
+        // long value = numTargets;
+        // value *= Target.TargetType.values.length;
+        long value = 0;
+        value += targetType.ordinal();
         value *= LowStrategy.values.length;
         value += lowStrategy.ordinal();
         value *= HighStrategy.values.length;
         value += highStrategy.ordinal();
         if(forNewRobot()) {
-            value *= SignalUnit.ID_MOD;
+            value *= ID_MOD;
             value += archonIds[3];
-            value *= SignalUnit.ID_MOD;
+            value *= ID_MOD;
             value += archonIds[2];
-            value *= SignalUnit.ID_MOD;
+            value *= ID_MOD;
             value += archonIds[1];
             value *= 4;
             value += numArchons;
@@ -92,6 +104,8 @@ class SignalStrategy {
             first |= 3 << CONTROL_SHIFT_STRATEGY_INNER;
         } else {
             first = (int) value;
+            first *= ID_MOD;
+            first += id;
             first |= 2 << CONTROL_SHIFT_STRATEGY_INNER;
             second = locations.toInt();
         }
@@ -111,12 +125,16 @@ class SignalStrategy {
             int enemiesSize = Signals.enemiesSize;
             if(locations != null) locations.read();
             if(targetsSize != Signals.targetsSize) {
-                MapLocation targetLocation = Signals.targets[targetsSize--];
+                MapLocation targetLocation = Signals.targets[targetsSize];
+                Signals.targetsSize = targetsSize;
                 Target target = new Target(targetType, targetLocation);
+                Common.models.addFirst(target);
             }
             if(enemiesSize != Signals.enemiesSize) {
-                MapLocation enemyLocation = Signals.enemies[enemiesSize--];
+                MapLocation enemyLocation = Signals.enemies[enemiesSize];
+                Signals.enemiesSize = enemiesSize;
                 Target target = new Target(targetType, enemyLocation);
+                Common.models.addFirst(target);
             }
         }
     }

@@ -136,6 +136,16 @@ class Signals {
         return size / 2;
     }
 
+    static void sendBuilt(RobotController rc, LowStrategy lowStrategy) throws GameActionException {
+        sendBuilt(rc, lowStrategy, null, null);
+    }
+    static void sendBuilt(RobotController rc, LowStrategy lowStrategy, Target.TargetType targetType, MapLocation targetLocation) throws GameActionException {
+        new SignalStrategy(Common.highStrategy, lowStrategy, targetType, Common.numArchons, Common.archonIds).send(rc, 2);
+        int bounds = getBounds(rc).toInt();
+        int target = targetLocation == null ? BUFFER : new SignalLocations(new SignalLocation(SignalLocation.LocationType.TARGET, targetLocation)).toInt();
+        rc.broadcastMessageSignal(bounds, target, 2);
+    }
+
     static void addBounds(RobotController rc) throws GameActionException {
         addBoundsLow(rc);
         addBoundsHigh(rc);
