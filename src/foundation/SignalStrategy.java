@@ -15,7 +15,7 @@ class SignalStrategy {
     HighStrategy highStrategy;
     LowStrategy lowStrategy;
     Target.TargetType targetType;
-    // int numTargets = 0; // numTargets has 4-5 bits
+    Direction dir = Direction.NONE;
     SignalLocations locations;
 
     boolean forNewRobot() {
@@ -23,11 +23,10 @@ class SignalStrategy {
     }
 
     SignalStrategy(HighStrategy highStrategy, LowStrategy lowStrategy, Target.TargetType targetType, SignalLocations locations, int id) {
-        this.id = id;
+        this.id = id % ID_MOD;
         this.highStrategy = highStrategy;
         this.lowStrategy = lowStrategy;
         this.targetType = targetType;
-        // this.numTargets = numTargets;
         this.locations = locations;
     }
 
@@ -35,7 +34,6 @@ class SignalStrategy {
         this.highStrategy = highStrategy;
         this.lowStrategy = lowStrategy;
         this.targetType = targetType;
-        // this.numTargets = numTargets;
         this.locations = locations;
     }
 
@@ -44,8 +42,8 @@ class SignalStrategy {
         this.lowStrategy = lowStrategy;
         this.targetType = targetType;
         this.numArchons = numArchons;
-        // this.numTargets = numTargets;
         this.archonIds = archonIds;
+        this.dir = Common.enemyBase == null ? Direction.NONE : Common.enemyBase;
     }
 
     SignalStrategy(int first, int second) {
@@ -76,6 +74,8 @@ class SignalStrategy {
         lowStrategy = LowStrategy.values[(int) (value % LowStrategy.values.length)];
         value /= LowStrategy.values.length;
         targetType = Target.TargetType.values[(int) (value % Target.TargetType.values.length)];
+        value /= Target.TargetType.values.length;
+        dir = Common.DIRECTIONS[(int) (value % Common.DIRECTIONS.length)];
         // value /= Target.TargetType.values.length;
         // numTargets = (int) value;
     }
@@ -85,6 +85,8 @@ class SignalStrategy {
         // long value = numTargets;
         // value *= Target.TargetType.values.length;
         long value = 0;
+        value += dir.ordinal();
+        value *= Target.TargetType.values.length;
         value += targetType.ordinal();
         value *= LowStrategy.values.length;
         value += lowStrategy.ordinal();
@@ -118,23 +120,32 @@ class SignalStrategy {
                 readCommon();
                 Common.numArchons = numArchons;
                 Common.archonIds = archonIds;
+                Common.enemyBase = dir;
+                Common.myBase = dir.opposite();
             }
-        } else if(id == ID_NONE || id == Common.id) {
+        } else if(id == ID_NONE || id == Common.id % ID_MOD) {
             readCommon();
-            int targetsSize = Signals.targetsSize;
-            int enemiesSize = Signals.enemiesSize;
-            if(locations != null) locations.read();
-            if(targetsSize != Signals.targetsSize) {
-                MapLocation targetLocation = Signals.targets[targetsSize];
-                Signals.targetsSize = targetsSize;
-                Target target = new Target(targetType, targetLocation);
-                Common.models.addFirst(target);
-            }
-            if(enemiesSize != Signals.enemiesSize) {
-                MapLocation enemyLocation = Signals.enemies[enemiesSize];
-                Signals.enemiesSize = enemiesSize;
-                Target target = new Target(targetType, enemyLocation);
-                Common.models.addFirst(target);
+            if(targetType != Target.TargetType.NONE) {
+                int enemiesSize = Signals.enemiesSize;
+                int targetsSize = Signals.targetsSize;
+                if(locations != null) {
+                    locations.read();
+                    if(enemiesSize != Signals.enemiesSize) {
+                        MapLocation enemyLocation = Signals.enemies[enemiesSize];
+                        Signals.enemiesSize = enemiesSize;
+                        Target target = new Target(targetType, enemyLocation);
+                        Common.models.addFirst(target);
+                    }
+                    if(targetsSize != Signals.targetsSize) {
+                        MapLocation targetLocation = Signals.targets[targetsSize];
+                        Signals.targetsSize = targetsSize;
+                        Target target = new Target(targetType, targetLocation);
+                        Common.models.addFirst(target);
+                    }
+                } else if(dir != Direction.NONE) {
+                    Target target = new Target(targetType, dir);
+                    Common.models.addFirst(target);
+                }
             }
         }
     }

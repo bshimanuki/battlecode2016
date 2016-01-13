@@ -80,8 +80,15 @@ class Target extends Model {
         this.loc = loc;
         this.id = id;
     }
+    Target(TargetType targetType, Direction dir) {
+        this(targetType);
+        this.dir = dir;
+    }
     Target(TargetType targetType, MapLocation loc) {
+        this(targetType);
         this.loc = loc;
+    }
+    private Target(TargetType targetType) {
         switch(targetType) {
             case ZOMBIE_LEAD:
                 weights = new EnumMap<>(defaultZombieLeadWeights);

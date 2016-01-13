@@ -39,7 +39,7 @@ class Opening extends Model {
                 if(Common.yMin != Common.MAP_NONE) ++y;
                 if(Common.yMax != Common.MAP_NONE) --y;
                 Direction buildDir = loc.directionTo(new MapLocation(x, y));
-                if(buildDir == Direction.OMNI) buildDir = Common.DIRECTIONS[Common.rand.nextInt(Common.DIRECTIONS.length)];
+                if(buildDir == Direction.OMNI) buildDir = Common.DIRECTIONS[Common.rand.nextInt(8)];
                 if(rc.canBuild(buildDir, RobotType.SCOUT)) rc.build(buildDir, RobotType.SCOUT);
                 else {
                     for(int i=0; i<7; ++i) {
@@ -60,11 +60,9 @@ class Opening extends Model {
                 if(Common.yMin != Common.MAP_NONE) --y;
                 if(Common.yMax != Common.MAP_NONE) ++y;
                 Common.myBase = loc.directionTo(new MapLocation(x, y));
-                if(Common.myBase == Direction.OMNI) {
-                    Common.myBase = null;
-                } else {
-                    Common.enemyBase = Common.myBase.opposite();
-                }
+                if(Common.myBase == Direction.OMNI)
+                    Common.myBase = Direction.NONE;
+                Common.enemyBase = Common.myBase.opposite();
                 x = 0;
                 y = 0;
                 for(int i=0; i<Common.archonIdsSize; ++i) {

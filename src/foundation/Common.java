@@ -6,10 +6,7 @@ import java.util.Random;
 import battlecode.common.*;
 
 class Common {
-    final static Direction[] DIRECTIONS = {
-        Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST,
-        Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST
-    };
+    final static Direction[] DIRECTIONS = Direction.values();
     final static Direction[][] CARDINAL_DIRECTIONS = {
         {Direction.NORTH_WEST, Direction.WEST, Direction.SOUTH_WEST},
         {Direction.NORTH, Direction.OMNI, Direction.SOUTH},
@@ -39,8 +36,8 @@ class Common {
     static int yMin = MAP_NONE;
     static int yMax = MAP_NONE;
     // starting sides
-    static Direction myBase = null;
-    static Direction enemyBase = null;
+    static Direction myBase = Direction.NONE;
+    static Direction enemyBase = Direction.NONE;
 
     // Team vars
     static Team myTeam;
