@@ -22,7 +22,6 @@ class Opening extends Model {
                 Common.archonHometowns[Common.archonIdsSize++] = Common.hometown;
                 Common.sendBoundariesLow = true;
                 Common.sendBoundariesHigh = true;
-                Common.addInfo(rc.senseRobot(Common.id));
                 // send a signal for map bounds and then ensure no more are sent
                 Signals.locsSize = 0;
                 Signals.halfSignalsSize = 0;
@@ -40,21 +39,19 @@ class Opening extends Model {
                 if(Common.yMax != Common.MAP_NONE) --y;
                 Direction buildDir = loc.directionTo(new MapLocation(x, y));
                 if(buildDir == Direction.OMNI) buildDir = Common.DIRECTIONS[Common.rand.nextInt(8)];
-                if(rc.canBuild(buildDir, RobotType.SCOUT)) rc.build(buildDir, RobotType.SCOUT);
-                else {
-                    for(int i=0; i<7; ++i) {
-                        buildDir.rotateLeft();
-                        if(rc.canBuild(buildDir, RobotType.SCOUT)) {
-                            rc.build(buildDir, RobotType.SCOUT);
-                            break;
-                        }
+                for(int i=0; i<8; ++i) {
+                    if(rc.canBuild(buildDir, RobotType.SCOUT)) {
+                        Common.buildCommon(rc, buildDir, RobotType.SCOUT);
+                        break;
                     }
+                    buildDir.rotateLeft();
                 }
                 break;
             case 2:
                 // full rubble scan being done in Common.runBefore
                 break;
             case 3:
+                // base calculations
                 if(Common.xMin != Common.MAP_NONE) --x;
                 if(Common.xMax != Common.MAP_NONE) ++x;
                 if(Common.yMin != Common.MAP_NONE) --y;
@@ -72,6 +69,12 @@ class Opening extends Model {
                 x /= Common.archonIdsSize;
                 y /= Common.archonIdsSize;
                 Archon.base = new Target(new MapLocation(x, y));
+                break;
+            case 4:
+                // build signals
+                new SignalStrategy(Common.highStrategy, LowStrategy.EXPLORE, Target.TargetType.NONE, Common.numArchons, Common.archonIds).send(rc, 2);
+                rc.broadcastMessageSignal(Signals.getBounds(rc).toInt(), Signals.BUFFER, 2);
+                if(Common.enemyBase != Direction.NONE) new SignalStrategy(Common.highStrategy, LowStrategy.EXPLORE, Target.TargetType.MOVE, Common.enemyBase, Common.lastBuiltId).send(rc, 2);
                 break;
             case 15:
                 return true;

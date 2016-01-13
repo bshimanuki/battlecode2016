@@ -81,6 +81,8 @@ class Common {
     static LowStrategy lowStrategy;
     static Target.TargetType targetType;
     static LinkedList<Model> models = new LinkedList<>();
+    static MapLocation lastBuiltLocation;
+    static int lastBuiltId;
 
     // Message vars
     static boolean sendBoundariesLow;
@@ -105,6 +107,12 @@ class Common {
         sightRadius = robotType.sensorRadiusSquared;
         straightSight = (int) Math.sqrt(sightRadius);
         canMessageSignal = robotType.canMessageSignal();
+        try {
+            addInfo(rc.senseRobot(id));
+        } catch(Exception e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -115,8 +123,9 @@ class Common {
         // -2 for build signals
         Signals.maxMessages = GameConstants.MESSAGE_SIGNALS_PER_TURN - 2;
         read = Signals.readSignals(rc);
+        int turn = rc.getRoundNum();
 
-        switch(rc.getRoundNum() - enrollment) {
+        switch(turn - enrollment) {
             case 0:
                 if(targetType != null && Signals.targetsSize > 0) {
                     models.addFirst(new Target(targetType, Signals.targets[0]));
@@ -138,9 +147,11 @@ class Common {
         }
 
         updateMap(rc);
-        robotInfos = rc.senseNearbyRobots();
-        for(RobotInfo info : robotInfos) {
-            addInfo(info);
+        if(turn > 5) {
+            robotInfos = rc.senseNearbyRobots();
+            for(RobotInfo info : robotInfos) {
+                addInfo(info);
+            }
         }
     }
 
@@ -263,12 +274,19 @@ class Common {
         if(robotType == RobotType.ARCHON) mapParts[loc.x%MAP_MOD][loc.y%MAP_MOD] = 0;
     }
 
-    static void build(RobotController rc, Direction dir, RobotType robotType, LowStrategy lowStrategy) throws GameActionException {
+    static void buildCommon(RobotController rc, Direction dir, RobotType robotType) throws GameActionException {
         rc.build(dir, robotType);
+        lastBuiltLocation = rc.getLocation().add(dir);
+        RobotInfo info = rc.senseRobotAtLocation(lastBuiltLocation);
+        addInfo(info);
+        lastBuiltId = info.ID;
+    }
+    static void build(RobotController rc, Direction dir, RobotType robotType, LowStrategy lowStrategy) throws GameActionException {
+        buildCommon(rc, dir, robotType);
         Signals.sendBuilt(rc, lowStrategy);
     }
     static void build(RobotController rc, Direction dir, RobotType robotType, LowStrategy lowStrategy, Target.TargetType targetType, MapLocation targetLocation) throws GameActionException {
-        rc.build(dir, robotType);
+        buildCommon(rc, dir, robotType);
         Signals.sendBuilt(rc, lowStrategy, targetType, targetLocation);
     }
 

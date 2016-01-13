@@ -13,6 +13,7 @@ class SignalLocations {
         this.second = second;
     }
     SignalLocations(int value) {
+        if(value == Signals.BUFFER) return;
         SignalLocation.LocationType firstType = SignalLocation.LocationType.values[(value >>> 29) % 4];
         SignalLocation.LocationType secondType = SignalLocation.LocationType.values[(value >>> 27) % 4];
         value &= -1 >>> 5;
@@ -46,8 +47,8 @@ class SignalLocations {
     }
 
     void read() throws GameActionException {
-        first.read();
-        second.read();
+        if(first != null) first.read();
+        if(second != null) second.read();
     }
 
     @Override

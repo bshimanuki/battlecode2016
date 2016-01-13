@@ -42,6 +42,7 @@ class Signals {
      */
     static int readSignals(RobotController rc) throws GameActionException {
         // TODO: skip large queue
+        if(rc.getRoundNum() == 0) return 0;
         Signal[] signals = rc.emptySignalQueue();
         int num = signals.length;
         Team myTeam = Common.myTeam;
@@ -53,7 +54,7 @@ class Signals {
             for(int i=0; i<num; ++i) {
                 Signal s = signals[i];
                 if(myTeam == s.getTeam()) {
-                    if(Common.knownTypes[s.getRobotID()] == null) {
+                    if(Common.knownTypes[s.getID()] == null) {
                         Common.archonIds[Common.archonIdsSize] = s.getID();
                         Common.archonHometowns[Common.archonIdsSize++] = s.getLocation();
                     }
@@ -94,7 +95,7 @@ class Signals {
                 extract(first);
                 extract(second);
             } else if(first >>> CONTROL_SHIFT_STRATEGY != 0) {
-                new SignalStrategy(first, second).read();
+                new SignalStrategy(first, second, s.getID()).read();
             } else {
             }
         }

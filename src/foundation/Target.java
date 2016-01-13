@@ -124,13 +124,13 @@ class Target extends Model {
                         return finish();
                     }
                 }
-            } else if(lastSight == rc.getRoundNum() - 1 && loc.distanceSquaredTo(curLocation) <= 10) {
+            } else if(lastSight == rc.getRoundNum() - 1 && loc != null && loc.distanceSquaredTo(curLocation) <= 10) {
                 // can't sense and previous location within contracted sight => died
                 return finish();
             }
         }
 
-        if(loc == null) {
+        if(id != ID_NONE && loc == null) {
             // should not get here
             System.out.println(String.format("Robot %d not found when targeting", id));
             loc = curLocation;
