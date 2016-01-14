@@ -375,4 +375,10 @@ public class RobotControllerMock implements RobotController {
         // TODO Auto-generated method stub
         return null;
     }
+
+    @Override
+    public MapLocation[] getInitialArchonLocations(Team t) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }
