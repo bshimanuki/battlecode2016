@@ -18,8 +18,7 @@ class Opening extends Model {
         int y = loc.y;
         switch(round) {
             case 0:
-                Common.archonIds[Common.archonIdsSize] = Common.id;
-                Common.archonHometowns[Common.archonIdsSize++] = Common.hometown;
+                Common.archonIds[Common.archonIdsSize++] = Common.id;
                 Common.sendBoundariesLow = true;
                 Common.sendBoundariesHigh = true;
                 // send a signal for map bounds and then ensure no more are sent
@@ -28,11 +27,9 @@ class Opening extends Model {
                 Signals.addBounds(rc);
                 Signals.sendQueue(rc, 30 * Common.sightRadius);
                 Signals.maxMessages = 0;
+                Archon.base = new Target(new MapLocation(Common.twiceCenterX/2, Common.twiceCenterY/2));
                 break;
             case 1:
-                // Relies on each archon creating no units round 0, and uses cheaper round than Math.round
-                Common.numArchons = (int) ((1 + 0.5*GameConstants.PART_INCOME_UNIT_PENALTY - (rc.getTeamParts() % 1)) / GameConstants.PART_INCOME_UNIT_PENALTY);
-
                 if(Common.xMin != Common.MAP_NONE) ++x;
                 if(Common.xMax != Common.MAP_NONE) --x;
                 if(Common.yMin != Common.MAP_NONE) ++y;
@@ -52,6 +49,7 @@ class Opening extends Model {
                 break;
             case 3:
                 // base calculations
+                // TODO: use inital archon positions
                 if(Common.xMin != Common.MAP_NONE) --x;
                 if(Common.xMax != Common.MAP_NONE) ++x;
                 if(Common.yMin != Common.MAP_NONE) --y;
@@ -60,19 +58,10 @@ class Opening extends Model {
                 if(Common.myBase == Direction.OMNI)
                     Common.myBase = Direction.NONE;
                 Common.enemyBase = Common.myBase.opposite();
-                x = 0;
-                y = 0;
-                for(int i=0; i<Common.archonIdsSize; ++i) {
-                    x += Common.archonHometowns[i].x;
-                    y += Common.archonHometowns[i].y;
-                }
-                x /= Common.archonIdsSize;
-                y /= Common.archonIdsSize;
-                Archon.base = new Target(new MapLocation(x, y));
                 break;
             case 4:
                 // build signals
-                new SignalStrategy(Common.highStrategy, LowStrategy.EXPLORE, Target.TargetType.NONE, Common.numArchons, Common.archonIds).send(rc, 2);
+                new SignalStrategy(Common.highStrategy, LowStrategy.EXPLORE, Target.TargetType.NONE, Common.archonIds).send(rc, 2);
                 rc.broadcastMessageSignal(Signals.getBounds(rc).toInt(), Signals.BUFFER, 2);
                 if(Common.enemyBase != Direction.NONE) new SignalStrategy(Common.highStrategy, LowStrategy.EXPLORE, Target.TargetType.MOVE, Common.enemyBase, Common.lastBuiltId).send(rc, 2);
                 break;

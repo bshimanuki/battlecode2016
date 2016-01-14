@@ -55,8 +55,7 @@ class Signals {
                 Signal s = signals[i];
                 if(myTeam == s.getTeam()) {
                     if(Common.knownTypes[s.getID()] == null) {
-                        Common.archonIds[Common.archonIdsSize] = s.getID();
-                        Common.archonHometowns[Common.archonIdsSize++] = s.getLocation();
+                        Common.archonIds[Common.archonIdsSize++] = s.getID();
                     }
                     Common.addInfo(s.getRobotID(), s.getTeam(), RobotType.ARCHON, s.getLocation());
                     extract(s);
@@ -141,7 +140,7 @@ class Signals {
         sendBuilt(rc, lowStrategy, null, null);
     }
     static void sendBuilt(RobotController rc, LowStrategy lowStrategy, Target.TargetType targetType, MapLocation targetLocation) throws GameActionException {
-        new SignalStrategy(Common.highStrategy, lowStrategy, targetType, Common.numArchons, Common.archonIds).send(rc, 2);
+        new SignalStrategy(Common.highStrategy, lowStrategy, targetType, Common.archonIds).send(rc, 2);
         int bounds = getBounds(rc).toInt();
         int target = targetLocation == null ? BUFFER : new SignalLocations(new SignalLocation(SignalLocation.LocationType.TARGET, targetLocation)).toInt();
         rc.broadcastMessageSignal(bounds, target, 2);
@@ -186,13 +185,13 @@ class Signals {
             x = Common.MAP_NONE;
         } else {
             x += Common.hometown.x / Common.MAP_MOD * Common.MAP_MOD;
-            x = _getCoordinate(x, Common.xMin, Common.xMax, (Common.rc.getLocation().x + Common.hometown.x) / 2);
+            x = _getCoordinate(x, Common.xMin, Common.xMax, Common.twiceCenterX / 2);
         }
         if(y == SIG_NONE) {
             y = Common.MAP_NONE;
         } else {
             y += Common.hometown.y / Common.MAP_MOD * Common.MAP_MOD;
-            y = _getCoordinate(y, Common.yMin, Common.yMax, (Common.rc.getLocation().y + Common.hometown.y) / 2);
+            y = _getCoordinate(y, Common.yMin, Common.yMax, Common.twiceCenterY / 2);
         }
         return new MapLocation(x, y);
     }

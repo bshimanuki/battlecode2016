@@ -1,5 +1,6 @@
 package foundation;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -18,6 +19,7 @@ class Common {
     };
     final static int MAP_NONE = -1;
     final static int MAP_MOD = 100;
+    final static int MAP_MAX = 600;
     final static MapLocation MAP_EMPTY = new MapLocation(MAP_NONE, MAP_NONE);
     final static int MIN_BUILD_TIME = 10;
     final static int MAX_ID = 65536;
@@ -30,14 +32,17 @@ class Common {
     static int partLocationsSize = 0;
     static double[][] mapRubble = new double[MAP_MOD][MAP_MOD];
     static int[][] rubbleTimes = new int[MAP_MOD][MAP_MOD];
+    static int twiceCenterX = 0;
+    static int twiceCenterY = 0;
+    static boolean rotation = false; // else mirror
     // mod 100
     static int xMin = MAP_NONE;
     static int xMax = MAP_NONE;
     static int yMin = MAP_NONE;
     static int yMax = MAP_NONE;
     // starting sides
-    static Direction myBase = Direction.NONE;
-    static Direction enemyBase = Direction.NONE;
+    static Direction myBase;
+    static Direction enemyBase;
 
     // Team vars
     static Team myTeam;
@@ -50,10 +55,10 @@ class Common {
     static MapLocation[] knownLocations = new MapLocation[MAX_ID];
     static int[] typeSignals = new int[MAX_ID]; // way larger than necessary, but whatever
     static int typeSignalsSize = 0;
-    static int numArchons = 1;
     static int[] archonIds = new int[4];
     static int archonIdsSize = 0;
-    static MapLocation[] archonHometowns = new MapLocation[4];
+    static MapLocation[] myArchonHometowns;
+    static MapLocation[] enemyArchonHometowns;
 
     static int[] neutralIds = new int[MAX_ID];
     static int neutralIdsSize = 0;
@@ -109,6 +114,29 @@ class Common {
         canMessageSignal = robotType.canMessageSignal();
         try {
             addInfo(rc.senseRobot(id));
+            myArchonHometowns = rc.getInitialArchonLocations(myTeam);
+            enemyArchonHometowns = rc.getInitialArchonLocations(enemyTeam);
+            int coordinates[] = new int[MAP_MAX];
+            for(int i=enemyArchonHometowns.length-1; i>=0; --i) {
+                MapLocation loc = enemyArchonHometowns[i];
+                twiceCenterX += loc.x;
+                twiceCenterY += loc.y;
+                coordinates[loc.y] *= MAP_MAX;
+                coordinates[loc.y] += loc.x + 1;
+            }
+            for(int i=0; i<myArchonHometowns.length; ++i) {
+                MapLocation loc = myArchonHometowns[i];
+                twiceCenterX += loc.x;
+                twiceCenterY += loc.y;
+            }
+            twiceCenterX /= myArchonHometowns.length;
+            twiceCenterY /= myArchonHometowns.length;
+            for(int i=0; i<myArchonHometowns.length; ++i) {
+                MapLocation loc = myArchonHometowns[i];
+                int x = coordinates[loc.y] - 1;
+                coordinates[loc.y] /= MAP_MAX;
+                if(loc.x != twiceCenterX - x) rotation = true;
+            }
         } catch(Exception e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
@@ -161,7 +189,7 @@ class Common {
             if(sendBoundariesHigh) Signals.addBoundsHigh(rc);
         }
         int send = Signals.sendQueue(rc, sendRadius);
-        rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d archons %d", send, read, xMin, yMin, xMax, yMax, numArchons));
+        rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d", send, read, xMin, yMin, xMax, yMax));
     }
 
     static void updateMap(RobotController rc) throws GameActionException {

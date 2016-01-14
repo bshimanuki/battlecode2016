@@ -11,7 +11,6 @@ class SignalStrategy {
 
     int sourceId;
     int id = ID_NONE;
-    int numArchons;
     int[] archonIds;
     HighStrategy highStrategy;
     LowStrategy lowStrategy;
@@ -53,11 +52,10 @@ class SignalStrategy {
         this.locations = locations;
     }
 
-    SignalStrategy(HighStrategy highStrategy, LowStrategy lowStrategy, Target.TargetType targetType, int numArchons, int[] archonIds) {
+    SignalStrategy(HighStrategy highStrategy, LowStrategy lowStrategy, Target.TargetType targetType, int[] archonIds) {
         this.highStrategy = highStrategy;
         this.lowStrategy = lowStrategy;
         this.targetType = targetType;
-        this.numArchons = numArchons;
         this.archonIds = archonIds;
         this.dir = Common.enemyBase == null ? Direction.NONE : Common.enemyBase;
     }
@@ -69,8 +67,6 @@ class SignalStrategy {
             // initializing built robot
             value = ((long) first << 32) | (((long) second & -1L) >>> 32);
             value &= -1L >>> 4;
-            numArchons = (int) (value % 4) + 1;
-            value /= 4;
             archonIds = new int[4];
             // archonIds[0] is archon sending message
             archonIds[0] = sourceId;
@@ -113,8 +109,6 @@ class SignalStrategy {
             value += archonIds[2];
             value *= ID_MOD;
             value += archonIds[1];
-            value *= 4;
-            value += numArchons - 1;
             second = (int) value;
             first = (int) (value >>> 32);
             first |= 3 << CONTROL_SHIFT_STRATEGY_INNER;
@@ -132,10 +126,9 @@ class SignalStrategy {
         if(forNewRobot()) {
             if(Common.rc.getRoundNum() == Common.enrollment) {
                 readCommon();
-                Common.numArchons = numArchons;
                 Common.archonIds = archonIds;
-                Common.enemyBase = dir;
-                Common.myBase = dir.opposite();
+                // Common.enemyBase = dir;
+                // Common.myBase = dir.opposite();
             }
         } else if(id == ID_NONE || id == Common.id % ID_MOD) {
             readCommon();
@@ -172,7 +165,7 @@ class SignalStrategy {
 
     @Override
     public String toString() {
-        if(forNewRobot()) return numArchons + " " + archonIds[1] + " " + archonIds[2] + " " + archonIds[3] + " " + highStrategy + " " + lowStrategy + " " + targetType + " " + dir;
+        if(forNewRobot()) return archonIds[1] + " " + archonIds[2] + " " + archonIds[3] + " " + highStrategy + " " + lowStrategy + " " + targetType + " " + dir;
         return highStrategy + " " + lowStrategy + " " + targetType + " " + dir + " " + locations + " " + id;
     }
 
