@@ -170,8 +170,8 @@ class Target extends Model {
                     // check if edge of map is within sight
                     if(Common.xMin != Common.MAP_NONE && Common.xMin > curLocation.x + Common.straightSight * dir.dx) dx = 0;
                     if(Common.xMax != Common.MAP_NONE && Common.xMax < curLocation.x + Common.straightSight * dir.dx) dx = 0;
-                    if(Common.yMin != Common.MAP_NONE && Common.yMin > curLocation.y + Common.straightSight * dir.dx) dy = 0;
-                    if(Common.yMax != Common.MAP_NONE && Common.yMax < curLocation.y + Common.straightSight * dir.dx) dy = 0;
+                    if(Common.yMin != Common.MAP_NONE && Common.yMin > curLocation.y + Common.straightSight * dir.dy) dy = 0;
+                    if(Common.yMax != Common.MAP_NONE && Common.yMax < curLocation.y + Common.straightSight * dir.dy) dy = 0;
                 } else { // ACTIVE
                     if(Common.xMin != Common.MAP_NONE && Common.xMin == curLocation.x) dx = 0;
                     if(Common.xMax != Common.MAP_NONE && Common.xMax == curLocation.x) dx = 0;
@@ -179,7 +179,7 @@ class Target extends Model {
                     if(Common.yMax != Common.MAP_NONE && Common.yMax == curLocation.y) dy = 0;
                 }
                 dir = Common.Direction(dx, dy);
-                if(dir == Direction.NONE) return finish();
+                if(dir == Direction.OMNI) return finish();
             }
         }
         if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
@@ -268,6 +268,7 @@ class Target extends Model {
     @Override
     public String toString() {
         if(loc != null) return String.format("Target<%d,%d>", loc.x, loc.y);
+        if(dir != null) return String.format("Target<%s>", dir);
         return "Target<>";
     }
 

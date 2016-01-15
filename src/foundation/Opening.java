@@ -5,6 +5,7 @@ import battlecode.common.*;
 class Opening extends Model {
 
     static Target target;
+    static boolean scoutExplore = false;
 
     /**
      * @param rc
@@ -29,6 +30,7 @@ class Opening extends Model {
             case 1:
                 Direction buildDir = initialExplore(loc);
                 if(buildDir == Direction.OMNI) buildDir = Common.DIRECTIONS[Common.rand.nextInt(8)];
+                else scoutExplore = true;
                 for(int i=0; i<8; ++i) {
                     if(rc.canBuild(buildDir, RobotType.SCOUT)) {
                         Common.buildCommon(rc, buildDir, RobotType.SCOUT);
@@ -45,7 +47,7 @@ class Opening extends Model {
                 final int buildRadius = 2;
                 new SignalStrategy(Common.highStrategy, LowStrategy.EXPLORE, Target.TargetType.NONE, Common.archonIds).send(rc, buildRadius);
                 rc.broadcastMessageSignal(Signals.getBounds(rc).toInt(), Signals.BUFFER, buildRadius);
-                if(Common.enemyBase != Direction.NONE) new SignalStrategy(Common.highStrategy, LowStrategy.EXPLORE, Target.TargetType.MOVE, Common.enemyBase, Common.lastBuiltId).send(rc, buildRadius);
+                if(!scoutExplore) new SignalStrategy(Common.highStrategy, LowStrategy.EXPLORE, Target.TargetType.MOVE, Common.enemyBase, Common.lastBuiltId).send(rc, buildRadius);
                 break;
             case 20:
                 return true;
@@ -67,10 +69,10 @@ class Opening extends Model {
         int x = loc.x;
         int y = loc.y;
         for(MapLocation hometown : Common.myArchonHometowns) {
-            if(hometown.x < x) north = false;
-            if(hometown.x > x) south = false;
-            if(hometown.y < y) west = false;
-            if(hometown.y > y) east = false;
+            if(hometown.x < x) west = false;
+            if(hometown.x > x) east = false;
+            if(hometown.y < y) north = false;
+            if(hometown.y > y) south = false;
         }
         if(Common.xMin == Common.MAP_NONE && west) --x;
         if(Common.xMax == Common.MAP_NONE && east) ++x;
