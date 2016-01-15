@@ -14,8 +14,6 @@ class Opening extends Model {
     public boolean runInner(RobotController rc) throws GameActionException {
         int round = rc.getRoundNum();
         MapLocation loc = rc.getLocation();
-        int x = loc.x;
-        int y = loc.y;
         switch(round) {
             case 0:
                 Common.archonIds[Common.archonIdsSize++] = Common.id;
@@ -27,14 +25,9 @@ class Opening extends Model {
                 Signals.addBounds(rc);
                 Signals.sendQueue(rc, 30 * Common.sightRadius);
                 Signals.maxMessages = 0;
-                Archon.base = new Target(new MapLocation(Common.twiceCenterX/2, Common.twiceCenterY/2));
                 break;
             case 1:
-                if(Common.xMin != Common.MAP_NONE) ++x;
-                if(Common.xMax != Common.MAP_NONE) --x;
-                if(Common.yMin != Common.MAP_NONE) ++y;
-                if(Common.yMax != Common.MAP_NONE) --y;
-                Direction buildDir = loc.directionTo(new MapLocation(x, y));
+                Direction buildDir = initialExplore(loc);
                 if(buildDir == Direction.OMNI) buildDir = Common.DIRECTIONS[Common.rand.nextInt(8)];
                 for(int i=0; i<8; ++i) {
                     if(rc.canBuild(buildDir, RobotType.SCOUT)) {
@@ -48,24 +41,13 @@ class Opening extends Model {
                 // full rubble scan being done in Common.runBefore
                 break;
             case 3:
-                // base calculations
-                // TODO: use inital archon positions
-                if(Common.xMin != Common.MAP_NONE) --x;
-                if(Common.xMax != Common.MAP_NONE) ++x;
-                if(Common.yMin != Common.MAP_NONE) --y;
-                if(Common.yMax != Common.MAP_NONE) ++y;
-                Common.myBase = loc.directionTo(new MapLocation(x, y));
-                if(Common.myBase == Direction.OMNI)
-                    Common.myBase = Direction.NONE;
-                Common.enemyBase = Common.myBase.opposite();
-                break;
-            case 4:
                 // build signals
-                new SignalStrategy(Common.highStrategy, LowStrategy.EXPLORE, Target.TargetType.NONE, Common.archonIds).send(rc, 2);
-                rc.broadcastMessageSignal(Signals.getBounds(rc).toInt(), Signals.BUFFER, 2);
-                if(Common.enemyBase != Direction.NONE) new SignalStrategy(Common.highStrategy, LowStrategy.EXPLORE, Target.TargetType.MOVE, Common.enemyBase, Common.lastBuiltId).send(rc, 2);
+                final int buildRadius = 2;
+                new SignalStrategy(Common.highStrategy, LowStrategy.EXPLORE, Target.TargetType.NONE, Common.archonIds).send(rc, buildRadius);
+                rc.broadcastMessageSignal(Signals.getBounds(rc).toInt(), Signals.BUFFER, buildRadius);
+                if(Common.enemyBase != Direction.NONE) new SignalStrategy(Common.highStrategy, LowStrategy.EXPLORE, Target.TargetType.MOVE, Common.enemyBase, Common.lastBuiltId).send(rc, buildRadius);
                 break;
-            case 15:
+            case 20:
                 return true;
             default:
                 break;
@@ -75,6 +57,26 @@ class Opening extends Model {
         // target = new Target(new MapLocation(0, Common.yMin));
         // return target.run(rc);
         return false;
+    }
+
+    static Direction initialExplore(MapLocation loc) {
+        boolean north = true;
+        boolean south = true;
+        boolean west = true;
+        boolean east = true;
+        int x = loc.x;
+        int y = loc.y;
+        for(MapLocation hometown : Common.myArchonHometowns) {
+            if(hometown.x < x) north = false;
+            if(hometown.x > x) south = false;
+            if(hometown.y < y) west = false;
+            if(hometown.y > y) east = false;
+        }
+        if(Common.xMin == Common.MAP_NONE && west) --x;
+        if(Common.xMax == Common.MAP_NONE && east) ++x;
+        if(Common.yMin == Common.MAP_NONE && north) --y;
+        if(Common.yMax == Common.MAP_NONE && south) ++y;
+        return loc.directionTo(new MapLocation(x, y));
     }
 
 }

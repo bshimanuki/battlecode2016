@@ -6,6 +6,7 @@ class Archon extends Model {
 
     Target target;
     static Target base;
+    static MapLocation center;
 
     @Override
     public boolean runInner(RobotController rc) throws GameActionException {

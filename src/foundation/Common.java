@@ -1,6 +1,5 @@
 package foundation;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -117,6 +116,8 @@ class Common {
             myArchonHometowns = rc.getInitialArchonLocations(myTeam);
             enemyArchonHometowns = rc.getInitialArchonLocations(enemyTeam);
             int coordinates[] = new int[MAP_MAX];
+            int x = 0;
+            int y = 0;
             for(int i=enemyArchonHometowns.length-1; i>=0; --i) {
                 MapLocation loc = enemyArchonHometowns[i];
                 twiceCenterX += loc.x;
@@ -128,15 +129,22 @@ class Common {
                 MapLocation loc = myArchonHometowns[i];
                 twiceCenterX += loc.x;
                 twiceCenterY += loc.y;
+                x += loc.x;
+                y += loc.y;
             }
             twiceCenterX /= myArchonHometowns.length;
             twiceCenterY /= myArchonHometowns.length;
+            x /= myArchonHometowns.length;
+            y /= myArchonHometowns.length;
             for(int i=0; i<myArchonHometowns.length; ++i) {
                 MapLocation loc = myArchonHometowns[i];
-                int x = coordinates[loc.y] - 1;
+                int xCoord = coordinates[loc.y] - 1;
                 coordinates[loc.y] /= MAP_MAX;
-                if(loc.x != twiceCenterX - x) rotation = true;
+                if(loc.x != twiceCenterX - xCoord) rotation = true;
             }
+            Archon.center = new MapLocation(x, y);
+            myBase = new MapLocation(twiceCenterX/2, twiceCenterY/2).directionTo(Archon.center);
+            enemyBase = myBase.opposite();
         } catch(Exception e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
@@ -402,11 +410,26 @@ class Common {
         if(infos.length == 0) return null;
         MapLocation curLocation = rc.getLocation();
         RobotInfo closest = infos[0];
-        int dist = 2 * Common.sightRadius; // to be replaced
+        int dist = 2 * GameConstants.MAP_MAX_WIDTH * GameConstants.MAP_MAX_WIDTH; // to be replaced
         for(RobotInfo info : infos) {
             int newdist = curLocation.distanceSquaredTo(info.location);
             if(newdist < dist) {
                 closest = info;
+                dist = newdist;
+            }
+        }
+        return closest;
+    }
+
+    static MapLocation closestLocation(MapLocation[] locs) {
+        if(locs.length == 0) return null;
+        MapLocation curLocation = rc.getLocation();
+        MapLocation closest = locs[0];
+        int dist = 2 * GameConstants.MAP_MAX_WIDTH * GameConstants.MAP_MAX_WIDTH; // to be replaced
+        for(MapLocation loc : locs) {
+            int newdist = curLocation.distanceSquaredTo(loc);
+            if(newdist < dist) {
+                closest = loc;
                 dist = newdist;
             }
         }
