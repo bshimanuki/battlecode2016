@@ -4,6 +4,8 @@ import battlecode.common.*;
 
 class Opening extends Model {
 
+    final static int PING_FACTOR = 30;
+
     static Target target;
     static boolean scoutExplore = false;
     static Direction buildDir;
@@ -25,7 +27,7 @@ class Opening extends Model {
                 Signals.locsSize = 0;
                 Signals.halfSignalsSize = 0;
                 Signals.addBounds(rc);
-                Signals.sendQueue(rc, 30 * Common.sightRadius);
+                Signals.sendQueue(rc, PING_FACTOR * Common.sightRadius);
                 Signals.maxMessages = 0;
                 break;
             case 1:

@@ -15,6 +15,7 @@ class Archon extends Model {
             RobotInfo[] neutrals = rc.senseNearbyRobots(2, Team.NEUTRAL);
             if(neutrals.length > 0) {
                 rc.activate(neutrals[0].location);
+                return false;
             }
             if(fate < 200) {
                 target = null;
@@ -40,17 +41,7 @@ class Archon extends Model {
                     return false;
                 }
                 rc.setIndicatorString(1, "Running fate");
-                // Choose a random direction to try to move in
-                Direction dirToMove = Common.DIRECTIONS[fate % 8];
-                // Check the rubble in that direction
-                if(rc.senseRubble(rc.getLocation().add(dirToMove)) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
-                    // Too much rubble, so I should clear it
-                    rc.clearRubble(dirToMove);
-                    // Check if I can move in this direction
-                } else if(rc.canMove(dirToMove)) {
-                    // Move
-                    rc.move(dirToMove);
-                }
+                move(rc);
             } else {
                 // Choose a unit to build
                 // RobotType typeToBuild = Common.ROBOT_TYPES[fate % 8];
@@ -65,6 +56,53 @@ class Archon extends Model {
             }
         }
         return false;
+    }
+
+    static void move(RobotController rc) throws GameActionException {
+        final int DIR_NONE = 8;
+        final int HOSTILE_RADIUS = 13;
+        final double POINTS_HOSTILE = -3;
+        final double POINTS_PARTS = 0.1;
+        final double POINTS_NEUTRAL = 0.2; // per part cost
+        final double POINTS_NEUTRAL_ARCHON = 300;
+        final int MAP_MOD = Common.MAP_MOD;
+        final double sqrt[] = Common.sqrt;
+        final double mapParts[][] = Common.mapParts;
+        MapLocation loc = rc.getLocation();
+        double dirPoints[] = new double[9]; // include None
+        for(RobotInfo bad : rc.senseHostileRobots(loc, HOSTILE_RADIUS)) {
+            if(bad.type != RobotType.SCOUT) {
+                dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE;
+                dirPoints[DIR_NONE] += POINTS_HOSTILE / 4;
+            }
+        }
+        for(RobotInfo good : rc.senseNearbyRobots(Common.sightRadius, Team.NEUTRAL)) {
+            if(good.type == RobotType.ARCHON) {
+                dirPoints[loc.directionTo(good.location).ordinal()] += POINTS_NEUTRAL_ARCHON;
+            } else {
+                dirPoints[loc.directionTo(good.location).ordinal()] += POINTS_NEUTRAL * good.type.partCost;
+            }
+        }
+        for(MapLocation ploc : rc.sensePartLocations(Common.sightRadius)) {
+            double dist = sqrt[loc.distanceSquaredTo(ploc)];
+            dirPoints[loc.directionTo(ploc).ordinal()] += POINTS_PARTS * mapParts[ploc.x%MAP_MOD][ploc.y%MAP_MOD] / dist;
+        }
+        int bestDirIndex = DIR_NONE;
+        for(int i=0; i<DIR_NONE; ++i) {
+            if(dirPoints[i] > dirPoints[bestDirIndex]) bestDirIndex = i;
+        }
+        // Choose a direction to try to move in
+        Direction dirToMove = Common.DIRECTIONS[bestDirIndex];
+        dirToMove = Common.findPathDirection(rc, dirToMove);
+        // Check the rubble in that direction
+        if(rc.senseRubble(rc.getLocation().add(dirToMove)) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
+            // Too much rubble, so I should clear it
+            rc.clearRubble(dirToMove);
+            // Check if I can move in this direction
+        } else if(dirToMove != Direction.NONE) {
+            // Move
+            rc.move(dirToMove);
+        }
     }
 
 }

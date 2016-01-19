@@ -23,6 +23,8 @@ class Common {
     final static int MIN_BUILD_TIME = 10;
     final static int MAX_ID = 65536;
     final static int BUILD_LAG = 1; // Delay between built and first turn
+    final static double EPS = 1e-2;
+    final static double[] sqrt = new double[60]; // faster than Math.sqrt, cache for everything in sight
 
     // Map vars
     static double[][] mapParts = new double[MAP_MOD][MAP_MOD];
@@ -175,8 +177,12 @@ class Common {
                     models.addFirst(new Target(targetType, Signals.targets[0]));
                 }
                 break;
+            case 1:
+                for(int i=0; i<sqrt.length; ++i) sqrt[i] = Math.sqrt(i);
+                break;
             case 2:
                 // Sense rubble a little after construction
+                // TODO: change to 3(?) to avoid overlapping with action
                 senseRubble(rc);
                 break;
             default:
@@ -202,9 +208,11 @@ class Common {
     static void runAfter(RobotController rc) throws GameActionException {
         if(canMessageSignal) {
             if(mapBoundUpdate && Common.lowStrategy == LowStrategy.EXPLORE) {
+                final int minRadius = 2 * sightRadius;
                 int bounds = Signals.getBounds(rc).toInt();
                 MapLocation target = furthestArchonStart(rc);
                 int radius = MAP_UPDATE_MESSAGE_FACTOR * rc.getLocation().distanceSquaredTo(target);
+                if(radius < minRadius || rc.getType() == RobotType.ARCHON) radius = minRadius;
                 rc.broadcastMessageSignal(bounds, Signals.BUFFER, radius);
                 ++sent;
                 sendBoundariesLow = false;
@@ -512,20 +520,32 @@ class Common {
         return hometown;
     }
 
+    /**
+     * If robotType is null, compute where to move. Else compute where to build.
+     * @param rc
+     * @param dir
+     * @param robotType
+     * @return Direction to move/build in
+     */
     static Direction findPathDirection(RobotController rc, Direction dir, RobotType robotType) {
         final int maxRotations = 8;
-        for(int i=0; i<maxRotations; ++i) {
+        for(int i=0; i<=maxRotations; ++i) {
+            if(i == maxRotations) return Direction.NONE;
             if(i % 2 == 0) {
                 for(int j=0; j<i; ++j) dir = dir.rotateLeft();
             } else {
                 for(int j=0; j<i; ++j) dir = dir.rotateRight();
             }
-            if(rc.canBuild(dir, robotType)) {
-                break;
+            if(robotType == null) {
+                if(rc.canMove(dir)) break;
+            } else {
+                if(rc.canBuild(dir, robotType)) break;
             }
-            if(i == maxRotations) dir = Direction.NONE;
         }
         return dir;
+    }
+    static Direction findPathDirection(RobotController rc, Direction dir) {
+        return findPathDirection(rc, dir, null);
     }
 
 }
