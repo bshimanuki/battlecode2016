@@ -5,6 +5,8 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import team391.Common;
+import team391.SignalUnit;
 import battlecode.common.*;
 
 public class SignalUnitTest {

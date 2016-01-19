@@ -5,6 +5,10 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import team391.Common;
+import team391.SignalLocation;
+import team391.SignalLocations;
+import team391.Signals;
 import battlecode.common.*;
 
 public class SignalLocationsTest {
