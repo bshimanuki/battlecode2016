@@ -7,8 +7,8 @@ class Scout extends Model {
     @Override
     public boolean runInner(RobotController rc) throws GameActionException {
         int round = rc.getRoundNum();
-        // First Scout
-        if(round < 30 && round == Common.enrollment) {
+        // First or second Scout
+        if(round < 50 && round == Common.enrollment) {
             Direction targetDirection = Opening.initialExplore(rc.getLocation());
             if(targetDirection != Direction.OMNI) {
                 Target target = new Target(targetDirection);

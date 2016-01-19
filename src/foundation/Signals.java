@@ -132,7 +132,7 @@ class Signals {
             new SignalLocations(locs[i], locs[i+1]).add();
         locsSize = 0; // clear locs queue
         if(halfSignalsSize % 2 == 1) addRandomType(rc);
-        size = Math.min(halfSignalsSize, 2*maxMessages);
+        size = Math.min(halfSignalsSize, 2*(maxMessages - Common.sent));
         for(int i=0; i<size; i+=2)
             rc.broadcastMessageSignal(halfSignals[i], halfSignals[i+1], radius);
         halfSignalsSize = 0; // clear halfSignals queue

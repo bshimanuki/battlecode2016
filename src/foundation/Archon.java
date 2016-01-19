@@ -12,6 +12,10 @@ class Archon extends Model {
     public boolean runInner(RobotController rc) throws GameActionException {
         int fate = Common.rand.nextInt(1000);
         if(rc.isCoreReady()) {
+            RobotInfo[] neutrals = rc.senseNearbyRobots(2, Team.NEUTRAL);
+            if(neutrals.length > 0) {
+                rc.activate(neutrals[0].location);
+            }
             if(fate < 200) {
                 target = null;
                 for(int i=0; i<Common.partLocationsSize; ++i) {
@@ -48,22 +52,15 @@ class Archon extends Model {
                     rc.move(dirToMove);
                 }
             } else {
-                // Choose a random unit to build
-                RobotType typeToBuild = Common.ROBOT_TYPES[fate % 8];
+                // Choose a unit to build
+                // RobotType typeToBuild = Common.ROBOT_TYPES[fate % 8];
+                RobotType typeToBuild = RobotType.SCOUT;
                 // Check for sufficient parts
                 if(rc.hasBuildRequirements(typeToBuild)) {
                     // Choose a random direction to try to build in
                     Direction dirToBuild = Common.DIRECTIONS[Common.rand.nextInt(8)];
-                    for(int i = 0; i < 8; i++) {
-                        // If possible, build in this direction
-                        if(rc.canBuild(dirToBuild, typeToBuild)) {
-                            Common.build(rc, dirToBuild, typeToBuild, LowStrategy.NONE, Target.TargetType.MOVE, rc.getLocation().add(10,10));
-                            break;
-                        } else {
-                            // Rotate the direction to try
-                            dirToBuild = dirToBuild.rotateLeft();
-                        }
-                    }
+                    dirToBuild = Common.findPathDirection(rc, dirToBuild, typeToBuild);
+                    if(dirToBuild != Direction.NONE) Common.build(rc, dirToBuild, typeToBuild, LowStrategy.EXPLORE);
                 }
             }
         }

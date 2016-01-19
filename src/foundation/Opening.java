@@ -6,6 +6,7 @@ class Opening extends Model {
 
     static Target target;
     static boolean scoutExplore = false;
+    static Direction buildDir;
 
     /**
      * @param rc
@@ -28,16 +29,11 @@ class Opening extends Model {
                 Signals.maxMessages = 0;
                 break;
             case 1:
-                Direction buildDir = initialExplore(loc);
+                buildDir = initialExplore(loc);
                 if(buildDir == Direction.OMNI) buildDir = Common.DIRECTIONS[Common.rand.nextInt(8)];
                 else scoutExplore = true;
-                for(int i=0; i<8; ++i) {
-                    if(rc.canBuild(buildDir, RobotType.SCOUT)) {
-                        Common.buildCommon(rc, buildDir, RobotType.SCOUT);
-                        break;
-                    }
-                    buildDir.rotateLeft();
-                }
+                buildDir = Common.findPathDirection(rc, buildDir, RobotType.SCOUT);
+                if(buildDir != Direction.NONE) Common.buildCommon(rc, buildDir, RobotType.SCOUT);
                 break;
             case 2:
                 // full rubble scan being done in Common.runBefore
@@ -47,12 +43,16 @@ class Opening extends Model {
                 final int buildRadius = 2;
                 new SignalStrategy(Common.highStrategy, LowStrategy.EXPLORE, Target.TargetType.NONE, Common.archonIds).send(rc, buildRadius);
                 rc.broadcastMessageSignal(Signals.getBounds(rc).toInt(), Signals.BUFFER, buildRadius);
-                ++Common.send;
+                ++Common.sent;
                 if(!scoutExplore) new SignalStrategy(Common.highStrategy, LowStrategy.EXPLORE, Target.TargetType.MOVE, Common.enemyBase, Common.lastBuiltId).send(rc, buildRadius);
                 break;
             case 20:
-                return true;
+                if(Common.myArchonHometowns.length != 1) return true;
             default:
+                if(round > 20) {
+                    buildDir = buildDir.opposite();
+                    if(buildDir != Direction.NONE) Common.buildCommon(rc, buildDir, RobotType.SCOUT);
+                }
                 break;
         }
 
