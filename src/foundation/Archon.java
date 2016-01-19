@@ -7,7 +7,7 @@ class Archon extends Model {
     final static int DIR_NONE = 8;
     final static int NUM_DIRECTIONS = Common.DIRECTIONS.length;
     final static double FORCED_MOVE_AWAY_THRESH = -3;
-    final static double FORCED_MOVE_TO_THRESH = 3;
+    final static double FORCED_MOVE_TO_THRESH = 5;
     final static double MOVE_RAND = 0.5;
 
     Target target;
@@ -26,18 +26,18 @@ class Archon extends Model {
                 Common.activate(rc, neutrals[0].location, neutrals[0].type, LowStrategy.NONE);
                 return false;
             }
-            if(fate < 200) {
-                target = null;
-                for(int i=0; i<Common.partLocationsSize; ++i) {
-                    MapLocation loc = Common.partLocations[i];
-                    if(Common.mapParts[loc.x%Common.MAP_MOD][loc.y%Common.MAP_MOD] != 0) {
-                        target = new Target(loc);
-                        target.weights.put(Target.TargetType.MOVE, Target.TargetType.Level.PRIORITY);
-                        break;
-                    }
-                }
-                if(target != null) rc.setIndicatorLine(rc.getLocation(), target.loc, 0,255,0);
-            }
+            // if(fate < 200) {
+                // target = null;
+                // for(int i=0; i<Common.partLocationsSize; ++i) {
+                    // MapLocation loc = Common.partLocations[i];
+                    // if(Common.mapParts[loc.x%Common.MAP_MOD][loc.y%Common.MAP_MOD] != 0) {
+                        // target = new Target(loc);
+                        // target.weights.put(Target.TargetType.MOVE, Target.TargetType.Level.PRIORITY);
+                        // break;
+                    // }
+                // }
+                // if(target != null) rc.setIndicatorLine(rc.getLocation(), target.loc, 0,255,0);
+            // }
 
             computeMove(rc);
             relaxMove(0.5);
@@ -88,6 +88,7 @@ class Archon extends Model {
         final double POINTS_HOSTILE = -5;
         final double POINTS_HOSTILE_TURRET = -8;
         final double POINTS_PARTS = 0.05;
+        final double PARTS_RUBBLE_THRESH = GameConstants.RUBBLE_OBSTRUCTION_THRESH;
         final double POINTS_NEUTRAL = 0.1; // per part cost
         final double POINTS_NEUTRAL_ARCHON = 300;
         final double POINTS_ZOMBIE_LEAD = -10;
@@ -117,8 +118,10 @@ class Archon extends Model {
             }
         }
         for(MapLocation ploc : rc.sensePartLocations(Common.sightRadius)) {
-            double dist = sqrt[loc.distanceSquaredTo(ploc)];
-            dirPoints[loc.directionTo(ploc).ordinal()] += POINTS_PARTS * mapParts[ploc.x%MAP_MOD][ploc.y%MAP_MOD] / dist;
+            if(Common.mapRubble[ploc.x%MAP_MOD][ploc.y%MAP_MOD] < PARTS_RUBBLE_THRESH) {
+                double dist = sqrt[loc.distanceSquaredTo(ploc)];
+                dirPoints[loc.directionTo(ploc).ordinal()] += POINTS_PARTS * mapParts[ploc.x%MAP_MOD][ploc.y%MAP_MOD] / dist;
+            }
         }
         for(int i=Signals.zombieLeadsBegin; i<Signals.zombieLeadsSize; ++i) {
             RobotInfo lead = Signals.zombieLeads[i];
