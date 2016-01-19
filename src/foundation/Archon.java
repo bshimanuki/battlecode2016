@@ -4,9 +4,18 @@ import battlecode.common.*;
 
 class Archon extends Model {
 
+    final static int DIR_NONE = 8;
+    final static int NUM_DIRECTIONS = DIR_NONE + 1;
+    final static double FORCED_MOVE_AWAY_THRESH = -1;
+    final static double FORCED_MOVE_TO_THRESH = 2;
+    final static double MOVE_RAND = 0.5;
+
     Target target;
     static Target base;
     static MapLocation center;
+    static double[] dirPoints = new double[NUM_DIRECTIONS]; // include None
+    static Direction moveDir;
+    static double movePoint; // points for moveDir
 
     @Override
     public boolean runInner(RobotController rc) throws GameActionException {
@@ -29,6 +38,12 @@ class Archon extends Model {
                 }
                 if(target != null) rc.setIndicatorLine(rc.getLocation(), target.loc, 0,255,0);
             }
+
+            computeMove(rc);
+            if(dirPoints[DIR_NONE] < FORCED_MOVE_AWAY_THRESH || dirPoints[moveDir.ordinal()] > FORCED_MOVE_TO_THRESH) {
+                if(move(rc)) return false;
+            }
+
             if(fate < 800) {
                 if(target != null) {
                     rc.setIndicatorString(1, "Targeting " + target.loc);
@@ -41,7 +56,15 @@ class Archon extends Model {
                     return false;
                 }
                 rc.setIndicatorString(1, "Running fate");
-                move(rc);
+                // Check the rubble in that direction
+                if(rc.senseRubble(rc.getLocation().add(moveDir)) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
+                    // Too much rubble, so I should clear it
+                    rc.clearRubble(moveDir);
+                    // Check if I can move in this direction
+                } else {
+                    // Move
+                    if(move(rc)) return false;
+                }
             } else {
                 // Choose a unit to build
                 // RobotType typeToBuild = Common.ROBOT_TYPES[fate % 8];
@@ -58,8 +81,7 @@ class Archon extends Model {
         return false;
     }
 
-    static void move(RobotController rc) throws GameActionException {
-        final int DIR_NONE = 8;
+    static void computeMove(RobotController rc) throws GameActionException {
         final int HOSTILE_RADIUS = 13;
         final double POINTS_HOSTILE = -3;
         final double POINTS_PARTS = 0.1;
@@ -68,8 +90,8 @@ class Archon extends Model {
         final int MAP_MOD = Common.MAP_MOD;
         final double sqrt[] = Common.sqrt;
         final double mapParts[][] = Common.mapParts;
+        dirPoints = new double[NUM_DIRECTIONS];
         MapLocation loc = rc.getLocation();
-        double dirPoints[] = new double[9]; // include None
         for(RobotInfo bad : rc.senseHostileRobots(loc, HOSTILE_RADIUS)) {
             if(bad.type != RobotType.SCOUT) {
                 dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE;
@@ -87,21 +109,27 @@ class Archon extends Model {
             double dist = sqrt[loc.distanceSquaredTo(ploc)];
             dirPoints[loc.directionTo(ploc).ordinal()] += POINTS_PARTS * mapParts[ploc.x%MAP_MOD][ploc.y%MAP_MOD] / dist;
         }
-        int bestDirIndex = DIR_NONE;
-        for(int i=0; i<DIR_NONE; ++i) {
-            if(dirPoints[i] > dirPoints[bestDirIndex]) bestDirIndex = i;
+        for(int i=0; i<=DIR_NONE; ++i) {
+            dirPoints[i] += MOVE_RAND * Common.rand.nextDouble();
         }
-        // Choose a direction to try to move in
-        Direction dirToMove = Common.DIRECTIONS[bestDirIndex];
-        dirToMove = Common.findPathDirection(rc, dirToMove);
-        // Check the rubble in that direction
-        if(rc.senseRubble(rc.getLocation().add(dirToMove)) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
-            // Too much rubble, so I should clear it
-            rc.clearRubble(dirToMove);
-            // Check if I can move in this direction
-        } else if(dirToMove != Direction.NONE) {
-            // Move
-            rc.move(dirToMove);
+        int bestDirIndex = DIR_NONE;
+        movePoint = dirPoints[DIR_NONE];
+        for(int i=0; i<DIR_NONE; ++i) {
+            if(dirPoints[i] > movePoint) {
+                bestDirIndex = i;
+                movePoint = dirPoints[i];
+            }
+        }
+        moveDir = Common.DIRECTIONS[bestDirIndex];
+    }
+
+    static boolean move(RobotController rc) throws GameActionException {
+        moveDir = Common.findPathDirection(rc, moveDir);
+        if(moveDir != Direction.NONE) {
+            rc.move(moveDir);
+            return true;
+        } else {
+            return false;
         }
     }
 
