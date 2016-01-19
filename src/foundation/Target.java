@@ -272,4 +272,17 @@ class Target extends Model {
         return "Target<>";
     }
 
+    public boolean knowsBoardEdge(RobotController rc) {
+        MapLocation curLocation = rc.getLocation();
+        int dx = dir.dx;
+        int dy = dir.dy;
+        if(Common.xMin != Common.MAP_NONE && Common.xMin > curLocation.x + Common.MAP_MOD * dir.dx) dx = 0;
+        if(Common.xMax != Common.MAP_NONE && Common.xMax < curLocation.x + Common.MAP_MOD * dir.dx) dx = 0;
+        if(Common.yMin != Common.MAP_NONE && Common.yMin > curLocation.y + Common.MAP_MOD * dir.dy) dy = 0;
+        if(Common.yMax != Common.MAP_NONE && Common.yMax < curLocation.y + Common.MAP_MOD * dir.dy) dy = 0;
+        dir = Common.Direction(dx, dy);
+        if(dir == Direction.OMNI) return true;
+        return false;
+    }
+
 }

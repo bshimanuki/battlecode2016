@@ -12,6 +12,7 @@ class Scout extends Model {
             Direction targetDirection = Opening.initialExplore(rc.getLocation());
             if(targetDirection != Direction.OMNI) {
                 Target target = new Target(targetDirection);
+                target.setTrigger((_rc) -> target.knowsBoardEdge(_rc));
                 if(!target.run(rc)) Common.models.addFirst(target);
             }
         }

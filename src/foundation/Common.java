@@ -26,6 +26,8 @@ class Common {
 
     // Map vars
     static double[][] mapParts = new double[MAP_MOD][MAP_MOD];
+    static MapLocation[] interestLocations = new MapLocation[MAX_ID];
+    static int interestLocationsSize = 0;
     static int[][] partsTimes = new int[MAP_MOD][MAP_MOD];
     static MapLocation[] partLocations = new MapLocation[MAX_ID];
     static int partLocationsSize = 0;
@@ -100,6 +102,7 @@ class Common {
 
     // Threshholds and Constants
     static int PART_KEEP_THRESH = 50; // min amount to keep in location list
+    static int MAP_UPDATE_MESSAGE_FACTOR = 4;
 
     static void init(RobotController rc) {
         int roundLimit = rc.getRoundLimit();
@@ -202,8 +205,10 @@ class Common {
         if(canMessageSignal) {
             if(mapBoundUpdate && Common.lowStrategy == LowStrategy.EXPLORE) {
                 int bounds = Signals.getBounds(rc).toInt();
-                int radius = 4 * rc.getLocation().distanceSquaredTo(hometown);
+                MapLocation target = furthestArchonStart(rc);
+                int radius = MAP_UPDATE_MESSAGE_FACTOR * rc.getLocation().distanceSquaredTo(target);
                 rc.broadcastMessageSignal(bounds, Signals.BUFFER, radius);
+                ++send;
                 sendBoundariesLow = false;
                 sendBoundariesHigh = false;
                 mapBoundUpdate = false;
@@ -211,7 +216,7 @@ class Common {
             if(sendBoundariesLow) Signals.addBoundsLow(rc);
             if(sendBoundariesHigh) Signals.addBoundsHigh(rc);
         }
-        int send = Signals.sendQueue(rc, sendRadius);
+        send += Signals.sendQueue(rc, sendRadius);
         rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d", send, read, xMin, yMin, xMax, yMax));
     }
 
@@ -466,6 +471,20 @@ class Common {
             }
         }
         return closest;
+    }
+
+    static MapLocation furthestArchonStart(RobotController rc) {
+        MapLocation loc = rc.getLocation();
+        MapLocation hometown = null;
+        int dist = 0;
+        for(int i=0; i<myArchonHometowns.length; ++i) {
+            int newdist = loc.distanceSquaredTo(myArchonHometowns[i]);
+            if(newdist > dist) {
+                hometown = myArchonHometowns[i];
+                dist = newdist;
+            }
+        }
+        return hometown;
     }
 
 }

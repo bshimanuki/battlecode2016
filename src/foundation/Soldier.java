@@ -12,6 +12,7 @@ class Soldier extends Model {
         if(fate % 5 == 3) {
             // Send a normal signal
             rc.broadcastSignal(80);
+            ++Common.send;
         }
 
         boolean shouldAttack = false;

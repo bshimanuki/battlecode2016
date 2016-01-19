@@ -120,6 +120,7 @@ class SignalStrategy {
             second = locations == null ? Signals.BUFFER : locations.toInt();
         }
         rc.broadcastMessageSignal(first, second, radius);
+        ++Common.send;
     }
 
     void read() throws GameActionException {
