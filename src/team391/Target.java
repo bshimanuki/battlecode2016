@@ -142,7 +142,8 @@ class Target extends Model {
         if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) {
             if(rc.getInfectedTurns() == 0) {
                 RobotInfo closestZombie = Common.closestRobot(rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE));
-                move(rc, closestZombie == null ? loc : closestZombie.location);
+                if(closestZombie == null) Scout.move(rc);
+                else move(rc, closestZombie == null ? loc : closestZombie.location);
             } else {
                 move(rc, loc);
                 if(rc.isCoreReady()) {
@@ -242,8 +243,8 @@ class Target extends Model {
             }
             RobotInfo[] closests = {Common.closestRobot(zombies), Common.closestRangedRobot(zombies)};
             double dot = -Common.MAX_DIST;
-            double dx = 0;
-            double dy = 0;
+            double dx = x;
+            double dy = y;
             for(RobotInfo closest : closests) {
                 if(closest != null) {
                     double tx = x;
@@ -275,7 +276,6 @@ class Target extends Model {
                 if(dx * dx + dy * dy < 0.3) nextDirection = Direction.NONE;
                 if(!Common.underAttack(zombies, curLocation.add(nextDirection)))
                     targetDirection = nextDirection;
-                rc.setIndicatorString(1, String.format("%f %f %f", dx*dx+dy*dy, dx, dy));
             }
             // real distance, not squared distance
             // if(dist > 5.5 || closest.type != RobotType.RANGEDZOMBIE && dist > 2.5)
@@ -359,6 +359,19 @@ class Target extends Model {
         if(Common.xMax != Common.MAP_NONE && Common.xMax < curLocation.x + Common.MAP_MOD * dir.dx) dx = 0;
         if(Common.yMin != Common.MAP_NONE && Common.yMin > curLocation.y + Common.MAP_MOD * dir.dy) dy = 0;
         if(Common.yMax != Common.MAP_NONE && Common.yMax < curLocation.y + Common.MAP_MOD * dir.dy) dy = 0;
+        dir = Common.Direction(dx, dy);
+        if(dir == Direction.OMNI) return true;
+        return false;
+    }
+
+    public boolean seesBoardEdge(RobotController rc) {
+        MapLocation curLocation = rc.getLocation();
+        int dx = dir.dx;
+        int dy = dir.dy;
+        if(Common.xMin != Common.MAP_NONE && Common.xMin > curLocation.x + Common.MAP_MOD * dir.dx && Common.xMin > curLocation.x - Common.straightSight) dx = 0;
+        if(Common.xMax != Common.MAP_NONE && Common.xMax < curLocation.x + Common.MAP_MOD * dir.dx && Common.xMax < curLocation.x + Common.straightSight) dx = 0;
+        if(Common.yMin != Common.MAP_NONE && Common.yMin > curLocation.y + Common.MAP_MOD * dir.dy && Common.yMin > curLocation.y - Common.straightSight) dy = 0;
+        if(Common.yMax != Common.MAP_NONE && Common.yMax < curLocation.y + Common.MAP_MOD * dir.dy && Common.yMax < curLocation.y + Common.straightSight) dy = 0;
         dir = Common.Direction(dx, dy);
         if(dir == Direction.OMNI) return true;
         return false;

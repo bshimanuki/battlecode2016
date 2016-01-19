@@ -52,8 +52,11 @@ class Opening extends Model {
                 if(Common.myArchonHometowns.length != 1) return true;
             default:
                 if(round > 20) {
-                    buildDir = buildDir.opposite();
-                    if(buildDir != Direction.NONE) Common.buildCommon(rc, buildDir, RobotType.SCOUT);
+                    buildDir = Common.findPathDirection(rc, buildDir.opposite());
+                    if(buildDir != Direction.NONE) {
+                        Common.buildCommon(rc, buildDir, RobotType.SCOUT);
+                        return true;
+                    }
                 }
                 break;
         }

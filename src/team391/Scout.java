@@ -32,6 +32,17 @@ class Scout extends Model {
                     }
                 }
             }
+        } else if(round == Common.enrollment) {
+            int num = Math.max(50, 100 - 2 * rc.senseNearbyRobots(Common.sightRadius, Common.myTeam).length);
+            int rand = Common.rand.nextInt(num);
+            if(rand < 8) {
+                Target kill = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase);
+                kill.setTrigger((_rc) -> kill.seesBoardEdge(_rc));
+                Common.models.addFirst(kill);
+                Target opening = new Target(Target.TargetType.ZOMBIE_LEAD, Common.DIRECTIONS[rand]);
+                opening.setTrigger((_rc) -> opening.seesBoardEdge(_rc) || _rc.senseNearbyRobots(35, Team.ZOMBIE).length > 0);
+                Common.models.addFirst(opening);
+            }
         }
 
         if(target == null) {
@@ -85,17 +96,21 @@ class Scout extends Model {
         if(target != null) {
             if(target.run(rc)) target = null;
         } else {
-            int rand = Common.rand.nextInt(9);
-            Direction dir;
-            if(rand == 8 && last != null) dir = last;
-            else dir = Common.DIRECTIONS[rand];
-            dir = Common.findPathDirection(rc, dir);
-            if(rc.isCoreReady() && rc.canMove(dir)) {
-                Common.move(rc, dir);
-                last = dir;
-            }
+            move(rc);
         }
         return false;
+    }
+
+    static void move(RobotController rc) throws GameActionException {
+        int rand = Common.rand.nextInt(9);
+        Direction dir;
+        if(rand == 8 && last != null) dir = last;
+        else dir = Common.DIRECTIONS[rand];
+        dir = Common.findPathDirection(rc, dir);
+        if(rc.isCoreReady() && rc.canMove(dir)) {
+            Common.move(rc, dir);
+            last = dir;
+        }
     }
 
     @Override
