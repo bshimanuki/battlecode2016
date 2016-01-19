@@ -6,10 +6,14 @@ import battlecode.common.*;
  * Helper class to send and receive signals. @see Jam for use in jamming (deprecated by bc 0.0.4).
  *
  * Message codes:
- *  000. (Unused)
- *  001. Strategy
- *  01.. Unit
- *  1... Locations
+ *   000. Misc
+ *   001. Strategy
+ *   01.. Unit
+ *   1... Locations
+ *
+ * Misc (first,second):
+ *   5,type/info: Zombie Lead
+ *   6,type/info: Zombie Kamikaze
  */
 class Signals {
 
@@ -19,11 +23,16 @@ class Signals {
     final static int BUFFER = -1;
     final static int MAX_QUEUE = 4000;
 
+    final static int ZOMBIE_LEAD = 5;
+    final static int ZOMBIE_KAMIKAZE = 6;
+
     // for locations
     final static int SIG_NONE = 100;
     final static int SIG_MOD = 101;
 
     // Send queues
+    static Signals[] fullSignals = new Signals[MAX_QUEUE];
+    static int fullSignalsSize = 0;
     static int[] halfSignals = new int[MAX_QUEUE];
     static int halfSignalsSize = 0;
     static SignalLocation[] locs = new SignalLocation[MAX_QUEUE];
@@ -37,6 +46,28 @@ class Signals {
     static int enemiesSize = 0;
     static MapLocation[] targets = new MapLocation[MAX_QUEUE];
     static int targetsSize = 0;
+    static RobotInfo[] zombieLeads = new RobotInfo[Common.MAX_ID]; // queue
+    static int zombieLeadsSize = 0;
+    static int zombieLeadsBegin = 0;
+
+    // Instance vars
+    int first, second, radius;
+
+    Signals(int first, int second) {
+        this(first, second, 2 * Common.sightRadius);
+    }
+    Signals(int first, int second, int radius) {
+        this.first = first;
+        this.second = second;
+        this.radius = radius;
+    }
+
+    void add() {
+        fullSignals[fullSignalsSize++] = this;
+    }
+    void send(RobotController rc) throws GameActionException {
+        rc.broadcastMessageSignal(first, second, radius);
+    }
 
     /**
      * Read Signal queue.
@@ -98,6 +129,14 @@ class Signals {
             } else if(first >>> CONTROL_SHIFT_STRATEGY != 0) {
                 new SignalStrategy(first, second, s.getID()).read();
             } else {
+                switch(s.getMessage()[0]) {
+                    case 5:
+                        RobotInfo robot = decompressSelfInfo(s.getID(), s.getLocation(), s.getMessage()[1]);
+                        zombieLeads[zombieLeadsSize++] = robot;
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }
@@ -132,11 +171,17 @@ class Signals {
             new SignalLocations(locs[i], locs[i+1]).add();
         locsSize = 0; // clear locs queue
         if(halfSignalsSize % 2 == 1) addRandomType(rc);
-        size = Math.min(halfSignalsSize, 2*(maxMessages - Common.sent));
+        fullSignalsSize = Math.min(fullSignalsSize, maxMessages);
+        size = Math.min(halfSignalsSize, 2*(maxMessages - Common.sent - fullSignalsSize));
         for(int i=0; i<size; i+=2)
             rc.broadcastMessageSignal(halfSignals[i], halfSignals[i+1], radius);
         halfSignalsSize = 0; // clear halfSignals queue
         size /= 2;
+        for(int i=0; i<fullSignalsSize; ++i) {
+            fullSignals[i].send(rc);
+        }
+        size += fullSignalsSize; // clear fullSignals queue
+        fullSignalsSize = 0;
         if(buildStrategy[round] != null) {
             buildStrategy[round].send(rc, 2);
             int bounds = getBounds(rc).toInt();
@@ -166,9 +211,18 @@ class Signals {
     static SignalLocations getBounds(RobotController rc) throws GameActionException {
         return new SignalLocations(getBoundsLow(rc), getBoundsHigh(rc));
     }
+
     static void addRandomType(RobotController rc) throws GameActionException {
         if(Common.typeSignalsSize != 0) halfSignals[halfSignalsSize++] = Common.typeSignals[Common.rand.nextInt(Common.typeSignalsSize)];
         else halfSignals[halfSignalsSize++] = BUFFER;
+    }
+
+    static void addSelfZombieLead(RobotController rc) throws GameActionException {
+        new Signals(ZOMBIE_LEAD, compressSelfInfo(rc.senseRobot(rc.getID()))).add();
+    }
+    static void addSelfZombieKamikaze(RobotController rc) throws GameActionException {
+        // destruction is assumed, so don't worry about coreDelay
+        new Signals(ZOMBIE_KAMIKAZE, compressSelfInfo(rc.senseRobot(rc.getID())), Common.MAX_DIST).add();
     }
 
     static int reduceCoordinate(int x) {
@@ -210,6 +264,44 @@ class Signals {
             else if(x > xMid + Common.MAP_MOD / 2) x -= Common.MAP_MOD;
         }
         return x;
+    }
+
+    /**
+     * Give type and health info of self. Loses double precision on health.
+     * @param info
+     * @return int for use in signal
+     */
+    static int compressSelfInfo(RobotInfo info) {
+        int value = (int) info.health;
+        value *= SignalUnit.TYPE_MOD;
+        value += SignalUnit.typeSignal.get(info.type);
+        value *= RobotType.STANDARDZOMBIE.infectTurns + 1;
+        value += info.zombieInfectedTurns;
+        value *= RobotType.VIPER.infectTurns + 1;
+        value += info.viperInfectedTurns;
+        return value;
+    }
+
+    static RobotInfo decompressSelfInfo(int id, MapLocation loc, int value) {
+        int viper = value % RobotType.VIPER.infectTurns + 1;
+        value /= RobotType.VIPER.infectTurns + 1;
+        int zombie = value % RobotType.STANDARDZOMBIE.infectTurns + 1;
+        value /= RobotType.STANDARDZOMBIE.infectTurns + 1;
+        RobotType type = SignalUnit.normalTypes[value % SignalUnit.TYPE_MOD];
+        value /= SignalUnit.TYPE_MOD;
+        double health = value;
+        return new RobotInfo(
+                id,
+                Common.myTeam,
+                type,
+                loc,
+                0, // coreDelay
+                0, // weaponDelay
+                type.attackPower,
+                health,
+                type.maxHealth,
+                zombie,
+                viper);
     }
 
 }

@@ -13,7 +13,7 @@ class Target extends Model {
         RUBBLE(Level.INACTIVE), // clear to move, full clear to move, clear even if scout (though not full clear)
         ZOMBIE_ATTACK(Level.ACTIVE), // ignore zombies, attack zombies
         ZOMBIE_KAMIKAZE(Level.INACTIVE),
-        ZOMBIE_LEAD(Level.INACTIVE),
+        ZOMBIE_LEAD(Level.INACTIVE), // off, lead, lead and kamikaze
         NONE(Level.INACTIVE),
         ;
         final static TargetType[] values = TargetType.values();
@@ -68,7 +68,7 @@ class Target extends Model {
         this.loc = loc;
     }
     Target(MapLocation loc) {
-        this.weights = new EnumMap<>(defaultWeights);
+        this((TargetType) null);
         this.loc = loc;
     }
     Target(int id, Map<TargetType, TargetType.Level> weights) {
@@ -143,9 +143,10 @@ class Target extends Model {
                 RobotInfo closestZombie = Common.closestRobot(rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE));
                 move(rc, closestZombie == null ? loc : closestZombie.location);
             } else {
-                if(move(rc, loc) || rc.isCoreReady()) {
+                move(rc, loc);
+                if(rc.isCoreReady()) {
                     RobotInfo closestZombie = Common.closestRobot(rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE));
-                    if(closestZombie != null && curLocation.distanceSquaredTo(closestZombie.location) < 2)
+                    if(closestZombie != null && curLocation.distanceSquaredTo(closestZombie.location) <= 2)
                         return finish();
                     if(rc.getInfectedTurns() < 3) return finish();
                 }
@@ -223,7 +224,7 @@ class Target extends Model {
         if(!rc.isCoreReady() || !rc.getType().canMove()) return false;
         boolean toMove = true;
         MapLocation curLocation = rc.getLocation();
-        Direction targetDirection = dir == null ? rc.getLocation().directionTo(loc) : dir;
+        Direction targetDirection = loc != null ? rc.getLocation().directionTo(loc) : dir;
         if(targetDirection == Direction.OMNI) return false;
         if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
             RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
@@ -256,24 +257,33 @@ class Target extends Model {
         return true;
     }
 
-    boolean finish() {
+    boolean finish() throws GameActionException {
+        Common.rc.setIndicatorString(1, Common.rc.getRoundNum() + " " + "finish");
         if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) {
             if(Common.rc.getInfectedTurns() > 0) {
                 System.out.println("Zombie Kamikaze!");
+                Signals.addSelfZombieKamikaze(Common.rc);
                 Common.rc.disintegrate();
             }
             else {
                 System.out.println("Zombie Kamikaze FAILED");
                 return false;
             }
+        } else if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.PRIORITY) >= 0) {
+            weights.put(TargetType.ZOMBIE_LEAD, TargetType.Level.INACTIVE);
+            weights.put(TargetType.ZOMBIE_KAMIKAZE, TargetType.Level.ACTIVE);
+            return false;
         }
         return true;
     }
 
     @Override
     public String toString() {
-        if(loc != null) return String.format("Target<%d,%d>", loc.x, loc.y);
-        if(dir != null) return String.format("Target<%s>", dir);
+        String end = "";
+        if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) end = "(Zombie Lead)";
+        if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) end = "(Zombie Kamikazi)";
+        if(loc != null) return String.format("Target<%d,%d>%s", loc.x, loc.y, end);
+        if(dir != null) return String.format("Target<%s>%s", dir, end);
         return "Target<>";
     }
 

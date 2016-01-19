@@ -170,6 +170,7 @@ class Common {
         // -2 for build signals
         Signals.maxMessages = GameConstants.MESSAGE_SIGNALS_PER_TURN - 2;
         read = Signals.readSignals(rc);
+        sent = 0;
         int turn = rc.getRoundNum();
 
         switch(turn - enrollment) {
