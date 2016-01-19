@@ -29,6 +29,8 @@ class Signals {
     static SignalLocation[] locs = new SignalLocation[MAX_QUEUE];
     static int locsSize = 0;
     static int maxMessages; // reset to GameConstants.MESSAGE_SIGNALS_PER_TURN each turn
+    static MapLocation buildTarget[];
+    static SignalStrategy buildStrategy[];
 
     // Receive queues
     static MapLocation[] enemies = new MapLocation[MAX_QUEUE];
@@ -123,6 +125,7 @@ class Signals {
      * @throws GameActionException
      */
     static int sendQueue(RobotController rc, int radius) throws GameActionException {
+        int round = rc.getRoundNum();
         if(locsSize % 2 == 1) locs[locsSize++] = new SignalLocation();
         int size = locsSize;
         for(int i=0; i<size; i+=2)
@@ -133,17 +136,15 @@ class Signals {
         for(int i=0; i<size; i+=2)
             rc.broadcastMessageSignal(halfSignals[i], halfSignals[i+1], radius);
         halfSignalsSize = 0; // clear halfSignals queue
-        return size / 2;
-    }
-
-    static void sendBuilt(RobotController rc, LowStrategy lowStrategy) throws GameActionException {
-        sendBuilt(rc, lowStrategy, null, null);
-    }
-    static void sendBuilt(RobotController rc, LowStrategy lowStrategy, Target.TargetType targetType, MapLocation targetLocation) throws GameActionException {
-        new SignalStrategy(Common.highStrategy, lowStrategy, targetType, Common.archonIds).send(rc, 2);
-        int bounds = getBounds(rc).toInt();
-        int target = targetLocation == null ? BUFFER : new SignalLocations(new SignalLocation(SignalLocation.LocationType.TARGET, targetLocation)).toInt();
-        rc.broadcastMessageSignal(bounds, target, 2);
+        size /= 2;
+        if(buildStrategy[round] != null) {
+            buildStrategy[round].send(rc, 2);
+            int bounds = getBounds(rc).toInt();
+            int target = buildTarget[round] == null ? BUFFER : new SignalLocations(new SignalLocation(SignalLocation.LocationType.TARGET, buildTarget[round])).toInt();
+            rc.broadcastMessageSignal(bounds, target, 2);
+            size += 2;
+        }
+        return size;
     }
 
     static void addBounds(RobotController rc) throws GameActionException {
@@ -166,7 +167,8 @@ class Signals {
         return new SignalLocations(getBoundsLow(rc), getBoundsHigh(rc));
     }
     static void addRandomType(RobotController rc) throws GameActionException {
-        halfSignals[halfSignalsSize++] = Common.typeSignals[Common.rand.nextInt(Common.typeSignalsSize)];
+        if(Common.typeSignalsSize != 0) halfSignals[halfSignalsSize++] = Common.typeSignals[Common.rand.nextInt(Common.typeSignalsSize)];
+        else halfSignals[halfSignalsSize++] = BUFFER;
     }
 
     static int reduceCoordinate(int x) {

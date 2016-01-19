@@ -89,6 +89,7 @@ class Common {
     static int lastBuiltId;
 
     // Message vars
+    static boolean mapBoundUpdate;
     static boolean sendBoundariesLow;
     static boolean sendBoundariesHigh;
     static int sendRadius;
@@ -97,13 +98,17 @@ class Common {
     static int read;
     static int send;
 
+    // Threshholds and Constants
+    static int PART_KEEP_THRESH = 50; // min amount to keep in location list
+
     static void init(RobotController rc) {
+        int roundLimit = rc.getRoundLimit();
         Common.rc = rc;
         rand = new Random(rc.getID());
         id = rc.getID();
         myTeam = rc.getTeam();
         enemyTeam = myTeam.opponent();
-        history = new MapLocation[rc.getRoundLimit()];
+        history = new MapLocation[roundLimit];
         robotType = rc.getType();
         enrollment = rc.getRoundNum();
         if(robotType != RobotType.ARCHON) birthday = enrollment - robotType.buildTurns - BUILD_LAG;
@@ -111,6 +116,8 @@ class Common {
         sightRadius = robotType.sensorRadiusSquared;
         straightSight = (int) Math.sqrt(sightRadius);
         canMessageSignal = robotType.canMessageSignal();
+        Signals.buildTarget = new MapLocation[roundLimit];
+        Signals.buildStrategy = new SignalStrategy[roundLimit];
         try {
             addInfo(rc.senseRobot(id));
             myArchonHometowns = rc.getInitialArchonLocations(myTeam);
@@ -193,6 +200,14 @@ class Common {
 
     static void runAfter(RobotController rc) throws GameActionException {
         if(canMessageSignal) {
+            if(mapBoundUpdate && Common.lowStrategy == LowStrategy.EXPLORE) {
+                int bounds = Signals.getBounds(rc).toInt();
+                int radius = 4 * rc.getLocation().distanceSquaredTo(hometown);
+                rc.broadcastMessageSignal(bounds, Signals.BUFFER, radius);
+                sendBoundariesLow = false;
+                sendBoundariesHigh = false;
+                mapBoundUpdate = false;
+            }
             if(sendBoundariesLow) Signals.addBoundsLow(rc);
             if(sendBoundariesHigh) Signals.addBoundsHigh(rc);
         }
@@ -206,25 +221,31 @@ class Common {
             int x = -straightSight;
             while(!rc.onTheMap(loc.add(++x, 0)));
             xMin = loc.x + x;
+            xMax = twiceCenterX - xMin;
             sendBoundariesLow = true;
+            mapBoundUpdate = true;
         }
         if(xMax == MAP_NONE && !rc.onTheMap(loc.add(straightSight, 0))) {
             int x = straightSight;
             while(!rc.onTheMap(loc.add(--x, 0)));
             xMax = loc.x + x;
+            xMin = twiceCenterX - xMax;
             sendBoundariesHigh = true;
+            mapBoundUpdate = true;
         }
         if(yMin == MAP_NONE && !rc.onTheMap(loc.add(0, -straightSight))) {
             int y = -straightSight;
             while(!rc.onTheMap(loc.add(0, ++y)));
             yMin = loc.y + y;
             sendBoundariesLow = true;
+            mapBoundUpdate = true;
         }
         if(yMax == MAP_NONE && !rc.onTheMap(loc.add(0, straightSight))) {
             int y = straightSight;
             while(!rc.onTheMap(loc.add(0, --y)));
             yMax = loc.y + y;
             sendBoundariesHigh = true;
+            mapBoundUpdate = true;
         }
     }
 
@@ -318,12 +339,13 @@ class Common {
         lastBuiltId = info.ID;
     }
     static void build(RobotController rc, Direction dir, RobotType robotType, LowStrategy lowStrategy) throws GameActionException {
-        buildCommon(rc, dir, robotType);
-        Signals.sendBuilt(rc, lowStrategy);
+        build(rc, dir, robotType, lowStrategy, Target.TargetType.NONE, null);
     }
     static void build(RobotController rc, Direction dir, RobotType robotType, LowStrategy lowStrategy, Target.TargetType targetType, MapLocation targetLocation) throws GameActionException {
         buildCommon(rc, dir, robotType);
-        Signals.sendBuilt(rc, lowStrategy, targetType, targetLocation);
+        int round = rc.getRoundNum() + robotType.buildTurns;
+        Signals.buildStrategy[round] = new SignalStrategy(Common.highStrategy, lowStrategy, targetType, Common.archonIds);
+        Signals.buildTarget[round] = targetLocation;
     }
 
     static void addInfo(RobotInfo info) throws GameActionException {
@@ -354,7 +376,7 @@ class Common {
             knownTimes[id] = rc.getRoundNum();
             knownLocations[id] = loc;
         }
-        if(rc.getType().canMessageSignal() && (newRobot || newLoc)) {
+        if(rc.getType().canMessageSignal() && (newRobot || newLoc) && rc.getRoundNum() - enrollment > 10) {
             if(robotType == RobotType.ARCHON
                     || robotType == RobotType.ZOMBIEDEN
                     || robotType == RobotType.BIGZOMBIE
@@ -394,11 +416,21 @@ class Common {
     static void senseParts(RobotController rc) throws GameActionException {
         int roundNum = rc.getRoundNum();
         for(MapLocation loc : rc.sensePartLocations(sightRadius)) {
-            if(partsTimes[loc.x%MAP_MOD][loc.y%MAP_MOD] == 0)
-                partLocations[partLocationsSize++] = loc;
-            mapParts[loc.x%MAP_MOD][loc.y%MAP_MOD] = rc.senseParts(loc);
+            if(mapParts[loc.x%MAP_MOD][loc.y%MAP_MOD] == 0) {
+                double parts = rc.senseParts(loc);
+                if(parts >= PART_KEEP_THRESH) partLocations[partLocationsSize++] = loc;
+                mapParts[loc.x%MAP_MOD][loc.y%MAP_MOD] = parts;
+            }
             partsTimes[loc.x%MAP_MOD][loc.y%MAP_MOD] = roundNum;
         }
+        // if(robotType == RobotType.ARCHON && rand.nextInt(1) == 0) {
+            // // cull list
+            // ListIterator<MapLocation> it = partLocations.listIterator();
+            // while(it.hasNext()) {
+                // MapLocation loc = it.next();
+                // if(rc.canSense(loc) && rc.senseParts(loc) == 0) it.remove();
+            // }
+        // }
     }
 
     static Direction Direction(int dx, int dy) {
