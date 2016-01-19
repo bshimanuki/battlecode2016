@@ -251,9 +251,13 @@ class Target extends Model {
                     x += zx;
                     y += zy;
                 }
-                // MAP_MOD to approximate with better precision
-                targetDirection = new MapLocation(0, 0).directionTo(new MapLocation((int) (Common.MAP_MOD * x), (int) (Common.MAP_MOD * y)));
-                if(x * x + y * y < 0.3) targetDirection = Direction.NONE;
+                RobotInfo[] allies = rc.senseNearbyRobots(curLocation.add(targetDirection.opposite()), 2, Common.myTeam);
+                boolean crowded = allies.length >= 3;
+                if(!crowded) {
+                    // MAP_MOD to approximate with better precision
+                    targetDirection = new MapLocation(0, 0).directionTo(new MapLocation((int) (Common.MAP_MOD * x), (int) (Common.MAP_MOD * y)));
+                    if(x * x + y * y < 0.3) targetDirection = Direction.NONE;
+                }
                 // real distance, not squared distance
                 // if(dist > 5.5 || closest.type != RobotType.RANGEDZOMBIE && dist > 2.5)
                     // toMove = false;
@@ -262,7 +266,7 @@ class Target extends Model {
         Direction moveDirection = Common.findPathDirection(rc, targetDirection);
         if(moveDirection == Direction.NONE) toMove = false;
         MapLocation toTargetLocation = curLocation.add(targetDirection);
-        if(targetDirection.dx * moveDirection.dx + targetDirection.dy * moveDirection.dy < 0) toMove = false;
+        if(targetDirection.dx * moveDirection.dx + targetDirection.dy * moveDirection.dy < -Common.EPS) toMove = false;
         double rubble = rc.senseRubble(toTargetLocation);
         switch(weights.get(TargetType.RUBBLE)) {
             case INACTIVE:
@@ -283,16 +287,7 @@ class Target extends Model {
 
     boolean finish() throws GameActionException {
         if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) {
-            // bc bug: dieing on last turn of infection does not spawn zombie
-            if(Common.rc.getInfectedTurns() > 1) {
-                System.out.println("Zombie Kamikaze!");
-                Signals.addSelfZombieKamikaze(Common.rc);
-                Common.rc.disintegrate();
-            }
-            else {
-                System.out.println("Zombie Kamikaze FAILED");
-                return false;
-            }
+            return Common.kamikaze(Common.rc);
         } else if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.PRIORITY) >= 0) {
             weights.put(TargetType.ZOMBIE_LEAD, TargetType.Level.INACTIVE);
             weights.put(TargetType.ZOMBIE_KAMIKAZE, TargetType.Level.ACTIVE);

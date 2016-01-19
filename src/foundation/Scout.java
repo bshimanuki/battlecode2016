@@ -64,7 +64,21 @@ class Scout extends Model {
             }
         } else {
             RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
-            if(zombies.length == 0) target = null;
+            if(zombies.length == 0 && rc.getInfectedTurns() > 1) {
+                boolean kamikaze = true;
+                int numAllies = 0;
+                for(int i=Signals.zombieLeadsBegin; i<Signals.zombieLeadsSize; ++i) {
+                    if(rc.canSenseRobot(Signals.zombieLeads[i].ID)) ++numAllies;
+                }
+                if(numAllies <= 2) kamikaze = false;
+                for(int i=0; i<Common.archonIdsSize; ++i)
+                    if(rc.canSenseRobot(Common.archonIds[i])) kamikaze = false;
+                if(kamikaze) {
+                    Common.kamikaze(rc);
+                } else {
+                    target = null;
+                }
+            }
         }
 
         if(target != null) {

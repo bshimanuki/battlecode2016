@@ -551,4 +551,18 @@ class Common {
         return findPathDirection(rc, dir, null);
     }
 
+    static boolean kamikaze(RobotController rc) throws GameActionException {
+        // bc bug: dieing on last turn of infection does not spawn zombie
+        if(Common.rc.getInfectedTurns() > 1) {
+            System.out.println("Zombie Kamikaze!");
+            Signals.addSelfZombieKamikaze(Common.rc);
+            Common.rc.disintegrate();
+            return true;
+        }
+        else {
+            System.out.println("Zombie Kamikaze FAILED");
+            return false;
+        }
+    }
+
 }

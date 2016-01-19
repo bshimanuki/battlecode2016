@@ -5,7 +5,7 @@ import battlecode.common.*;
 class Archon extends Model {
 
     final static int DIR_NONE = 8;
-    final static int NUM_DIRECTIONS = DIR_NONE + 1;
+    final static int NUM_DIRECTIONS = Common.DIRECTIONS.length;
     final static double FORCED_MOVE_AWAY_THRESH = -3;
     final static double FORCED_MOVE_TO_THRESH = 3;
     final static double MOVE_RAND = 0.5;
@@ -72,8 +72,9 @@ class Archon extends Model {
                 RobotType typeToBuild = RobotType.SCOUT;
                 // Check for sufficient parts
                 if(rc.hasBuildRequirements(typeToBuild)) {
-                    // Choose a random direction to try to build in
-                    Direction dirToBuild = Common.DIRECTIONS[Common.rand.nextInt(8)];
+                    // Choose a direction to try to build in
+                    RobotInfo hostile = Common.closestRobot(rc.senseHostileRobots(rc.getLocation(), Common.sightRadius));
+                    Direction dirToBuild = hostile != null ? rc.getLocation().directionTo(hostile.location) : Common.DIRECTIONS[Common.rand.nextInt(8)];
                     dirToBuild = Common.findPathDirection(rc, dirToBuild, typeToBuild);
                     if(dirToBuild != Direction.NONE) Common.build(rc, dirToBuild, typeToBuild, LowStrategy.EXPLORE);
                 }
@@ -89,6 +90,7 @@ class Archon extends Model {
         final double POINTS_PARTS = 0.05;
         final double POINTS_NEUTRAL = 0.1; // per part cost
         final double POINTS_NEUTRAL_ARCHON = 300;
+        final double POINTS_ZOMBIE_LEAD = -10;
         final int MAP_MOD = Common.MAP_MOD;
         final double sqrt[] = Common.sqrt;
         final double mapParts[][] = Common.mapParts;
@@ -100,7 +102,7 @@ class Archon extends Model {
                 dirPoints[DIR_NONE] += POINTS_HOSTILE / 4;
             }
         }
-        for(RobotInfo bad : rc.senseHostileRobots(loc, Common.sightRadius)) {
+        for(RobotInfo bad : rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam)) {
             if(bad.type == RobotType.TURRET) {
                 if(loc.distanceSquaredTo(bad.location) >= GameConstants.TURRET_MINIMUM_RANGE)
                     dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE_TURRET;
@@ -117,6 +119,12 @@ class Archon extends Model {
         for(MapLocation ploc : rc.sensePartLocations(Common.sightRadius)) {
             double dist = sqrt[loc.distanceSquaredTo(ploc)];
             dirPoints[loc.directionTo(ploc).ordinal()] += POINTS_PARTS * mapParts[ploc.x%MAP_MOD][ploc.y%MAP_MOD] / dist;
+        }
+        for(int i=Signals.zombieLeadsBegin; i<Signals.zombieLeadsSize; ++i) {
+            RobotInfo lead = Signals.zombieLeads[i];
+            MapLocation leadLoc = lead.location;
+            // if(rc.canSenseRobot(lead.ID)) leadLoc = rc.senseRobot(lead.ID).location;
+            dirPoints[loc.directionTo(leadLoc).ordinal()] += POINTS_ZOMBIE_LEAD;
         }
         for(int i=0; i<=DIR_NONE; ++i) {
             dirPoints[i] += MOVE_RAND * Common.rand.nextDouble();
