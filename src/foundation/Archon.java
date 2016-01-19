@@ -6,8 +6,8 @@ class Archon extends Model {
 
     final static int DIR_NONE = 8;
     final static int NUM_DIRECTIONS = DIR_NONE + 1;
-    final static double FORCED_MOVE_AWAY_THRESH = -1;
-    final static double FORCED_MOVE_TO_THRESH = 2;
+    final static double FORCED_MOVE_AWAY_THRESH = -3;
+    final static double FORCED_MOVE_TO_THRESH = 3;
     final static double MOVE_RAND = 0.5;
 
     Target target;
@@ -40,6 +40,7 @@ class Archon extends Model {
             }
 
             computeMove(rc);
+            relaxMove(0.5);
             if(dirPoints[DIR_NONE] < FORCED_MOVE_AWAY_THRESH || dirPoints[moveDir.ordinal()] > FORCED_MOVE_TO_THRESH) {
                 if(move(rc)) return false;
             }
@@ -83,9 +84,10 @@ class Archon extends Model {
 
     static void computeMove(RobotController rc) throws GameActionException {
         final int HOSTILE_RADIUS = 13;
-        final double POINTS_HOSTILE = -3;
-        final double POINTS_PARTS = 0.1;
-        final double POINTS_NEUTRAL = 0.2; // per part cost
+        final double POINTS_HOSTILE = -5;
+        final double POINTS_HOSTILE_TURRET = -8;
+        final double POINTS_PARTS = 0.05;
+        final double POINTS_NEUTRAL = 0.1; // per part cost
         final double POINTS_NEUTRAL_ARCHON = 300;
         final int MAP_MOD = Common.MAP_MOD;
         final double sqrt[] = Common.sqrt;
@@ -93,9 +95,16 @@ class Archon extends Model {
         dirPoints = new double[NUM_DIRECTIONS];
         MapLocation loc = rc.getLocation();
         for(RobotInfo bad : rc.senseHostileRobots(loc, HOSTILE_RADIUS)) {
-            if(bad.type != RobotType.SCOUT) {
+            if(bad.type.attackPower > 0) {
                 dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE;
                 dirPoints[DIR_NONE] += POINTS_HOSTILE / 4;
+            }
+        }
+        for(RobotInfo bad : rc.senseHostileRobots(loc, Common.sightRadius)) {
+            if(bad.type == RobotType.TURRET) {
+                if(loc.distanceSquaredTo(bad.location) >= GameConstants.TURRET_MINIMUM_RANGE)
+                    dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE_TURRET;
+                dirPoints[DIR_NONE] += POINTS_HOSTILE_TURRET / 4;
             }
         }
         for(RobotInfo good : rc.senseNearbyRobots(Common.sightRadius, Team.NEUTRAL)) {
@@ -130,6 +139,17 @@ class Archon extends Model {
             return true;
         } else {
             return false;
+        }
+    }
+
+    static void relaxMove(double factor) {
+        double[] points = new double[NUM_DIRECTIONS];
+        double partial = (1 - factor) / 2;
+        points[DIR_NONE] = dirPoints[DIR_NONE];
+        for(int i=0; i<DIR_NONE; ++i) {
+            points[i] = factor * dirPoints[i];
+            points[i] += partial * dirPoints[(i + 1) % DIR_NONE];
+            points[i] += partial * dirPoints[(i + 7) % DIR_NONE];
         }
     }
 

@@ -25,6 +25,7 @@ class Common {
     final static int BUILD_LAG = 1; // Delay between built and first turn
     final static double EPS = 1e-2;
     final static double[] sqrt = new double[60]; // faster than Math.sqrt, cache for everything in sight
+    final static int MAX_DIST = 2 * GameConstants.MAP_MAX_WIDTH * GameConstants.MAP_MAX_WIDTH;
 
     // Map vars
     static double[][] mapParts = new double[MAP_MOD][MAP_MOD];
@@ -480,7 +481,7 @@ class Common {
         if(infos.length == 0) return null;
         MapLocation curLocation = rc.getLocation();
         RobotInfo closest = infos[0];
-        int dist = 2 * GameConstants.MAP_MAX_WIDTH * GameConstants.MAP_MAX_WIDTH; // to be replaced
+        int dist = MAX_DIST; // to be replaced
         for(RobotInfo info : infos) {
             int newdist = curLocation.distanceSquaredTo(info.location);
             if(newdist < dist) {
@@ -495,7 +496,7 @@ class Common {
         if(locs.length == 0) return null;
         MapLocation curLocation = rc.getLocation();
         MapLocation closest = locs[0];
-        int dist = 2 * GameConstants.MAP_MAX_WIDTH * GameConstants.MAP_MAX_WIDTH; // to be replaced
+        int dist = MAX_DIST; // to be replaced
         for(MapLocation loc : locs) {
             int newdist = curLocation.distanceSquaredTo(loc);
             if(newdist < dist) {
@@ -529,9 +530,10 @@ class Common {
      */
     static Direction findPathDirection(RobotController rc, Direction dir, RobotType robotType) {
         final int maxRotations = 8;
+        int diff = rand.nextInt(2);
         for(int i=0; i<=maxRotations; ++i) {
             if(i == maxRotations) return Direction.NONE;
-            if(i % 2 == 0) {
+            if((i + diff) % 2 == 0) {
                 for(int j=0; j<i; ++j) dir = dir.rotateLeft();
             } else {
                 for(int j=0; j<i; ++j) dir = dir.rotateRight();

@@ -215,37 +215,42 @@ class Target extends Model {
      * Move towards target
      * @param rc
      * @param loc
-     * @return true if moved
+     * @return true if action performed (including rubble)
      * @throws GameActionException
      */
     boolean move(RobotController rc, MapLocation loc) throws GameActionException {
         // TODO: path finding
         if(!rc.isCoreReady() || !rc.getType().canMove()) return false;
+        boolean toMove = true;
         MapLocation curLocation = rc.getLocation();
-        Direction moveDirection = dir == null ? rc.getLocation().directionTo(loc) : dir;
-        if(moveDirection == Direction.OMNI) return false;
+        Direction targetDirection = dir == null ? rc.getLocation().directionTo(loc) : dir;
+        if(targetDirection == Direction.OMNI) return false;
         if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
             RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
             RobotInfo closest = Common.closestRobot(zombies);
             if(closest != null) {
-                if((curLocation.x - closest.location.x) * moveDirection.dx + (curLocation.y - closest.location.y) * moveDirection.dy > 5)
-                    return false;
+                int dist = (curLocation.x - closest.location.x) * targetDirection.dx + (curLocation.y - closest.location.y) * targetDirection.dy;
+                if(dist > 13 || closest.type != RobotType.RANGEDZOMBIE && dist > 5)
+                    toMove = false;
             }
         }
-        MapLocation next = curLocation.add(moveDirection);
-        double rubble = rc.senseRubble(next);
+        Direction moveDirection = Common.findPathDirection(rc, targetDirection);
+        if(moveDirection == Direction.NONE) toMove = false;
+        MapLocation toTargetLocation = curLocation.add(targetDirection);
+        if(targetDirection.dx * moveDirection.dx + targetDirection.dy * moveDirection.dy < 0) toMove = false;
+        double rubble = rc.senseRubble(toTargetLocation);
         switch(weights.get(TargetType.RUBBLE)) {
             case INACTIVE:
-                if(rc.canMove(moveDirection)) Common.move(rc, moveDirection);
-                else if(rubble > 0) rc.clearRubble(moveDirection);
+                if(toMove) Common.move(rc, moveDirection);
+                else if(rubble > 0) rc.clearRubble(targetDirection);
                 break;
             case ACTIVE:
-                if(rubble >= GameConstants.RUBBLE_SLOW_THRESH) rc.clearRubble(moveDirection);
-                else if(rc.canMove(moveDirection)) Common.move(rc, moveDirection);
+                if(rubble >= GameConstants.RUBBLE_SLOW_THRESH) rc.clearRubble(targetDirection);
+                else if(toMove) Common.move(rc, moveDirection);
                 break;
             case PRIORITY:
-                if(rubble >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) rc.clearRubble(moveDirection);
-                else if(rc.canMove(moveDirection)) Common.move(rc, moveDirection);
+                if(rubble >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) rc.clearRubble(targetDirection);
+                else if(toMove) Common.move(rc, moveDirection);
                 break;
         }
         return true;
