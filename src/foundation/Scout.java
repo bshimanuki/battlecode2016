@@ -35,25 +35,31 @@ class Scout extends Model {
 
         if(target == null) {
             RobotInfo[] zombies = rc.senseNearbyRobots(ZOMBIE_ACCEPT_RADIUS, Team.ZOMBIE);
-            RobotInfo[] leads = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
             if(zombies.length > 12) {
                 target = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase);
             } else {
                 MapLocation loc = rc.getLocation();
-                for(RobotInfo zombie : zombies) {
-                    boolean closest = true;
-                    int dist = loc.distanceSquaredTo(zombie.location);
-                    for(RobotInfo lead : leads) {
-                        if(lead.location.distanceSquaredTo(zombie.location) < dist) {
-                            closest = false;
-                            break;
+                boolean[] notClosest = new boolean[zombies.length];
+                int[] dist = new int[zombies.length];
+                for(int i=0; i<zombies.length; ++i)
+                    dist[i] = loc.distanceSquaredTo(zombies[i].location);
+                for(int i=Signals.zombieLeadsBegin; i<Signals.zombieLeadsSize; ++i) {
+                    RobotInfo lead = Signals.zombieLeads[i];
+                    if(rc.canSenseRobot(lead.ID)) {
+                        lead = rc.senseRobot(lead.ID);
+                        for(int j=0; j<zombies.length; ++j) {
+                            RobotInfo zombie = zombies[j];
+                            if(lead.location.distanceSquaredTo(zombie.location) < dist[j]) {
+                                notClosest[j] = true;
+                            }
                         }
                     }
-                    if(closest) {
-                        target = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase);
-                        Signals.addSelfZombieLead(rc);
-                        break;
-                    }
+                }
+                boolean closest = false;
+                for(boolean c : notClosest) if(!c) closest = true;
+                if(closest) {
+                    target = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase);
+                    Signals.addSelfZombieLead(rc);
                 }
             }
         } else {

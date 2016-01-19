@@ -227,6 +227,10 @@ class Target extends Model {
         Direction targetDirection = loc != null ? rc.getLocation().directionTo(loc) : dir;
         if(targetDirection == Direction.OMNI) return false;
         if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
+            // consistent signal which gets spread out over many units
+            if((rc.getID() + rc.getRoundNum()) % 5 == 0) {
+                Signals.addSelfZombieLead(rc);
+            }
             RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
             double x = targetDirection.dx;
             double y = targetDirection.dy;
@@ -240,7 +244,7 @@ class Target extends Model {
                 double zy = closest.location.y - curLocation.y;
                 double dist = Common.sqrt[curLocation.distanceSquaredTo(closest.location)];
                 double dist_factor = 0.5;
-                double distBuffer = closest.type == RobotType.RANGEDZOMBIE ? 2 : 1;
+                double distBuffer = closest.type == RobotType.RANGEDZOMBIE ? 2 : 0.5;
                 if(dist > distBuffer) {
                     zx *= dist_factor * (dist - distBuffer) / dist;
                     zy *= dist_factor * (dist - distBuffer) / dist;
@@ -249,7 +253,7 @@ class Target extends Model {
                 }
                 // MAP_MOD to approximate with better precision
                 targetDirection = new MapLocation(0, 0).directionTo(new MapLocation((int) (Common.MAP_MOD * x), (int) (Common.MAP_MOD * y)));
-                if(x * x + y * y < 0.5) targetDirection = Direction.NONE;
+                if(x * x + y * y < 0.3) targetDirection = Direction.NONE;
                 // real distance, not squared distance
                 // if(dist > 5.5 || closest.type != RobotType.RANGEDZOMBIE && dist > 2.5)
                     // toMove = false;
@@ -279,7 +283,8 @@ class Target extends Model {
 
     boolean finish() throws GameActionException {
         if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) {
-            if(Common.rc.getInfectedTurns() > 0) {
+            // bc bug: dieing on last turn of infection does not spawn zombie
+            if(Common.rc.getInfectedTurns() > 1) {
                 System.out.println("Zombie Kamikaze!");
                 Signals.addSelfZombieKamikaze(Common.rc);
                 Common.rc.disintegrate();

@@ -47,6 +47,7 @@ class Signals {
     static MapLocation[] targets = new MapLocation[MAX_QUEUE];
     static int targetsSize = 0;
     static RobotInfo[] zombieLeads = new RobotInfo[Common.MAX_ID]; // queue
+    static int[] zombieLeadsTurn = new int[Common.MAX_ID]; // queue
     static int zombieLeadsSize = 0;
     static int zombieLeadsBegin = 0;
 
@@ -112,6 +113,18 @@ class Signals {
                 }
             }
         }
+        int round = rc.getRoundNum() - 5;
+        while(zombieLeadsBegin < zombieLeadsSize && zombieLeadsTurn[zombieLeadsBegin] < round) ++zombieLeadsBegin;
+        if(zombieLeadsSize > zombieLeads.length - 1000) {
+            RobotInfo[] infos = new RobotInfo[Common.MAX_ID];
+            int[] turns = new int[Common.MAX_ID];
+            System.arraycopy(zombieLeads, zombieLeadsBegin, infos, 0, zombieLeadsSize - zombieLeadsBegin);
+            System.arraycopy(zombieLeadsTurn, zombieLeadsBegin, turns, 0, zombieLeadsSize - zombieLeadsBegin);
+            zombieLeads = infos;
+            zombieLeadsTurn = turns;
+            zombieLeadsSize = zombieLeadsSize - zombieLeadsBegin;
+            zombieLeadsBegin = 0;
+        }
         return num;
     }
 
@@ -132,7 +145,8 @@ class Signals {
                 switch(s.getMessage()[0]) {
                     case 5:
                         RobotInfo robot = decompressSelfInfo(s.getID(), s.getLocation(), s.getMessage()[1]);
-                        zombieLeads[zombieLeadsSize++] = robot;
+                        zombieLeads[zombieLeadsSize] = robot;
+                        zombieLeadsTurn[zombieLeadsSize++] = Common.rc.getRoundNum();
                         break;
                     default:
                         break;
