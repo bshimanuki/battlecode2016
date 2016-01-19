@@ -484,7 +484,8 @@ class Common {
         MapLocation curLocation = rc.getLocation();
         RobotInfo closest = null;
         int dist = MAX_DIST; // to be replaced
-        for(RobotInfo info : infos) {
+        // exclude dens
+        for(RobotInfo info : infos) if(info.type != RobotType.ZOMBIEDEN) {
             int newdist = curLocation.distanceSquaredTo(info.location);
             if(newdist < dist) {
                 closest = info;

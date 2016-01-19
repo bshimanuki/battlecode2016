@@ -104,6 +104,7 @@ class Archon extends Model {
         final double POINTS_HOSTILE = -5;
         final double POINTS_HOSTILE_TURRET = -8;
         final double POINTS_HOSTILE_BIGZOMBIE = -8;
+        final double POINTS_HOSTILE_ZOMBIEDEN = -4;
         final double POINTS_PARTS = 0.05;
         final double PARTS_RUBBLE_THRESH = GameConstants.RUBBLE_OBSTRUCTION_THRESH;
         final double POINTS_NEUTRAL = 0.1; // per part cost
@@ -124,6 +125,9 @@ class Archon extends Model {
                     dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE_BIGZOMBIE;
                     dirPoints[DIR_NONE] += POINTS_HOSTILE_BIGZOMBIE / 4;
                 }
+            } else if(bad.type == RobotType.ZOMBIEDEN) {
+                dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE_ZOMBIEDEN;
+                dirPoints[DIR_NONE] += POINTS_HOSTILE_ZOMBIEDEN / 4;
             }
         }
         for(RobotInfo bad : rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam)) {
