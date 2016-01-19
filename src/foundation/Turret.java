@@ -6,6 +6,7 @@ class Turret extends Model {
 
     @Override
     public boolean runInner(RobotController rc) throws GameActionException {
+        if(rc.getType() == RobotType.TTM) rc.unpack();
         int myAttackRange = rc.getType().attackRadiusSquared;
         // If this robot type can attack, check for enemies within range and attack one
         if(rc.isWeaponReady()) {

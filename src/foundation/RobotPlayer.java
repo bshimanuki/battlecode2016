@@ -22,6 +22,7 @@ public class RobotPlayer {
                 robot = new Scout();
                 break;
             case TURRET:
+            case TTM:
                 robot = new Turret();
                 break;
             default:
