@@ -128,6 +128,11 @@ class SignalStrategy {
             if(Common.rc.getRoundNum() == Common.enrollment) {
                 readCommon();
                 Common.archonIds = archonIds;
+                int archonIdsSize = 1;
+                for(; archonIdsSize<4; ++archonIdsSize)
+                    if(archonIds[archonIdsSize] == 0)
+                        break;
+                Common.archonIdsSize = archonIdsSize;
                 // Common.enemyBase = dir;
                 // Common.myBase = dir.opposite();
             }

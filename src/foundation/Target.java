@@ -228,7 +228,7 @@ class Target extends Model {
         if(targetDirection == Direction.OMNI) return false;
         if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
             // consistent signal which gets spread out over many units
-            if((rc.getID() + rc.getRoundNum()) % 5 == 0) {
+            if((rc.getID() + rc.getRoundNum()) % Signals.ZOMBIE_SIGNAL_REFRESH == 0) {
                 Signals.addSelfZombieLead(rc);
             }
             RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
@@ -267,6 +267,28 @@ class Target extends Model {
         if(moveDirection == Direction.NONE) toMove = false;
         MapLocation toTargetLocation = curLocation.add(targetDirection);
         if(targetDirection.dx * moveDirection.dx + targetDirection.dy * moveDirection.dy < -Common.EPS) toMove = false;
+        if(toMove) {
+            Direction testDir = moveDirection.opposite();
+            int upper = moveDirection.isDiagonal() ? 5 : 3;
+            for(int j=0; j<upper; ++j) {
+                for(int k=0; k<j; ++k) {
+                    if(j % 2 == 0) testDir = testDir.rotateLeft();
+                    else testDir = testDir.rotateRight();
+                }
+                MapLocation testLoc = curLocation.add(testDir);
+                RobotInfo info = rc.senseRobotAtLocation(testLoc);
+                if(info != null && info.team == Team.ZOMBIE) {
+                    for(int i=0; i<Common.archonIdsSize; ++i) {
+                        if(rc.canSenseRobot(Common.archonIds[i])) {
+                            RobotInfo ainfo = Common.seenRobots[Common.archonIds[i]];
+                            if(testLoc.distanceSquaredTo(ainfo.location) <= 2) {
+                                toMove = false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
         double rubble = rc.senseRubble(toTargetLocation);
         switch(weights.get(TargetType.RUBBLE)) {
             case INACTIVE:

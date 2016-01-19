@@ -25,6 +25,7 @@ class Signals {
 
     final static int ZOMBIE_LEAD = 5;
     final static int ZOMBIE_KAMIKAZE = 6;
+    final static int ZOMBIE_SIGNAL_REFRESH = 5; // every 5 turns
 
     // for locations
     final static int SIG_NONE = 100;
@@ -113,7 +114,7 @@ class Signals {
                 }
             }
         }
-        int round = rc.getRoundNum() - 5;
+        int round = rc.getRoundNum() - Signals.ZOMBIE_SIGNAL_REFRESH;
         while(zombieLeadsBegin < zombieLeadsSize && zombieLeadsTurn[zombieLeadsBegin] < round) ++zombieLeadsBegin;
         if(zombieLeadsSize > zombieLeads.length - 1000) {
             RobotInfo[] infos = new RobotInfo[Common.MAX_ID];
