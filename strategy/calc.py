@@ -9,6 +9,9 @@ RUBBLE_SLOW_THRESH = 50
 def next_rubble(rubble):
     return max(0, rubble * (1 - RUBBLE_CLEAR_PERCENTAGE) - RUBBLE_CLEAR_FLAT_AMOUNT)
 
+def previous_rubble(rubble):
+    return (rubble + RUBBLE_CLEAR_FLAT_AMOUNT) / (1 - RUBBLE_CLEAR_PERCENTAGE)
+
 def clear(rubble, turns=1):
     for i in xrange(turns):
         rubble = next_rubble(rubble)
@@ -26,3 +29,8 @@ def until_pass(rubble):
 
 def until_fast(rubble):
     return clear_until(rubble, RUBBLE_SLOW_THRESH)
+
+def unclear(rubble, turns = 1):
+    for i in xrange(turns):
+        rubble = previous_rubble(rubble)
+    return rubble
