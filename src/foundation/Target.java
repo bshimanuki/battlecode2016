@@ -228,14 +228,31 @@ class Target extends Model {
         if(targetDirection == Direction.OMNI) return false;
         if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
             RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
+            double x = targetDirection.dx;
+            double y = targetDirection.dy;
+            if(targetDirection.isDiagonal()) {
+                x /= 2;
+                y /= 2;
+            }
             RobotInfo closest = Common.closestRobot(zombies);
             if(closest != null) {
-                double dist = (curLocation.x - closest.location.x) * targetDirection.dx + (curLocation.y - closest.location.y) * targetDirection.dy;
-                if(targetDirection.isDiagonal()) dist /= Common.sqrt[2];
+                double zx = closest.location.x - curLocation.x;
+                double zy = closest.location.y - curLocation.y;
+                double dist = Common.sqrt[curLocation.distanceSquaredTo(closest.location)];
+                double dist_factor = 0.5;
+                double distBuffer = closest.type == RobotType.RANGEDZOMBIE ? 2 : 1;
+                if(dist > distBuffer) {
+                    zx *= dist_factor * (dist - distBuffer) / dist;
+                    zy *= dist_factor * (dist - distBuffer) / dist;
+                    x += zx;
+                    y += zy;
+                }
+                // MAP_MOD to approximate with better precision
+                targetDirection = new MapLocation(0, 0).directionTo(new MapLocation((int) (Common.MAP_MOD * x), (int) (Common.MAP_MOD * y)));
+                if(x * x + y * y < 0.5) targetDirection = Direction.NONE;
                 // real distance, not squared distance
-                if(dist > 5.5 || closest.type != RobotType.RANGEDZOMBIE && dist > 2.5)
-                    toMove = false;
-                rc.setIndicatorString(1, closest.type + " " + dist);
+                // if(dist > 5.5 || closest.type != RobotType.RANGEDZOMBIE && dist > 2.5)
+                    // toMove = false;
             }
         }
         Direction moveDirection = Common.findPathDirection(rc, targetDirection);
