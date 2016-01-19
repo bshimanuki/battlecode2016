@@ -16,7 +16,8 @@ public class RobotPlayer {
         switch(robotType) {
             case ARCHON:
                 robot = new Archon();
-                Common.models.add(new Opening());
+                if(rc.getRoundNum() == 0)
+                    Common.models.add(new Opening());
                 break;
             case SCOUT:
                 robot = new Scout();

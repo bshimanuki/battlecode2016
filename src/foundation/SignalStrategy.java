@@ -67,7 +67,7 @@ class SignalStrategy {
             // initializing built robot
             value = ((long) first << 32) | (((long) second & -1L) >>> 32);
             value &= -1L >>> 4;
-            archonIds = new int[4];
+            archonIds = new int[Common.MAX_ARCHONS];
             // archonIds[0] is archon sending message
             archonIds[0] = sourceId;
             archonIds[1] = (int) (value % ID_MOD);

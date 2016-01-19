@@ -23,7 +23,7 @@ class Archon extends Model {
         if(rc.isCoreReady()) {
             RobotInfo[] neutrals = rc.senseNearbyRobots(2, Team.NEUTRAL);
             if(neutrals.length > 0) {
-                rc.activate(neutrals[0].location);
+                Common.activate(rc, neutrals[0].location, neutrals[0].type, LowStrategy.NONE);
                 return false;
             }
             if(fate < 200) {

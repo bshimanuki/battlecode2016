@@ -26,6 +26,7 @@ class Common {
     final static double EPS = 1e-2;
     final static double[] sqrt = new double[60]; // faster than Math.sqrt, cache for everything in sight
     final static int MAX_DIST = 2 * GameConstants.MAP_MAX_WIDTH * GameConstants.MAP_MAX_WIDTH;
+    final static int MAX_ARCHONS = 8;
 
     // Map vars
     static double[][] mapParts = new double[MAP_MOD][MAP_MOD];
@@ -59,7 +60,7 @@ class Common {
     static MapLocation[] knownLocations = new MapLocation[MAX_ID];
     static int[] typeSignals = new int[MAX_ID]; // way larger than necessary, but whatever
     static int typeSignalsSize = 0;
-    static int[] archonIds = new int[4];
+    static int[] archonIds = new int[MAX_ARCHONS];
     static int archonIdsSize = 0;
     static MapLocation[] myArchonHometowns;
     static MapLocation[] enemyArchonHometowns;
