@@ -92,6 +92,8 @@ class Archon extends Model {
         final double POINTS_NEUTRAL = 0.1; // per part cost
         final double POINTS_NEUTRAL_ARCHON = 300;
         final double POINTS_ZOMBIE_LEAD = -10;
+        final double POINTS_HISTORY = -5;
+        final double HISTORY_DECAY = 0.75;
         final int MAP_MOD = Common.MAP_MOD;
         final double sqrt[] = Common.sqrt;
         final double mapParts[][] = Common.mapParts;
@@ -133,6 +135,16 @@ class Archon extends Model {
             if(rubble > 5*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -4;
             if(rubble > 10*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -8;
             if(rubble > 100*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -12;
+        }
+        double hpoints = POINTS_HISTORY;
+        for(int i=1; i<=Common.HISTORY_SIZE; ++i) {
+            int index = Common.historySize - i;
+            if(index < 0) break;
+            MapLocation hloc = Common.history[index];
+            Direction dir = loc.directionTo(hloc);
+            if(dir == Direction.OMNI) dir = Direction.NONE;
+            dirPoints[dir.ordinal()] += hpoints;
+            hpoints *= HISTORY_DECAY;
         }
         for(int i=Signals.zombieLeadsBegin; i<Signals.zombieLeadsSize; ++i) {
             RobotInfo lead = Signals.zombieLeads[i];

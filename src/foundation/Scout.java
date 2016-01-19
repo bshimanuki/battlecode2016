@@ -5,6 +5,7 @@ import battlecode.common.*;
 class Scout extends Model {
 
     final static int ZOMBIE_ACCEPT_RADIUS = 35;
+    static Direction last;
 
     Target target;
 
@@ -84,8 +85,15 @@ class Scout extends Model {
         if(target != null) {
             if(target.run(rc)) target = null;
         } else {
-            Direction dir = Common.DIRECTIONS[Common.rand.nextInt(8)];
-            if(rc.isCoreReady() && rc.canMove(dir)) Common.move(rc, dir);
+            int rand = Common.rand.nextInt(9);
+            Direction dir;
+            if(rand == 8 && last != null) dir = last;
+            else dir = Common.DIRECTIONS[rand];
+            dir = Common.findPathDirection(rc, dir);
+            if(rc.isCoreReady() && rc.canMove(dir)) {
+                Common.move(rc, dir);
+                last = dir;
+            }
         }
         return false;
     }
