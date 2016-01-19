@@ -111,10 +111,11 @@ class Archon extends Model {
             }
         }
         for(RobotInfo good : rc.senseNearbyRobots(Common.sightRadius, Team.NEUTRAL)) {
+            double dist = sqrt[loc.distanceSquaredTo(good.location)];
             if(good.type == RobotType.ARCHON) {
-                dirPoints[loc.directionTo(good.location).ordinal()] += POINTS_NEUTRAL_ARCHON;
+                dirPoints[loc.directionTo(good.location).ordinal()] += POINTS_NEUTRAL_ARCHON / dist;
             } else {
-                dirPoints[loc.directionTo(good.location).ordinal()] += POINTS_NEUTRAL * good.type.partCost;
+                dirPoints[loc.directionTo(good.location).ordinal()] += POINTS_NEUTRAL * good.type.partCost / dist;
             }
         }
         for(MapLocation ploc : rc.sensePartLocations(Common.sightRadius)) {
@@ -122,6 +123,16 @@ class Archon extends Model {
                 double dist = sqrt[loc.distanceSquaredTo(ploc)];
                 dirPoints[loc.directionTo(ploc).ordinal()] += POINTS_PARTS * mapParts[ploc.x%MAP_MOD][ploc.y%MAP_MOD] / dist;
             }
+        }
+        for(int i=0; i<8; ++i) {
+            Direction dir = Common.DIRECTIONS[i];
+            double rubble = Common.mapRubble[(loc.x + dir.dx) % Common.MAP_MOD][(loc.y + dir.dy) % Common.MAP_MOD];
+            if(rubble > GameConstants.RUBBLE_SLOW_THRESH) dirPoints[dir.ordinal()] += -.5;
+            if(rubble > GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -2;
+            if(rubble > 2*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -2;
+            if(rubble > 5*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -4;
+            if(rubble > 10*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -8;
+            if(rubble > 100*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -12;
         }
         for(int i=Signals.zombieLeadsBegin; i<Signals.zombieLeadsSize; ++i) {
             RobotInfo lead = Signals.zombieLeads[i];
