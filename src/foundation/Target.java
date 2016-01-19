@@ -89,6 +89,7 @@ class Target extends Model {
         this.loc = loc;
     }
     private Target(TargetType targetType) {
+        if(targetType == null) targetType = TargetType.MOVE; // default
         switch(targetType) {
             case ZOMBIE_LEAD:
                 weights = new EnumMap<>(defaultZombieLeadWeights);
@@ -232,36 +233,53 @@ class Target extends Model {
                 Signals.addSelfZombieLead(rc);
             }
             RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
+            boolean underAttack = Common.underAttack(zombies, curLocation);
             double x = targetDirection.dx;
             double y = targetDirection.dy;
             if(targetDirection.isDiagonal()) {
                 x /= 2;
                 y /= 2;
             }
-            RobotInfo closest = Common.closestRobot(zombies);
-            if(closest != null) {
-                double zx = closest.location.x - curLocation.x;
-                double zy = closest.location.y - curLocation.y;
-                double dist = Common.sqrt[curLocation.distanceSquaredTo(closest.location)];
-                double dist_factor = 0.5;
-                double distBuffer = closest.type == RobotType.RANGEDZOMBIE ? 2 : 0.5;
-                if(dist > distBuffer) {
-                    zx *= dist_factor * (dist - distBuffer) / dist;
-                    zy *= dist_factor * (dist - distBuffer) / dist;
-                    x += zx;
-                    y += zy;
+            RobotInfo[] closests = {Common.closestRobot(zombies), Common.closestRangedRobot(zombies)};
+            double dot = -Common.MAX_DIST;
+            double dx = 0;
+            double dy = 0;
+            for(RobotInfo closest : closests) {
+                if(closest != null) {
+                    double tx = x;
+                    double ty = y;
+                    double zx = closest.location.x - curLocation.x;
+                    double zy = closest.location.y - curLocation.y;
+                    double dist = Common.sqrt[curLocation.distanceSquaredTo(closest.location)];
+                    double dist_factor = 0.5;
+                    double distBuffer = closest.type == RobotType.RANGEDZOMBIE ? 2 : 0.5;
+                    if(dist > distBuffer) {
+                        zx *= dist_factor * (dist - distBuffer) / dist;
+                        zy *= dist_factor * (dist - distBuffer) / dist;
+                        tx += zx;
+                        ty += zy;
+                    }
+                    double tdot = x * tx + y * ty;
+                    if(tdot > dot) {
+                        dx = tx;
+                        dy = ty;
+                        dot = tdot;
+                    }
                 }
-                RobotInfo[] allies = rc.senseNearbyRobots(curLocation.add(targetDirection.opposite()), 2, Common.myTeam);
-                boolean crowded = allies.length >= 3;
-                if(!crowded) {
-                    // MAP_MOD to approximate with better precision
-                    targetDirection = new MapLocation(0, 0).directionTo(new MapLocation((int) (Common.MAP_MOD * x), (int) (Common.MAP_MOD * y)));
-                    if(x * x + y * y < 0.3) targetDirection = Direction.NONE;
-                }
-                // real distance, not squared distance
-                // if(dist > 5.5 || closest.type != RobotType.RANGEDZOMBIE && dist > 2.5)
-                    // toMove = false;
             }
+            RobotInfo[] allies = rc.senseNearbyRobots(curLocation.add(targetDirection.opposite()), 2, Common.myTeam);
+            boolean crowded = allies.length >= 3;
+            if(!crowded && !underAttack) {
+                // MAP_MOD to approximate with better precision
+                Direction nextDirection = new MapLocation(0, 0).directionTo(new MapLocation((int) (Common.MAP_MOD * dx), (int) (Common.MAP_MOD * dy)));
+                if(dx * dx + dy * dy < 0.3) nextDirection = Direction.NONE;
+                if(!Common.underAttack(zombies, curLocation.add(nextDirection)))
+                    targetDirection = nextDirection;
+                rc.setIndicatorString(1, String.format("%f %f %f", dx*dx+dy*dy, dx, dy));
+            }
+            // real distance, not squared distance
+            // if(dist > 5.5 || closest.type != RobotType.RANGEDZOMBIE && dist > 2.5)
+            // toMove = false;
         }
         Direction moveDirection = Common.findPathDirection(rc, targetDirection);
         if(moveDirection == Direction.NONE) toMove = false;
@@ -293,7 +311,12 @@ class Target extends Model {
         switch(weights.get(TargetType.RUBBLE)) {
             case INACTIVE:
                 if(toMove) Common.move(rc, moveDirection);
-                else if(rubble > 0) rc.clearRubble(targetDirection);
+                else if(rubble > 0) {
+                    if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
+
+                    }
+                    rc.clearRubble(targetDirection);
+                }
                 break;
             case ACTIVE:
                 if(rubble >= GameConstants.RUBBLE_SLOW_THRESH) rc.clearRubble(targetDirection);

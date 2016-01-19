@@ -480,15 +480,30 @@ class Common {
     }
 
     static RobotInfo closestRobot(RobotInfo[] infos) {
-        if(infos.length == 0) return null;
         MapLocation curLocation = rc.getLocation();
-        RobotInfo closest = infos[0];
+        RobotInfo closest = null;
         int dist = MAX_DIST; // to be replaced
         for(RobotInfo info : infos) {
             int newdist = curLocation.distanceSquaredTo(info.location);
             if(newdist < dist) {
                 closest = info;
                 dist = newdist;
+            }
+        }
+        return closest;
+    }
+
+    static RobotInfo closestRangedRobot(RobotInfo[] infos) {
+        MapLocation curLocation = rc.getLocation();
+        RobotInfo closest = null;
+        int dist = MAX_DIST; // to be replaced
+        for(RobotInfo info : infos) {
+            if(info.type.attackRadiusSquared >= 13) {
+                int newdist = curLocation.distanceSquaredTo(info.location);
+                if(newdist < dist) {
+                    closest = info;
+                    dist = newdist;
+                }
             }
         }
         return closest;
@@ -521,6 +536,15 @@ class Common {
             }
         }
         return hometown;
+    }
+
+    static boolean underAttack(RobotInfo[] robots, MapLocation loc) {
+        for(RobotInfo robot : robots) {
+            if(loc.distanceSquaredTo(robot.location) <= robot.type.attackRadiusSquared) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
