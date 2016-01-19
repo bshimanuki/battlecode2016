@@ -9,12 +9,6 @@ class Soldier extends Model {
         int myAttackRange = rc.getType().attackRadiusSquared;
         int fate = Common.rand.nextInt(1000);
 
-        if(fate % 5 == 3) {
-            // Send a normal signal
-            rc.broadcastSignal(80);
-            ++Common.sent;
-        }
-
         boolean shouldAttack = false;
 
         // If this robot type can attack, check for enemies within range and attack one

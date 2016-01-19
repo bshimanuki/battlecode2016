@@ -45,18 +45,18 @@ class Archon extends Model {
                 if(move(rc)) return false;
             }
 
-            if(fate < 800) {
+            if(fate < Math.max(400, 800 - rc.getTeamParts())) {
                 if(target != null) {
-                    rc.setIndicatorString(1, "Targeting " + target.loc);
+                    // rc.setIndicatorString(1, "Targeting " + target.loc);
                     if(target.run(rc)) target = null;
                     return false;
                 }
                 if(base != null && rc.getLocation().distanceSquaredTo(base.loc) >= Common.sightRadius) {
-                    rc.setIndicatorString(1, "Targeting base at " + base.loc);
+                    // rc.setIndicatorString(1, "Targeting base at " + base.loc);
                     base.run(rc);
                     return false;
                 }
-                rc.setIndicatorString(1, "Running fate");
+                // rc.setIndicatorString(1, "Running fate");
                 // Check the rubble in that direction
                 if(rc.senseRubble(rc.getLocation().add(moveDir)) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
                     // Too much rubble, so I should clear it
@@ -100,9 +100,10 @@ class Archon extends Model {
     }
 
     static void computeMove(RobotController rc) throws GameActionException {
-        final int HOSTILE_RADIUS = 13;
+        final int HOSTILE_RADIUS = 24;
         final double POINTS_HOSTILE = -5;
         final double POINTS_HOSTILE_TURRET = -8;
+        final double POINTS_HOSTILE_BIGZOMBIE = -8;
         final double POINTS_PARTS = 0.05;
         final double PARTS_RUBBLE_THRESH = GameConstants.RUBBLE_OBSTRUCTION_THRESH;
         final double POINTS_NEUTRAL = 0.1; // per part cost
@@ -119,6 +120,10 @@ class Archon extends Model {
             if(bad.type.attackPower > 0) {
                 dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE;
                 dirPoints[DIR_NONE] += POINTS_HOSTILE / 4;
+                if(bad.type == RobotType.BIGZOMBIE) {
+                    dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE_BIGZOMBIE;
+                    dirPoints[DIR_NONE] += POINTS_HOSTILE_BIGZOMBIE / 4;
+                }
             }
         }
         for(RobotInfo bad : rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam)) {

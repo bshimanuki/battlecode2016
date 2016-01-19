@@ -133,7 +133,7 @@ class Target extends Model {
 
         if(id != ID_NONE && loc == null) {
             // should not get here
-            System.out.println(String.format("Robot %d not found when targeting", id));
+            // System.out.println(String.format("Robot %d not found when targeting", id));
             loc = curLocation;
         }
 
@@ -231,7 +231,7 @@ class Target extends Model {
         if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
             // consistent signal which gets spread out over many units
             if((rc.getID() + rc.getRoundNum()) % Signals.ZOMBIE_SIGNAL_REFRESH == 0) {
-                Signals.addSelfZombieLead(rc);
+                Signals.addSelfZombieLead(rc, targetDirection);
             }
             RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
             boolean underAttack = Common.underAttack(zombies, curLocation);
@@ -276,6 +276,25 @@ class Target extends Model {
                 if(dx * dx + dy * dy < 0.3) nextDirection = Direction.NONE;
                 if(!Common.underAttack(zombies, curLocation.add(nextDirection)))
                     targetDirection = nextDirection;
+            } else if(underAttack) {
+                Direction nextDirection = targetDirection;
+                int rand = Common.rand.nextInt(2);
+                double hit = Common.MAX_ID;
+                Direction bestDirection = null;
+                for(int i=0; i<3; ++i) {
+                    for(int j=0; j<i; ++j) {
+                        if((rand + i) % 2 == 0) nextDirection = nextDirection.rotateLeft();
+                        else nextDirection = nextDirection.rotateRight();
+                    }
+                    double newHit = Common.amountAttack(zombies, curLocation.add(nextDirection));
+                    if(nextDirection == curLocation.directionTo(new MapLocation(Common.twiceCenterX/2, Common.twiceCenterY/2)))
+                        newHit += 5;
+                    if(newHit < hit) {
+                        bestDirection = nextDirection;
+                        hit = newHit;
+                    }
+                }
+                targetDirection = bestDirection;
             }
             // real distance, not squared distance
             // if(dist > 5.5 || closest.type != RobotType.RANGEDZOMBIE && dist > 2.5)
@@ -332,7 +351,7 @@ class Target extends Model {
 
     boolean finish() throws GameActionException {
         if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) {
-            return Common.kamikaze(Common.rc);
+            return Common.kamikaze(Common.rc, dir);
         } else if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.PRIORITY) >= 0) {
             weights.put(TargetType.ZOMBIE_LEAD, TargetType.Level.INACTIVE);
             weights.put(TargetType.ZOMBIE_KAMIKAZE, TargetType.Level.ACTIVE);

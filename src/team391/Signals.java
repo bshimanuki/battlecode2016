@@ -49,6 +49,7 @@ class Signals {
     static int targetsSize = 0;
     static RobotInfo[] zombieLeads = new RobotInfo[Common.MAX_ID]; // queue
     static int[] zombieLeadsTurn = new int[Common.MAX_ID]; // queue
+    static Direction[] zombieLeadsDir = new Direction[Common.MAX_ID]; // queue
     static int zombieLeadsSize = 0;
     static int zombieLeadsBegin = 0;
 
@@ -83,7 +84,7 @@ class Signals {
         Team myTeam = Common.myTeam;
         enemiesSize = 0; // clear enemies queue
         targetsSize = 0; // clear targets queue
-        boolean scanAll = num < 200;
+        boolean scanAll = num < 50;
         // for(int i=num; --i >= 0;) {
         if(rc.getRoundNum() < Common.MIN_BUILD_TIME) {
             for(int i=0; i<num; ++i) {
@@ -144,10 +145,15 @@ class Signals {
                 new SignalStrategy(first, second, s.getID()).read();
             } else {
                 switch(s.getMessage()[0]) {
-                    case 5:
-                        RobotInfo robot = decompressSelfInfo(s.getID(), s.getLocation(), s.getMessage()[1]);
-                        zombieLeads[zombieLeadsSize] = robot;
-                        zombieLeadsTurn[zombieLeadsSize++] = Common.rc.getRoundNum();
+                    case ZOMBIE_LEAD:
+                        SignalSelf sig = new SignalSelf(s.getID(), s.getLocation(), s.getMessage()[1]);
+                        zombieLeads[zombieLeadsSize] = sig.info;
+                        zombieLeadsTurn[zombieLeadsSize] = Common.rc.getRoundNum();
+                        zombieLeadsDir[zombieLeadsSize++] = sig.dir;
+                        // Common.rc.setIndicatorString(1, sig.info + " " + sig.dir);
+                        break;
+                    case ZOMBIE_KAMIKAZE:
+                        // TODO: handle
                         break;
                     default:
                         break;
@@ -232,12 +238,12 @@ class Signals {
         else halfSignals[halfSignalsSize++] = BUFFER;
     }
 
-    static void addSelfZombieLead(RobotController rc) throws GameActionException {
-        new Signals(ZOMBIE_LEAD, compressSelfInfo(rc.senseRobot(rc.getID()))).add();
+    static void addSelfZombieLead(RobotController rc, Direction dir) throws GameActionException {
+        new Signals(ZOMBIE_LEAD, new SignalSelf(rc.senseRobot(rc.getID()), dir).toInt()).add();
     }
-    static void addSelfZombieKamikaze(RobotController rc) throws GameActionException {
+    static void addSelfZombieKamikaze(RobotController rc, Direction dir) throws GameActionException {
         // destruction is assumed, so don't worry about coreDelay
-        new Signals(ZOMBIE_KAMIKAZE, compressSelfInfo(rc.senseRobot(rc.getID())), Common.MAX_DIST).add();
+        new Signals(ZOMBIE_KAMIKAZE, new SignalSelf(rc.senseRobot(rc.getID()), dir).toInt(), Common.MAX_DIST).add();
     }
 
     static int reduceCoordinate(int x) {
@@ -279,44 +285,6 @@ class Signals {
             else if(x > xMid + Common.MAP_MOD / 2) x -= Common.MAP_MOD;
         }
         return x;
-    }
-
-    /**
-     * Give type and health info of self. Loses double precision on health.
-     * @param info
-     * @return int for use in signal
-     */
-    static int compressSelfInfo(RobotInfo info) {
-        int value = (int) info.health;
-        value *= SignalUnit.TYPE_MOD;
-        value += SignalUnit.typeSignal.get(info.type);
-        value *= RobotType.STANDARDZOMBIE.infectTurns + 1;
-        value += info.zombieInfectedTurns;
-        value *= RobotType.VIPER.infectTurns + 1;
-        value += info.viperInfectedTurns;
-        return value;
-    }
-
-    static RobotInfo decompressSelfInfo(int id, MapLocation loc, int value) {
-        int viper = value % RobotType.VIPER.infectTurns + 1;
-        value /= RobotType.VIPER.infectTurns + 1;
-        int zombie = value % RobotType.STANDARDZOMBIE.infectTurns + 1;
-        value /= RobotType.STANDARDZOMBIE.infectTurns + 1;
-        RobotType type = SignalUnit.normalTypes[value % SignalUnit.TYPE_MOD];
-        value /= SignalUnit.TYPE_MOD;
-        double health = value;
-        return new RobotInfo(
-                id,
-                Common.myTeam,
-                type,
-                loc,
-                0, // coreDelay
-                0, // weaponDelay
-                type.attackPower,
-                health,
-                type.maxHealth,
-                zombie,
-                viper);
     }
 
 }

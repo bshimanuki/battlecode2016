@@ -226,7 +226,7 @@ class Common {
             if(sendBoundariesHigh) Signals.addBoundsHigh(rc);
         }
         sent += Signals.sendQueue(rc, sendRadius);
-        rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d", sent, read, xMin, yMin, xMax, yMax));
+        // rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d", sent, read, xMin, yMin, xMax, yMax));
     }
 
     static void updateMap(RobotController rc) throws GameActionException {
@@ -270,6 +270,7 @@ class Common {
      * @return true if attacked
      */
     static boolean attack(RobotController rc, RobotInfo[] infos) throws GameActionException {
+        if(Common.robotType == RobotType.VIPER) return Viper.attack(rc, infos);
         // TODO: better selection
         for(RobotInfo info : infos) {
             if(rc.canAttackLocation(info.location)) {
@@ -357,7 +358,7 @@ class Common {
     }
     static void build(RobotController rc, Direction dir, RobotType robotType, LowStrategy lowStrategy, Target.TargetType targetType, MapLocation targetLocation) throws GameActionException {
         buildCommon(rc, dir, robotType);
-        int round = rc.getRoundNum() + robotType.buildTurns;
+        int round = rc.getRoundNum() + robotType.buildTurns - 1;
         Signals.buildStrategy[round] = new SignalStrategy(Common.highStrategy, lowStrategy, targetType, Common.archonIds);
         Signals.buildTarget[round] = targetLocation;
     }
@@ -547,6 +548,16 @@ class Common {
         return false;
     }
 
+    static double amountAttack(RobotInfo[] robots, MapLocation loc) {
+        double hit = 0;
+        for(RobotInfo robot : robots) {
+            if(loc.distanceSquaredTo(robot.location) <= robot.type.attackRadiusSquared) {
+                hit += robot.attackPower;
+            }
+        }
+        return hit;
+    }
+
     /**
      * If robotType is null, compute where to move. Else compute where to build.
      * @param rc
@@ -576,16 +587,16 @@ class Common {
         return findPathDirection(rc, dir, null);
     }
 
-    static boolean kamikaze(RobotController rc) throws GameActionException {
+    static boolean kamikaze(RobotController rc, Direction dir) throws GameActionException {
         // bc bug: dieing on last turn of infection does not spawn zombie
         if(Common.rc.getInfectedTurns() > 1) {
-            System.out.println("Zombie Kamikaze!");
-            Signals.addSelfZombieKamikaze(Common.rc);
+            // System.out.println("Zombie Kamikaze!");
+            Signals.addSelfZombieKamikaze(Common.rc, dir);
             Common.rc.disintegrate();
             return true;
         }
         else {
-            System.out.println("Zombie Kamikaze FAILED");
+            // System.out.println("Zombie Kamikaze FAILED");
             return false;
         }
     }

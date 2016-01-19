@@ -71,7 +71,7 @@ class Scout extends Model {
                 for(boolean c : notClosest) if(!c) closest = true;
                 if(closest) {
                     target = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase);
-                    Signals.addSelfZombieLead(rc);
+                    Signals.addSelfZombieLead(rc, target.dir);
                 }
             }
         } else {
@@ -86,7 +86,7 @@ class Scout extends Model {
                 for(int i=0; i<Common.archonIdsSize; ++i)
                     if(rc.canSenseRobot(Common.archonIds[i])) kamikaze = false;
                 if(kamikaze) {
-                    Common.kamikaze(rc);
+                    Common.kamikaze(rc, target.dir);
                 } else {
                     target = null;
                 }
