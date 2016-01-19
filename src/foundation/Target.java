@@ -230,9 +230,12 @@ class Target extends Model {
             RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
             RobotInfo closest = Common.closestRobot(zombies);
             if(closest != null) {
-                int dist = (curLocation.x - closest.location.x) * targetDirection.dx + (curLocation.y - closest.location.y) * targetDirection.dy;
-                if(dist > 13 || closest.type != RobotType.RANGEDZOMBIE && dist > 5)
+                double dist = (curLocation.x - closest.location.x) * targetDirection.dx + (curLocation.y - closest.location.y) * targetDirection.dy;
+                if(targetDirection.isDiagonal()) dist /= Common.sqrt[2];
+                // real distance, not squared distance
+                if(dist > 5.5 || closest.type != RobotType.RANGEDZOMBIE && dist > 2.5)
                     toMove = false;
+                rc.setIndicatorString(1, closest.type + " " + dist);
             }
         }
         Direction moveDirection = Common.findPathDirection(rc, targetDirection);
@@ -258,7 +261,6 @@ class Target extends Model {
     }
 
     boolean finish() throws GameActionException {
-        Common.rc.setIndicatorString(1, Common.rc.getRoundNum() + " " + "finish");
         if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) {
             if(Common.rc.getInfectedTurns() > 0) {
                 System.out.println("Zombie Kamikaze!");
