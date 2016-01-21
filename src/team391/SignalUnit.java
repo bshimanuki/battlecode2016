@@ -49,6 +49,9 @@ class SignalUnit {
     //   assuming less than 1600 neutral and zombies
     final static int ID_MOD = 4096;
 
+    static int[] broadcastTurn = new int[ID_MOD]; // full map broadcasts
+
+
     Team team;
     RobotType robotType;
     int id;
@@ -102,11 +105,12 @@ class SignalUnit {
 
     void add() {
         Signals.halfSignals[Signals.halfSignalsSize++] = toInt();
-        if(!loc.equals(Common.MAP_EMPTY)) Signals.broadcastTurn[id%Common.MAX_ID] = Common.rc.getRoundNum();
+        if(!loc.equals(Common.MAP_EMPTY)) broadcastTurn[id] = Common.rc.getRoundNum();
     }
 
     void read() throws GameActionException {
         Common.addInfo(id, team, robotType, loc);
+        if(!loc.equals(Common.MAP_EMPTY)) broadcastTurn[id] = Common.rc.getRoundNum();
     }
 
     @Override

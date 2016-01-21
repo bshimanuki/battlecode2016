@@ -37,6 +37,8 @@ class Signals {
     static int fullSignalsSize = 0;
     static int[] halfSignals = new int[MAX_QUEUE];
     static int halfSignalsSize = 0;
+    static int[] halfSignalsFull = new int[MAX_QUEUE];
+    static int halfSignalsFullSize = 0;
     static SignalLocation[] locs = new SignalLocation[MAX_QUEUE];
     static int locsSize = 0;
     static int maxMessages; // reset to GameConstants.MESSAGE_SIGNALS_PER_TURN each turn
@@ -50,8 +52,6 @@ class Signals {
     static int targetsSize = 0;
 
     // Statuses
-    static int[] broadcastTurn = new int[Common.MAX_ID];
-
     static RobotInfo[] zombieLeads = new RobotInfo[Common.MAX_ID]; // queue
     static int[] zombieLeadsTurn = new int[Common.MAX_ID]; // queue
     static Direction[] zombieLeadsDir = new Direction[Common.MAX_ID]; // queue
@@ -202,18 +202,36 @@ class Signals {
      * @throws GameActionException
      */
     static int sendQueue(RobotController rc, int radius) throws GameActionException {
+        MapLocation loc = rc.getLocation();
+        int knownX = Common.MAP_MOD;
+        int knownY = Common.MAP_MOD;
+        if(Common.xMin != Common.MAP_NONE && Common.xMax != Common.MAP_NONE) {
+            knownX = Math.min(Common.xMax - loc.x, loc.x - Common.xMin);
+        }
+        if(Common.yMin != Common.MAP_NONE && Common.yMax != Common.MAP_NONE) {
+            knownY = Math.min(Common.yMax - loc.y, loc.y - Common.yMin);
+        }
+        int maxRadius = knownX * knownX + knownY * knownY;
         int round = rc.getRoundNum();
         if(locsSize % 2 == 1) locs[locsSize++] = new SignalLocation();
         int size = locsSize;
         for(int i=0; i<size; i+=2)
             new SignalLocations(locs[i], locs[i+1]).add();
         locsSize = 0; // clear locs queue
+        if(halfSignalsFullSize % 2 == 1) {
+            if(halfSignalsSize == 0) addRandomType(rc);
+            halfSignalsFull[halfSignalsFullSize++] = halfSignals[--halfSignalsSize];
+        }
         if(halfSignalsSize % 2 == 1) addRandomType(rc);
         fullSignalsSize = Math.min(fullSignalsSize, maxMessages);
-        size = Math.min(halfSignalsSize, 2*(maxMessages - Common.sent - fullSignalsSize));
+        size = Math.min(halfSignalsFullSize, 2*(maxMessages - Common.sent - fullSignalsSize));
+        for(int i=0; i<size; i+=2)
+            rc.broadcastMessageSignal(halfSignalsFull[i], halfSignalsFull[i+1], maxRadius);
+        size = Math.min(halfSignalsSize, 2*(maxMessages - Common.sent - fullSignalsSize - size/2));
         for(int i=0; i<size; i+=2)
             rc.broadcastMessageSignal(halfSignals[i], halfSignals[i+1], radius);
         halfSignalsSize = 0; // clear halfSignals queue
+        halfSignalsFullSize = 0; // clear halfSignals queue
         size /= 2;
         for(int i=0; i<fullSignalsSize; ++i) {
             fullSignals[i].send(rc);
