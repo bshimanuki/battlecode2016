@@ -52,6 +52,8 @@ class Signals {
     static Direction[] zombieLeadsDir = new Direction[Common.MAX_ID]; // queue
     static int zombieLeadsSize = 0;
     static int zombieLeadsBegin = 0;
+    static int[] status = new int[Common.MAX_ID];
+    static int[] statusTurn = new int[Common.MAX_ID];
 
     // Instance vars
     int first, second, radius;
@@ -116,7 +118,14 @@ class Signals {
             }
         }
         int round = rc.getRoundNum() - Signals.ZOMBIE_SIGNAL_REFRESH;
-        while(zombieLeadsBegin < zombieLeadsSize && zombieLeadsTurn[zombieLeadsBegin] < round) ++zombieLeadsBegin;
+        while(zombieLeadsBegin < zombieLeadsSize && zombieLeadsTurn[zombieLeadsBegin] < round) {
+            int idMod = zombieLeads[zombieLeadsBegin].ID % Common.MAX_ID;
+            if(statusTurn[idMod] < round) {
+                status[idMod] = 0;
+                statusTurn[idMod] = rc.getRoundNum();
+            }
+            ++zombieLeadsBegin;
+        }
         if(zombieLeadsSize > zombieLeads.length - 1000) {
             RobotInfo[] infos = new RobotInfo[Common.MAX_ID];
             int[] turns = new int[Common.MAX_ID];
@@ -144,13 +153,16 @@ class Signals {
             } else if(first >>> CONTROL_SHIFT_STRATEGY != 0) {
                 new SignalStrategy(first, second, s.getID()).read();
             } else {
+                int idMod = s.getID()%Common.MAX_ID;
+                status[idMod] = s.getMessage()[0];
+                statusTurn[idMod] = Common.rc.getRoundNum();
                 switch(s.getMessage()[0]) {
                     case ZOMBIE_LEAD:
                         SignalSelf sig = new SignalSelf(s.getID(), s.getLocation(), s.getMessage()[1]);
                         zombieLeads[zombieLeadsSize] = sig.info;
                         zombieLeadsTurn[zombieLeadsSize] = Common.rc.getRoundNum();
                         zombieLeadsDir[zombieLeadsSize++] = sig.dir;
-                        Common.rc.setIndicatorString(1, sig.info + " " + sig.dir);
+                        // Common.rc.setIndicatorString(1, sig.info + " " + sig.dir);
                         break;
                     case ZOMBIE_KAMIKAZE:
                         // TODO: handle

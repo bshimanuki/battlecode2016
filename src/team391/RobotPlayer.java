@@ -47,7 +47,7 @@ public class RobotPlayer {
                 Common.runBefore(rc);
 
                 if(Common.models.getFirst().run(rc)) {
-                    // if(!(Common.models.getFirst() instanceof Target)) System.out.println("Finished " + Common.models.getFirst());
+                    if(!(Common.models.getFirst() instanceof Target)) System.out.println("Finished " + Common.models.getFirst());
                     Common.models.removeFirst();
                 }
                 // robot.run(rc);

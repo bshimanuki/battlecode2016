@@ -108,9 +108,24 @@ class Target extends Model {
      */
     @Override
     public boolean runInner(RobotController rc) throws GameActionException {
-        // TODO : improve(?) sense if target destroyed
+        // TODO: improve(?) sense if target destroyed
         // TODO: TURRET movement
+        // TODO: aggregate robot sensing calls and loops
         MapLocation curLocation = rc.getLocation();
+
+        if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) {
+            RobotInfo[] enemies = rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam);
+            RobotInfo archon = Common.closestArchon(enemies);
+            RobotInfo closest = Common.closestRobot(enemies);
+            if(archon != null) {
+                id = archon.ID;
+                weights.put(TargetType.MOVE, TargetType.Level.ACTIVE);
+            } else if(closest != null) {
+                id = closest.ID;
+                weights.put(TargetType.MOVE, TargetType.Level.ACTIVE);
+            }
+        }
+
         if(id != ID_NONE) {
             if(rc.canSenseRobot(id)) {
                 targetInfo = rc.senseRobot(id);
@@ -133,8 +148,16 @@ class Target extends Model {
 
         if(id != ID_NONE && loc == null) {
             // should not get here
-            // System.out.println(String.format("Robot %d not found when targeting", id));
+            System.out.println(String.format("Robot %d not found when targeting", id));
             loc = curLocation;
+        }
+
+        Direction targetDirection = loc != null ? rc.getLocation().directionTo(loc) : dir;
+        if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0 || weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) {
+            // consistent signal which gets spread out over many units
+            if((rc.getID() + rc.getRoundNum()) % Signals.ZOMBIE_SIGNAL_REFRESH == 0) {
+                Signals.addSelfZombieLead(rc, targetDirection);
+            }
         }
 
         if(weights.get(TargetType.ATTACK) == TargetType.Level.PRIORITY)
@@ -146,12 +169,14 @@ class Target extends Model {
                 else move(rc, closestZombie == null ? loc : closestZombie.location);
             } else {
                 move(rc, loc);
+                boolean atTarget = loc != null && rc.getLocation().distanceSquaredTo(loc) <= 2;
+                if(atTarget) return finish();
                 if(rc.isCoreReady()) {
                     RobotInfo closestZombie = Common.closestRobot(rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE));
                     if(closestZombie != null && curLocation.distanceSquaredTo(closestZombie.location) <= 2)
                         return finish();
-                    if(rc.getInfectedTurns() < 3) return finish();
                 }
+                if(rc.getInfectedTurns() < 3) return finish();
             }
         } else {
             move(rc, loc);
@@ -186,7 +211,15 @@ class Target extends Model {
             }
         }
         if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
-            if(rc.senseNearbyRobots(13, Common.enemyTeam).length > 1) {
+            RobotInfo[] allies = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
+            RobotInfo[] enemies = rc.senseNearbyRobots(13, Common.enemyTeam);
+            RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
+            boolean aroundEnemies = enemies.length > 1 || enemies.length == 1 && enemies[0].type == RobotType.ARCHON;
+            RobotInfo closestEnemy = Common.closestRobot(enemies);
+            RobotInfo closestAlly = Common.closestNonKamikaze(allies);
+            RobotInfo closestArchon = Common.closestArchon(allies);
+            boolean closerToEnemies = closestEnemy != null && (closestAlly == null || curLocation.distanceSquaredTo(closestEnemy.location) < curLocation.distanceSquaredTo(closestAlly.location));
+            if(aroundEnemies && closerToEnemies && closestArchon == null && zombies.length > 0) {
                 weights.put(TargetType.ZOMBIE_LEAD, TargetType.Level.INACTIVE);
                 weights.put(TargetType.ZOMBIE_KAMIKAZE, TargetType.Level.ACTIVE);
             }
@@ -229,10 +262,6 @@ class Target extends Model {
         Direction targetDirection = loc != null ? rc.getLocation().directionTo(loc) : dir;
         if(targetDirection == Direction.OMNI) return false;
         if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
-            // consistent signal which gets spread out over many units
-            if((rc.getID() + rc.getRoundNum()) % Signals.ZOMBIE_SIGNAL_REFRESH == 0) {
-                Signals.addSelfZombieLead(rc, targetDirection);
-            }
             RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
             boolean underAttack = Common.underAttack(zombies, curLocation);
             double x = targetDirection.dx;

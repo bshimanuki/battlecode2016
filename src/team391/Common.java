@@ -425,10 +425,14 @@ class Common {
                     case TTM:
                         if(robotType == RobotType.VIPER || team != enemyTeam) break;
                     case ARCHON:
-                    case ZOMBIEDEN:
                     case BIGZOMBIE:
                         new SignalUnit(id, team, robotType, loc).add();
                         if(newRobot) typeSignals[typeSignalsSize++] = new SignalUnit(id, team, robotType).toInt();
+                        break;
+                    case ZOMBIEDEN:
+                        SignalUnit s = new SignalUnit(id, team, robotType, loc);
+                        s.add();
+                        if(newRobot) typeSignals[typeSignalsSize++] = s.toInt();
                         break;
                     default:
                         break;
@@ -501,6 +505,38 @@ class Common {
         int dist = MAX_DIST; // to be replaced
         for(RobotInfo info : infos) {
             if(info.type.attackRadiusSquared >= 13) {
+                int newdist = curLocation.distanceSquaredTo(info.location);
+                if(newdist < dist) {
+                    closest = info;
+                    dist = newdist;
+                }
+            }
+        }
+        return closest;
+    }
+
+    static RobotInfo closestArchon(RobotInfo[] infos) {
+        MapLocation curLocation = rc.getLocation();
+        RobotInfo closest = null;
+        int dist = MAX_DIST; // to be replaced
+        for(RobotInfo info : infos) {
+            if(info.type == RobotType.ARCHON) {
+                int newdist = curLocation.distanceSquaredTo(info.location);
+                if(newdist < dist) {
+                    closest = info;
+                    dist = newdist;
+                }
+            }
+        }
+        return closest;
+    }
+
+    static RobotInfo closestNonKamikaze(RobotInfo[] infos) {
+        MapLocation curLocation = rc.getLocation();
+        RobotInfo closest = null;
+        int dist = MAX_DIST; // to be replaced
+        for(RobotInfo info : infos) {
+            if(Signals.status[info.ID%MAX_ID] == 0) {
                 int newdist = curLocation.distanceSquaredTo(info.location);
                 if(newdist < dist) {
                     closest = info;
@@ -591,13 +627,13 @@ class Common {
     static boolean kamikaze(RobotController rc, Direction dir) throws GameActionException {
         // bc bug: dieing on last turn of infection does not spawn zombie
         if(Common.rc.getInfectedTurns() > 1) {
-            // System.out.println("Zombie Kamikaze!");
+            System.out.println("Zombie Kamikaze!");
             Signals.addSelfZombieKamikaze(Common.rc, dir);
             Common.rc.disintegrate();
             return true;
         }
         else {
-            // System.out.println("Zombie Kamikaze FAILED");
+            System.out.println("Zombie Kamikaze FAILED");
             return false;
         }
     }
