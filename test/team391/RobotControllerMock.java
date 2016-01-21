@@ -1,4 +1,4 @@
-package foundation;
+package team391;
 
 import battlecode.common.*;
 
@@ -380,5 +380,17 @@ public class RobotControllerMock implements RobotController {
     public MapLocation[] getInitialArchonLocations(Team t) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public boolean isArmageddon() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean isArmageddonDaytime() {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

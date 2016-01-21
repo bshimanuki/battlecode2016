@@ -1,4 +1,4 @@
-package foundation;
+package team391;
 
 import static org.junit.Assert.*;
 
@@ -15,6 +15,8 @@ public class SignalUnitTest {
     public void initiate() {
         Common.hometown = new MapLocation(123, 456);
         Common.xMax = 156;
+        Common.twiceCenterX = 250;
+        Common.twiceCenterY = 850;
         RobotControllerMock rc = new RobotControllerMock();
         rc.location = new MapLocation(118, 400);
         Common.rc = rc;
