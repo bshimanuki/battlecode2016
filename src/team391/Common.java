@@ -56,7 +56,7 @@ class Common {
     static RobotInfo[] seenRobots = new RobotInfo[MAX_ID];
     static Team[] knownTeams = new Team[MAX_ID];
     static RobotType[] knownTypes = new RobotType[MAX_ID];
-    static int[] knownTimes = new int[MAX_ID];
+    static int[] knownTimes = new int[MAX_ID]; // for locations
     static MapLocation[] knownLocations = new MapLocation[MAX_ID];
     static int[] typeSignals = new int[MAX_ID]; // way larger than necessary, but whatever
     static int typeSignalsSize = 0;
@@ -64,6 +64,11 @@ class Common {
     static int archonIdsSize = 0;
     static MapLocation[] myArchonHometowns;
     static MapLocation[] enemyArchonHometowns;
+
+    static int[] enemyArchonIds = new int[MAX_ARCHONS];
+    static int enemyArchonIdsSize = 0;
+    static int[] zombieDenIds = new int[MAX_ID];
+    static int zombieDenIdsSize = 0;
 
     static int[] neutralIds = new int[MAX_ID];
     static int neutralIdsSize = 0;
@@ -425,11 +430,13 @@ class Common {
                     case TTM:
                         if(robotType == RobotType.VIPER || team != enemyTeam) break;
                     case ARCHON:
+                        if(team == enemyTeam && newRobot) enemyArchonIds[enemyArchonIdsSize++] = id;
                     case BIGZOMBIE:
                         new SignalUnit(id, team, robotType, loc).add();
                         if(newRobot) typeSignals[typeSignalsSize++] = new SignalUnit(id, team, robotType).toInt();
                         break;
                     case ZOMBIEDEN:
+                        if(newRobot) zombieDenIds[zombieDenIdsSize++] = id;
                         SignalUnit s = new SignalUnit(id, team, robotType, loc);
                         s.add();
                         if(newRobot) typeSignals[typeSignalsSize++] = s.toInt();

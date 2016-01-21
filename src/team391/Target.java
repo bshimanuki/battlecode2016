@@ -148,8 +148,8 @@ class Target extends Model {
 
         if(id != ID_NONE && loc == null) {
             // should not get here
-            System.out.println(String.format("Robot %d not found when targeting", id));
-            loc = curLocation;
+            System.out.println(String.format("Robot %d not found when targeting, breaking", id));
+            return true;
         }
 
         Direction targetDirection = loc != null ? rc.getLocation().directionTo(loc) : dir;

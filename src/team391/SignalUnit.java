@@ -102,6 +102,7 @@ class SignalUnit {
 
     void add() {
         Signals.halfSignals[Signals.halfSignalsSize++] = toInt();
+        if(!loc.equals(Common.MAP_EMPTY)) Signals.broadcastTurn[id%Common.MAX_ID] = Common.rc.getRoundNum();
     }
 
     void read() throws GameActionException {

@@ -26,6 +26,7 @@ class Signals {
     final static int ZOMBIE_LEAD = 5;
     final static int ZOMBIE_KAMIKAZE = 6;
     final static int ZOMBIE_SIGNAL_REFRESH = 5; // every 5 turns
+    final static int UNIT_SIGNAL_REFRESH = 50; // broadcast unit positions
 
     // for locations
     final static int SIG_NONE = 100;
@@ -47,6 +48,10 @@ class Signals {
     static int enemiesSize = 0;
     static MapLocation[] targets = new MapLocation[MAX_QUEUE];
     static int targetsSize = 0;
+
+    // Statuses
+    static int[] broadcastTurn = new int[Common.MAX_ID];
+
     static RobotInfo[] zombieLeads = new RobotInfo[Common.MAX_ID]; // queue
     static int[] zombieLeadsTurn = new int[Common.MAX_ID]; // queue
     static Direction[] zombieLeadsDir = new Direction[Common.MAX_ID]; // queue
