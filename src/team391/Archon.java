@@ -47,16 +47,16 @@ class Archon extends Model {
 
             if(fate < Math.max(400, 800 - rc.getTeamParts())) {
                 if(target != null) {
-                    // rc.setIndicatorString(1, "Targeting " + target.loc);
+                    rc.setIndicatorString(1, "Targeting " + target.loc);
                     if(target.run(rc)) target = null;
                     return false;
                 }
                 if(base != null && rc.getLocation().distanceSquaredTo(base.loc) >= Common.sightRadius) {
-                    // rc.setIndicatorString(1, "Targeting base at " + base.loc);
+                    rc.setIndicatorString(1, "Targeting base at " + base.loc);
                     base.run(rc);
                     return false;
                 }
-                // rc.setIndicatorString(1, "Running fate");
+                rc.setIndicatorString(1, "Running fate");
                 // Check the rubble in that direction
                 if(rc.senseRubble(rc.getLocation().add(moveDir)) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
                     // Too much rubble, so I should clear it

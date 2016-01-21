@@ -150,7 +150,7 @@ class Signals {
                         zombieLeads[zombieLeadsSize] = sig.info;
                         zombieLeadsTurn[zombieLeadsSize] = Common.rc.getRoundNum();
                         zombieLeadsDir[zombieLeadsSize++] = sig.dir;
-                        // Common.rc.setIndicatorString(1, sig.info + " " + sig.dir);
+                        Common.rc.setIndicatorString(1, sig.info + " " + sig.dir);
                         break;
                     case ZOMBIE_KAMIKAZE:
                         // TODO: handle

@@ -226,7 +226,7 @@ class Common {
             if(sendBoundariesHigh) Signals.addBoundsHigh(rc);
         }
         sent += Signals.sendQueue(rc, sendRadius);
-        // rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d", sent, read, xMin, yMin, xMax, yMax));
+        rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d", sent, read, xMin, yMin, xMax, yMax));
     }
 
     static void updateMap(RobotController rc) throws GameActionException {
