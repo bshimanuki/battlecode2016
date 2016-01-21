@@ -19,16 +19,20 @@ class Scout extends Model {
                 Target opening = new Target(targetDirection);
                 opening.setTrigger((_rc) -> opening.knowsBoardEdge(_rc));
                 if(!opening.run(rc)) Common.models.addFirst(opening);
+            } else {
+                Target opening = new Target(Common.enemyBase);
+                opening.setTrigger((_rc) -> opening.knowsBoardEdge(_rc));
+                if(!opening.run(rc)) Common.models.addFirst(opening);
             }
             if(round < 30) { // first Scout
                 MapLocation loc = rc.getLocation();
                 final int PING_DIST = 33; // a little less than Archon sight
                 for(MapLocation hometown : Common.myArchonHometowns) {
                     if(loc.distanceSquaredTo(hometown) > Opening.PING_FACTOR * PING_DIST) {
-                        if(Common.xMin > loc.x - Common.straightSight) Common.mapBoundUpdate = true;
-                        if(Common.xMax > loc.x + Common.straightSight) Common.mapBoundUpdate = true;
-                        if(Common.yMin > loc.y - Common.straightSight) Common.mapBoundUpdate = true;
-                        if(Common.yMax > loc.y + Common.straightSight) Common.mapBoundUpdate = true;
+                        if(Common.xMin != Common.MAP_NONE && Common.xMin < hometown.x - Common.ARCHON_STRAIGHT_SIGHT) Common.mapBoundUpdate = true;
+                        if(Common.xMax != Common.MAP_NONE && Common.xMax > hometown.x + Common.ARCHON_STRAIGHT_SIGHT) Common.mapBoundUpdate = true;
+                        if(Common.yMin != Common.MAP_NONE && Common.yMin < hometown.y - Common.ARCHON_STRAIGHT_SIGHT) Common.mapBoundUpdate = true;
+                        if(Common.yMax != Common.MAP_NONE && Common.yMax > hometown.y + Common.ARCHON_STRAIGHT_SIGHT) Common.mapBoundUpdate = true;
                     }
                 }
             }

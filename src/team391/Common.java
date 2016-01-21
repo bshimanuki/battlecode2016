@@ -27,6 +27,7 @@ class Common {
     final static double[] sqrt = new double[60]; // faster than Math.sqrt, cache for everything in sight
     final static int MAX_DIST = 2 * GameConstants.MAP_MAX_WIDTH * GameConstants.MAP_MAX_WIDTH;
     final static int MAX_ARCHONS = 8;
+    final static int ARCHON_STRAIGHT_SIGHT = 5;
 
     // Map vars
     static double[][] mapParts = new double[MAP_MOD][MAP_MOD];
@@ -204,7 +205,6 @@ class Common {
             senseParts(rc);
         }
 
-        updateMap(rc);
         if(turn > 5) {
             robotInfos = rc.senseNearbyRobots();
             for(RobotInfo info : robotInfos) {
@@ -214,6 +214,7 @@ class Common {
     }
 
     static void runAfter(RobotController rc) throws GameActionException {
+        updateMap(rc);
         if(canMessageSignal) {
             if(mapBoundUpdate && Common.lowStrategy == LowStrategy.EXPLORE) {
                 final int minRadius = 2 * sightRadius;
@@ -221,6 +222,7 @@ class Common {
                 MapLocation target = furthestArchonStart(rc);
                 int radius = MAP_UPDATE_MESSAGE_FACTOR * rc.getLocation().distanceSquaredTo(target);
                 if(radius < minRadius || rc.getType() == RobotType.ARCHON) radius = minRadius;
+                // Signals.halfSignalsFull[Signals.halfSignalsFullSize++] = bounds;
                 rc.broadcastMessageSignal(bounds, Signals.BUFFER, radius);
                 ++sent;
                 sendBoundariesLow = false;
