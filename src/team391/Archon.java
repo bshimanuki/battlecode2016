@@ -41,7 +41,11 @@ class Archon extends Model {
 
             computeMove(rc);
             relaxMove(0.5);
-            if(dirPoints[DIR_NONE] < FORCED_MOVE_AWAY_THRESH || dirPoints[moveDir.ordinal()] > FORCED_MOVE_TO_THRESH) {
+            RobotInfo[] nearbyZombies = rc.senseNearbyRobots(5, Team.ZOMBIE);
+            RobotInfo[] nearbyAllies = rc.senseNearbyRobots(5, Common.myTeam);
+            if(nearbyZombies.length > 0 && nearbyAllies.length > 0
+                    || dirPoints[DIR_NONE] < FORCED_MOVE_AWAY_THRESH
+                    || dirPoints[moveDir.ordinal()] > FORCED_MOVE_TO_THRESH) {
                 if(move(rc)) return false;
             }
 
@@ -104,7 +108,7 @@ class Archon extends Model {
         final double POINTS_HOSTILE = -5;
         final double POINTS_HOSTILE_TURRET = -8;
         final double POINTS_HOSTILE_BIGZOMBIE = -8;
-        final double POINTS_HOSTILE_ZOMBIEDEN = -4;
+        final double POINTS_HOSTILE_ZOMBIEDEN = -8;
         final double POINTS_PARTS = 0.05;
         final double PARTS_RUBBLE_THRESH = GameConstants.RUBBLE_OBSTRUCTION_THRESH;
         final double POINTS_NEUTRAL = 0.1; // per part cost
@@ -155,8 +159,8 @@ class Archon extends Model {
             Direction dir = Common.DIRECTIONS[i];
             double rubble = Common.mapRubble[(loc.x + dir.dx) % Common.MAP_MOD][(loc.y + dir.dy) % Common.MAP_MOD];
             if(rubble > GameConstants.RUBBLE_SLOW_THRESH) dirPoints[dir.ordinal()] += -.5;
-            if(rubble > GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -2;
-            if(rubble > 2*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -2;
+            if(rubble > GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -4;
+            if(rubble > 2*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -4;
             if(rubble > 5*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -4;
             if(rubble > 10*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -8;
             if(rubble > 100*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -12;

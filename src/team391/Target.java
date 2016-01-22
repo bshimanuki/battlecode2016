@@ -308,7 +308,9 @@ class Target extends Model {
                 x /= 2;
                 y /= 2;
             }
-            RobotInfo[] closests = {Common.closestRobot(zombies), Common.closestRangedRobot(zombies)};
+            RobotInfo closestZombie = Common.closestRobot(zombies);
+            RobotInfo closestRangedZombie = Common.closestRangedRobot(zombies);
+            RobotInfo[] closests = {closestZombie, closestRangedZombie};
             double dot = -Common.MAX_DIST;
             double dx = x;
             double dy = y;
@@ -377,29 +379,33 @@ class Target extends Model {
             RobotInfo[] allAllies = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
             RobotInfo archon = Common.closestArchon(allAllies);
             if(archon != null) {
-                int ax = archon.location.x - curLocation.x;
-                int ay = archon.location.y - curLocation.y;
-                double ddot = ax * targetDirection.dx + ay * targetDirection.dy;
-                if(targetDirection.isDiagonal()) ddot /= Common.sqrt[2];
-                else ddot *= Common.sqrt[2];
-                if(ddot > 0) {
-                    Direction ldir = targetDirection.rotateLeft();
-                    Direction rdir = targetDirection.rotateRight();
-                    double ldot = ax * ldir.dx + ay * ldir.dy;
-                    double rdot = ax * rdir.dx + ay * rdir.dy;
-                    if(ldot < ddot) {
-                        targetDirection = ldir;
-                        ddot = ldot;
-                    }
-                    if(rdot < ddot) {
-                        targetDirection = rdir;
-                        ddot = rdot;
+                if(curLocation.distanceSquaredTo(closestZombie.location) >= archon.location.distanceSquaredTo(closestZombie.location)) {
+                    targetDirection = curLocation.directionTo(closestZombie.location);
+                } else {
+                    int ax = archon.location.x - curLocation.x;
+                    int ay = archon.location.y - curLocation.y;
+                    double ddot = ax * targetDirection.dx + ay * targetDirection.dy;
+                    if(targetDirection.isDiagonal()) ddot /= Common.sqrt[2];
+                    else ddot *= Common.sqrt[2];
+                    if(ddot > 0) {
+                        Direction ldir = targetDirection.rotateLeft();
+                        Direction rdir = targetDirection.rotateRight();
+                        double ldot = ax * ldir.dx + ay * ldir.dy;
+                        double rdot = ax * rdir.dx + ay * rdir.dy;
+                        if(ldot < ddot) {
+                            targetDirection = ldir;
+                            ddot = ldot;
+                        }
+                        if(rdot < ddot) {
+                            targetDirection = rdir;
+                            ddot = rdot;
+                        }
                     }
                 }
+                // real distance, not squared distance
+                // if(dist > 5.5 || closest.type != RobotType.RANGEDZOMBIE && dist > 2.5)
+                // toMove = false;
             }
-            // real distance, not squared distance
-            // if(dist > 5.5 || closest.type != RobotType.RANGEDZOMBIE && dist > 2.5)
-            // toMove = false;
         }
         Direction moveDirection = Common.findPathDirection(rc, targetDirection);
         if(moveDirection == Direction.NONE) toMove = false;
