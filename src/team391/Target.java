@@ -53,6 +53,7 @@ class Target extends Model {
     RobotInfo targetInfo;
     int lastSight = -1; // last turn target was seen
     double rubbleLevel; // max rubble to clear
+    boolean targetArchon = false; // special case
 
     // weights copied by reference
     Target(Direction dir, Map<TargetType, TargetType.Level> weights) {
@@ -87,6 +88,10 @@ class Target extends Model {
     Target(TargetType targetType, MapLocation loc) {
         this(targetType);
         this.loc = loc;
+    }
+    Target(TargetType targetType, boolean targetArchon) {
+        this(targetType);
+        this.targetArchon = targetArchon;
     }
     private Target(TargetType targetType) {
         if(targetType == null) targetType = TargetType.MOVE; // default
@@ -124,6 +129,21 @@ class Target extends Model {
                 id = closest.ID;
                 weights.put(TargetType.MOVE, TargetType.Level.ACTIVE);
             }
+        } else if(targetArchon) {
+            MapLocation archon = null;
+            int dist = Common.MAX_DIST;
+            for(int i=0; i<Common.enemyArchonIdsSize; ++i) {
+                MapLocation newLoc = Common.knownLocations[Common.enemyArchonIds[i]%SignalUnit.ID_MOD];
+                if(newLoc != null) {
+                    int newDist = curLocation.distanceSquaredTo(newLoc);
+                    if(newDist < dist) {
+                        archon = newLoc;
+                        dist = newDist;
+                    }
+                }
+            }
+            if(archon != null) loc = archon;
+            else dir = Common.enemyBase;
         }
 
         if(id != ID_NONE) {

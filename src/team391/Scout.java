@@ -40,11 +40,11 @@ class Scout extends Model {
             int num = Math.max(50, 100 - 2 * rc.senseNearbyRobots(Common.sightRadius, Common.myTeam).length);
             int rand = Common.rand.nextInt(num);
             if(rand < 8) {
-                Target kill = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase);
-                kill.setTrigger((_rc) -> kill.seesBoardEdge(_rc));
+                Target kill = new Target(Target.TargetType.ZOMBIE_LEAD, true);
+                kill.setTrigger((_rc) -> kill.seesBoardEdge(_rc) && _rc.senseNearbyRobots(ZOMBIE_ACCEPT_RADIUS, Team.ZOMBIE).length == 0);
                 Common.models.addFirst(kill);
                 Target opening = new Target(Target.TargetType.ZOMBIE_LEAD, Common.DIRECTIONS[rand]);
-                opening.setTrigger((_rc) -> opening.seesBoardEdge(_rc) || _rc.senseNearbyRobots(35, Team.ZOMBIE).length > 0);
+                opening.setTrigger((_rc) -> opening.seesBoardEdge(_rc) || _rc.senseNearbyRobots(ZOMBIE_ACCEPT_RADIUS, Team.ZOMBIE).length > 0);
                 Common.models.addFirst(opening);
             }
         }

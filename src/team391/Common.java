@@ -22,6 +22,7 @@ class Common {
     final static MapLocation MAP_EMPTY = new MapLocation(MAP_NONE, MAP_NONE);
     final static int MIN_BUILD_TIME = 10;
     final static int MAX_ID = 65536;
+    final static int ID_MOD = 4096;
     final static int BUILD_LAG = 1; // Delay between built and first turn
     final static double EPS = 1e-2;
     final static double[] sqrt = new double[60]; // faster than Math.sqrt, cache for everything in sight
@@ -55,10 +56,10 @@ class Common {
     static Team enemyTeam;
     static int[] seenTimes = new int[MAX_ID];
     static RobotInfo[] seenRobots = new RobotInfo[MAX_ID];
-    static Team[] knownTeams = new Team[MAX_ID];
-    static RobotType[] knownTypes = new RobotType[MAX_ID];
-    static int[] knownTimes = new int[MAX_ID]; // for locations
-    static MapLocation[] knownLocations = new MapLocation[MAX_ID];
+    static Team[] knownTeams = new Team[ID_MOD];
+    static RobotType[] knownTypes = new RobotType[ID_MOD];
+    static int[] knownTimes = new int[ID_MOD]; // for locations
+    static MapLocation[] knownLocations = new MapLocation[ID_MOD];
     static int[] typeSignals = new int[MAX_ID]; // way larger than necessary, but whatever
     static int typeSignalsSize = 0;
     static int[] archonIds = new int[MAX_ARCHONS];
@@ -396,22 +397,27 @@ class Common {
 
     static void addInfo(int id, Team team, MapLocation loc) {
         // not regular update since RobotType unknown
+        id = id % ID_MOD;
         knownTeams[id] = team;
-        knownTimes[id] = rc.getRoundNum();
-        knownLocations[id] = loc;
+        if(loc != null && !loc.equals(MAP_EMPTY)) {
+            knownTimes[id] = rc.getRoundNum();
+            knownLocations[id] = loc;
+        }
     }
 
     static void addInfo(int id, Team team, RobotType robotType) throws GameActionException {
         addInfo(id, team, robotType, null);
     }
 
+    @SuppressWarnings("fallthrough")
     static void addInfo(int id, Team team, RobotType robotType, MapLocation loc) throws GameActionException {
+        id = id % ID_MOD;
         boolean newLoc = false;
         // use knownTypes because team, time, and location can come from intercepting signals
         boolean newRobot = knownTypes[id] == null;
         knownTeams[id] = team;
         knownTypes[id] = robotType;
-        if(loc != null && loc.x != MAP_NONE) { // loc.y assumed
+        if(loc != null && !loc.equals(MAP_EMPTY)) {
             if(knownLocations[id] == null) newLoc = true;
             knownTimes[id] = rc.getRoundNum();
             knownLocations[id] = loc;
@@ -425,6 +431,7 @@ class Common {
                 neutralTypes[neutralTypesSize++] = robotType;
                 neutralLocations[neutralLocationsSize++] = loc;
             } else {
+                // fallthrough intentional
                 switch(robotType) {
                     case VIPER:
                         if(team != myTeam) break;

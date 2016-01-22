@@ -50,6 +50,7 @@ class Opening extends Model {
                 break;
             case 20:
                 if(Common.myArchonHometowns.length != 1) return true;
+                break;
             default:
                 if(round > 20) {
                     buildDir = Common.findPathDirection(rc, buildDir.opposite());

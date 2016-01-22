@@ -47,7 +47,7 @@ class SignalUnit {
     //   should be larger than total number of robots
     //   upper bounded built robots at 2*4*300 = 2400
     //   assuming less than 1600 neutral and zombies
-    final static int ID_MOD = 4096;
+    final static int ID_MOD = Common.ID_MOD;
 
     static int[] broadcastTurn = new int[ID_MOD]; // full map broadcasts
 

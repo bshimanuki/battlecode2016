@@ -6,7 +6,7 @@ class SignalStrategy {
 
     // starts with 0010 or 0011
     final static int CONTROL_SHIFT_STRATEGY_INNER = 28;
-    final static int ID_NONE = SignalUnit.ID_MOD;
+    final static int ID_NONE = Common.ID_MOD;
     final static int ID_MOD = ID_NONE + 1;
 
     int sourceId;
