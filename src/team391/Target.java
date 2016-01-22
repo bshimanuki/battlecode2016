@@ -323,7 +323,7 @@ class Target extends Model {
                     double distBuffer;
                     switch(closest.type) {
                         case RANGEDZOMBIE:
-                            distBuffer = 2;
+                            distBuffer = 2.5;
                             break;
                         case FASTZOMBIE:
                             distBuffer = 2.5;
@@ -373,6 +373,29 @@ class Target extends Model {
                     }
                 }
                 targetDirection = bestDirection;
+            }
+            RobotInfo[] allAllies = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
+            RobotInfo archon = Common.closestArchon(allAllies);
+            if(archon != null) {
+                int ax = archon.location.x - curLocation.x;
+                int ay = archon.location.y - curLocation.y;
+                double ddot = ax * targetDirection.dx + ay * targetDirection.dy;
+                if(targetDirection.isDiagonal()) ddot /= Common.sqrt[2];
+                else ddot *= Common.sqrt[2];
+                if(ddot > 0) {
+                    Direction ldir = targetDirection.rotateLeft();
+                    Direction rdir = targetDirection.rotateRight();
+                    double ldot = ax * ldir.dx + ay * ldir.dy;
+                    double rdot = ax * rdir.dx + ay * rdir.dy;
+                    if(ldot < ddot) {
+                        targetDirection = ldir;
+                        ddot = ldot;
+                    }
+                    if(rdot < ddot) {
+                        targetDirection = rdir;
+                        ddot = rdot;
+                    }
+                }
             }
             // real distance, not squared distance
             // if(dist > 5.5 || closest.type != RobotType.RANGEDZOMBIE && dist > 2.5)
@@ -445,7 +468,7 @@ class Target extends Model {
 
     @Override
     public String toString() {
-        String end = "" + " " + id + " " + targetArchon;
+        String end = "";
         if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) end += "(Zombie Lead)";
         if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) end += "(Zombie Kamikazi)";
         if(loc != null) return String.format("Target<%d,%d>%s", loc.x, loc.y, end);
