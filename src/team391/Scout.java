@@ -74,7 +74,8 @@ class Scout extends Model {
                 boolean closest = false;
                 for(boolean c : notClosest) if(!c) closest = true;
                 if(closest) {
-                    target = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase);
+                    if(rc.getRoundNum() < Common.ROUNDS_TARGET_BASE) target = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase);
+                    else target = new Target(Target.TargetType.ZOMBIE_LEAD, true);
                     Signals.addSelfZombieLead(rc, target.dir);
                 }
             }

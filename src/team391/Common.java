@@ -29,7 +29,8 @@ class Common {
     final static int MAX_DIST = 2 * GameConstants.MAP_MAX_WIDTH * GameConstants.MAP_MAX_WIDTH;
     final static int MAX_ARCHONS = 8;
     final static int ARCHON_STRAIGHT_SIGHT = 5;
-    final static int BUILD_ENEMY_UNIT_UPDATE = 300; // number of turns to inform new units of enemy locations
+    final static int BUILD_ENEMY_UNIT_UPDATE = 100; // number of turns to inform new units of enemy locations
+    final static int ROUNDS_TARGET_BASE = 300;
 
     // Map vars
     static double[][] mapParts = new double[MAP_MOD][MAP_MOD];

@@ -46,7 +46,7 @@ class Target extends Model {
     }
 
     Map<TargetType, TargetType.Level> weights;
-    // target is either loc, dir, or id;
+    // target is either loc, dir, id, or targetArchon
     MapLocation loc;
     Direction dir;
     int id = ID_NONE;
@@ -142,8 +142,24 @@ class Target extends Model {
                     }
                 }
             }
-            if(archon != null) loc = archon;
-            else dir = Common.enemyBase;
+            if(rc.getRoundNum() < Signals.UNIT_SIGNAL_REFRESH) {
+                for(MapLocation newLoc : Common.enemyArchonHometowns) {
+                    int newDist = curLocation.distanceSquaredTo(newLoc);
+                    if(newDist < dist) {
+                        archon = newLoc;
+                        dist = newDist;
+                    }
+                }
+            }
+            if(archon != null) {
+                loc = archon;
+                weights.put(TargetType.MOVE, TargetType.Level.ACTIVE);
+            }
+            else {
+                loc = null;
+                dir = Common.enemyBase;
+                weights.put(TargetType.MOVE, TargetType.Level.INACTIVE);
+            }
         }
 
         if(id != ID_NONE) {
@@ -163,6 +179,8 @@ class Target extends Model {
             } else if(lastSight == rc.getRoundNum() - 1 && loc != null && loc.distanceSquaredTo(curLocation) <= 10) {
                 // can't sense and previous location within contracted sight => died
                 return finish();
+            } else if(Common.knownLocations[id%Common.ID_MOD] != null) {
+                loc = Common.knownLocations[id%Common.ID_MOD];
             }
         }
 
@@ -302,7 +320,18 @@ class Target extends Model {
                     double zy = closest.location.y - curLocation.y;
                     double dist = Common.sqrt[curLocation.distanceSquaredTo(closest.location)];
                     double dist_factor = 0.5;
-                    double distBuffer = closest.type == RobotType.RANGEDZOMBIE ? 2 : 0.5;
+                    double distBuffer;
+                    switch(closest.type) {
+                        case RANGEDZOMBIE:
+                            distBuffer = 2;
+                            break;
+                        case FASTZOMBIE:
+                            distBuffer = 2.5;
+                            break;
+                        default:
+                            distBuffer = 0.5;
+                            break;
+                    }
                     if(dist > distBuffer) {
                         zx *= dist_factor * (dist - distBuffer) / dist;
                         zy *= dist_factor * (dist - distBuffer) / dist;
@@ -400,8 +429,13 @@ class Target extends Model {
 
     boolean finish() throws GameActionException {
         if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) {
-            return Common.kamikaze(Common.rc, dir);
+            Direction targetDir = loc != null ? Common.rc.getLocation().directionTo(loc) : dir;
+            return Common.kamikaze(Common.rc, targetDir);
         } else if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.PRIORITY) >= 0) {
+            weights.put(TargetType.ZOMBIE_LEAD, TargetType.Level.INACTIVE);
+            weights.put(TargetType.ZOMBIE_KAMIKAZE, TargetType.Level.ACTIVE);
+            return false;
+        } else if(Common.closestArchon(Common.rc.senseNearbyRobots(Common.sightRadius, Common.myTeam)) == null) {
             weights.put(TargetType.ZOMBIE_LEAD, TargetType.Level.INACTIVE);
             weights.put(TargetType.ZOMBIE_KAMIKAZE, TargetType.Level.ACTIVE);
             return false;
@@ -411,12 +445,13 @@ class Target extends Model {
 
     @Override
     public String toString() {
-        String end = "";
-        if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) end = "(Zombie Lead)";
-        if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) end = "(Zombie Kamikazi)";
+        String end = "" + " " + id + " " + targetArchon;
+        if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) end += "(Zombie Lead)";
+        if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) end += "(Zombie Kamikazi)";
         if(loc != null) return String.format("Target<%d,%d>%s", loc.x, loc.y, end);
         if(dir != null) return String.format("Target<%s>%s", dir, end);
-        return "Target<>";
+        if(id != ID_NONE) return String.format("Target<%s>%s", id, end);
+        return "Target<>" + end;
     }
 
     public boolean knowsBoardEdge(RobotController rc) {

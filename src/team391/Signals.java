@@ -275,10 +275,12 @@ class Signals {
     }
 
     static void addSelfZombieLead(RobotController rc, Direction dir) throws GameActionException {
+        if(dir == null) dir = Direction.NONE;
         new Signals(ZOMBIE_LEAD, new SignalSelf(rc.senseRobot(rc.getID()), dir).toInt()).add();
     }
     static void addSelfZombieKamikaze(RobotController rc, Direction dir) throws GameActionException {
         // destruction is assumed, so don't worry about coreDelay
+        if(dir == null) dir = Direction.NONE;
         new Signals(ZOMBIE_KAMIKAZE, new SignalSelf(rc.senseRobot(rc.getID()), dir).toInt(), Common.MAX_DIST).add();
     }
 
