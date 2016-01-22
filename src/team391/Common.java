@@ -235,6 +235,10 @@ class Common {
         }
         sent += Signals.sendQueue(rc, sendRadius);
         rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d", sent, read, xMin, yMin, xMax, yMax));
+        String str = "";
+        for(int i=0; i<enemyArchonIdsSize; ++i) str += enemyArchonIds[i] + ":" + knownLocations[enemyArchonIds[i]%ID_MOD] + " ";
+        str += " ";
+        rc.setIndicatorString(1, str);
     }
 
     static void updateMap(RobotController rc) throws GameActionException {
@@ -392,6 +396,20 @@ class Common {
     static void addInfo(RobotInfo info) throws GameActionException {
         seenRobots[info.ID] = info;
         seenTimes[info.ID] = rc.getRoundNum();
+        if(robotType == RobotType.SCOUT && rc.getRoundNum() > enrollment + 10) {
+            switch(info.type) {
+                case ARCHON:
+                    if(SignalUnit.broadcastTurn[info.ID%ID_MOD] < rc.getRoundNum() - Signals.UNIT_SIGNAL_REFRESH)
+                        new SignalUnit(info).addFull();
+                    break;
+                case ZOMBIEDEN:
+                    if(SignalUnit.broadcastTurn[info.ID%ID_MOD] == 0)
+                        new SignalUnit(info).addFull();
+                    break;
+                default:
+                    break;
+            }
+        }
         addInfo(info.ID, info.team, info.type, info.location);
     }
 

@@ -202,20 +202,20 @@ class Signals {
      * @throws GameActionException
      */
     static int sendQueue(RobotController rc, int radius) throws GameActionException {
+        int sending = 0;
         MapLocation loc = rc.getLocation();
         int knownX = Common.MAP_MOD;
         int knownY = Common.MAP_MOD;
         if(Common.xMin != Common.MAP_NONE && Common.xMax != Common.MAP_NONE) {
-            knownX = Math.min(Common.xMax - loc.x, loc.x - Common.xMin);
+            knownX = Math.max(Common.xMax - loc.x, loc.x - Common.xMin);
         }
         if(Common.yMin != Common.MAP_NONE && Common.yMax != Common.MAP_NONE) {
-            knownY = Math.min(Common.yMax - loc.y, loc.y - Common.yMin);
+            knownY = Math.max(Common.yMax - loc.y, loc.y - Common.yMin);
         }
         int maxRadius = knownX * knownX + knownY * knownY;
         int round = rc.getRoundNum();
         if(locsSize % 2 == 1) locs[locsSize++] = new SignalLocation();
-        int size = locsSize;
-        for(int i=0; i<size; i+=2)
+        for(int i=0; i<locsSize; i+=2)
             new SignalLocations(locs[i], locs[i+1]).add();
         locsSize = 0; // clear locs queue
         if(halfSignalsFullSize % 2 == 1) {
@@ -224,28 +224,29 @@ class Signals {
         }
         if(halfSignalsSize % 2 == 1) addRandomType(rc);
         fullSignalsSize = Math.min(fullSignalsSize, maxMessages);
-        size = Math.min(halfSignalsFullSize, 2*(maxMessages - Common.sent - fullSignalsSize));
-        for(int i=0; i<size; i+=2)
+        halfSignalsFullSize = Math.min(halfSignalsFullSize, 2*(maxMessages - Common.sent - fullSignalsSize));
+        for(int i=0; i<halfSignalsFullSize; i+=2)
             rc.broadcastMessageSignal(halfSignalsFull[i], halfSignalsFull[i+1], maxRadius);
-        size = Math.min(halfSignalsSize, 2*(maxMessages - Common.sent - fullSignalsSize - size/2));
-        for(int i=0; i<size; i+=2)
-            rc.broadcastMessageSignal(halfSignals[i], halfSignals[i+1], radius);
-        halfSignalsSize = 0; // clear halfSignals queue
+        sending += halfSignalsFullSize / 2;
         halfSignalsFullSize = 0; // clear halfSignals queue
-        size /= 2;
+        halfSignalsSize = Math.min(halfSignalsSize, 2*(maxMessages - Common.sent - fullSignalsSize - sending));
+        for(int i=0; i<halfSignalsSize; i+=2)
+            rc.broadcastMessageSignal(halfSignals[i], halfSignals[i+1], radius);
+        sending += halfSignalsSize / 2;
+        halfSignalsSize = 0; // clear halfSignals queue
         for(int i=0; i<fullSignalsSize; ++i) {
             fullSignals[i].send(rc);
         }
-        size += fullSignalsSize; // clear fullSignals queue
+        sending += fullSignalsSize; // clear fullSignals queue
         fullSignalsSize = 0;
         if(buildStrategy[round] != null) {
             buildStrategy[round].send(rc, 2);
             int bounds = getBounds(rc).toInt();
             int target = buildTarget[round] == null ? BUFFER : new SignalLocations(new SignalLocation(SignalLocation.LocationType.TARGET, buildTarget[round])).toInt();
             rc.broadcastMessageSignal(bounds, target, 2);
-            size += 2;
+            sending += 2;
         }
-        return size;
+        return sending;
     }
 
     static void addBounds(RobotController rc) throws GameActionException {

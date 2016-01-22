@@ -105,12 +105,17 @@ class SignalUnit {
 
     void add() {
         Signals.halfSignals[Signals.halfSignalsSize++] = toInt();
-        if(!loc.equals(Common.MAP_EMPTY)) broadcastTurn[id] = Common.rc.getRoundNum();
+        // if(!loc.equals(Common.MAP_EMPTY)) broadcastTurn[id] = Common.rc.getRoundNum();
+    }
+
+    void addFull() {
+        Signals.halfSignalsFull[Signals.halfSignalsFullSize++] = toInt();
+        broadcastTurn[id] = Common.rc.getRoundNum();
     }
 
     void read() throws GameActionException {
-        Common.addInfo(id, team, robotType, loc);
         if(!loc.equals(Common.MAP_EMPTY)) broadcastTurn[id] = Common.rc.getRoundNum();
+        Common.addInfo(id, team, robotType, loc);
     }
 
     @Override
