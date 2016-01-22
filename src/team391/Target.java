@@ -433,6 +433,7 @@ class Target extends Model {
     }
 
     public boolean seesBoardEdge(RobotController rc) {
+        if(dir == null) return false;
         MapLocation curLocation = rc.getLocation();
         int dx = dir.dx;
         int dy = dir.dy;

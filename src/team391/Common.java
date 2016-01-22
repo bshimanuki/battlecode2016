@@ -29,6 +29,7 @@ class Common {
     final static int MAX_DIST = 2 * GameConstants.MAP_MAX_WIDTH * GameConstants.MAP_MAX_WIDTH;
     final static int MAX_ARCHONS = 8;
     final static int ARCHON_STRAIGHT_SIGHT = 5;
+    final static int BUILD_ENEMY_UNIT_UPDATE = 300; // number of turns to inform new units of enemy locations
 
     // Map vars
     static double[][] mapParts = new double[MAP_MOD][MAP_MOD];
@@ -100,6 +101,7 @@ class Common {
     static LinkedList<Model> models = new LinkedList<>();
     static MapLocation lastBuiltLocation;
     static int lastBuiltId;
+    static int nextUnitInfo;
 
     // Message vars
     static int read;
@@ -210,6 +212,15 @@ class Common {
             robotInfos = rc.senseNearbyRobots();
             for(RobotInfo info : robotInfos) {
                 addInfo(info);
+            }
+        }
+
+        if(nextUnitInfo == rc.getRoundNum()) { // Archon only, after building new units
+            for(int i=0; i<enemyArchonIdsSize; ++i) {
+                int id = enemyArchonIds[i] % ID_MOD;
+                if(SignalUnit.broadcastTurn[id] != 0 && SignalUnit.broadcastTurn[id] > rc.getRoundNum() - BUILD_ENEMY_UNIT_UPDATE) {
+                    new SignalUnit(id, enemyTeam, RobotType.ARCHON, knownLocations[id]).add();
+                }
             }
         }
     }
@@ -364,6 +375,7 @@ class Common {
         RobotInfo info = rc.senseRobotAtLocation(lastBuiltLocation);
         addInfo(info);
         lastBuiltId = info.ID;
+        nextUnitInfo = rc.getRoundNum() + info.type.buildTurns;
     }
     static void build(RobotController rc, Direction dir, RobotType robotType, LowStrategy lowStrategy) throws GameActionException {
         build(rc, dir, robotType, lowStrategy, Target.TargetType.NONE, null);
@@ -440,6 +452,8 @@ class Common {
             knownTimes[id] = rc.getRoundNum();
             knownLocations[id] = loc;
         }
+        if(robotType == RobotType.ARCHON && team == enemyTeam && newRobot)
+            enemyArchonIds[enemyArchonIdsSize++] = id;
         if(rc.getType().canMessageSignal() && (newRobot || newLoc) && rc.getRoundNum() - enrollment > 10) {
             if(team == Team.NEUTRAL) {
                 SignalUnit s = new SignalUnit(id, team, robotType, loc);
@@ -455,9 +469,8 @@ class Common {
                         if(team != myTeam) break;
                     case TURRET:
                     case TTM:
-                        if(robotType == RobotType.VIPER || team != enemyTeam) break;
+                        if(robotType != RobotType.VIPER && team != enemyTeam) break;
                     case ARCHON:
-                        if(team == enemyTeam && newRobot) enemyArchonIds[enemyArchonIdsSize++] = id;
                     case BIGZOMBIE:
                         new SignalUnit(id, team, robotType, loc).add();
                         if(newRobot) typeSignals[typeSignalsSize++] = new SignalUnit(id, team, robotType).toInt();
