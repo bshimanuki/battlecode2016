@@ -4,6 +4,24 @@ import battlecode.common.*;
 
 class Scout extends Model {
 
+    final static MapLocation[] SIGHT_EDGE = {
+        new MapLocation(2, 7),
+        new MapLocation(4, 6),
+        new MapLocation(5, 5),
+        new MapLocation(6, 4),
+        new MapLocation(6, 3),
+        new MapLocation(7, 2),
+        new MapLocation(7, 1),
+        new MapLocation(7, 0),
+        new MapLocation(7, -1),
+        new MapLocation(7, -2),
+        new MapLocation(6, -3),
+        new MapLocation(6, -4),
+        new MapLocation(5, -5),
+        new MapLocation(4, -6),
+        new MapLocation(2, -7),
+    };
+
     final static int ZOMBIE_ACCEPT_RADIUS = 35;
     static Direction last;
 

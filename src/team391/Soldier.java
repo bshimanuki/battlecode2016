@@ -4,6 +4,18 @@ import battlecode.common.*;
 
 class Soldier extends Model {
 
+    final static MapLocation[] SIGHT_EDGE = {
+        new MapLocation(2, 4),
+        new MapLocation(3, 3),
+        new MapLocation(4, 2),
+        new MapLocation(4, 1),
+        new MapLocation(4, 0),
+        new MapLocation(4, -1),
+        new MapLocation(4, -2),
+        new MapLocation(3, -3),
+        new MapLocation(2, -4),
+    };
+
     @Override
     public boolean runInner(RobotController rc) throws GameActionException {
         int myAttackRange = rc.getType().attackRadiusSquared;

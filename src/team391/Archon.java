@@ -4,13 +4,28 @@ import battlecode.common.*;
 
 class Archon extends Model {
 
+    final static MapLocation[] SIGHT_EDGE = {
+        new MapLocation(3, 5),
+        new MapLocation(4, 4),
+        new MapLocation(5, 3),
+        new MapLocation(5, 2),
+        new MapLocation(5, 1),
+        new MapLocation(5, 0),
+        new MapLocation(5, -1),
+        new MapLocation(5, -2),
+        new MapLocation(5, -3),
+        new MapLocation(4, -4),
+        new MapLocation(3, -5),
+    };
+
     final static int DIR_NONE = 8;
     final static int NUM_DIRECTIONS = Common.DIRECTIONS.length;
     final static double FORCED_MOVE_AWAY_THRESH = -3;
     final static double FORCED_MOVE_TO_THRESH = 5;
-    final static double MOVE_RAND = 0.5;
+    // final static double MOVE_RAND = 0.5;
+    final static double MOVE_RAND = 0;
 
-    Target target;
+    static Target target;
     static Target base;
     static MapLocation center;
     static double[] dirPoints = new double[NUM_DIRECTIONS]; // include None
@@ -19,71 +34,7 @@ class Archon extends Model {
 
     @Override
     public boolean runInner(RobotController rc) throws GameActionException {
-        int fate = Common.rand.nextInt(1000);
-        if(rc.isCoreReady()) {
-            RobotInfo[] neutrals = rc.senseNearbyRobots(2, Team.NEUTRAL);
-            if(neutrals.length > 0) {
-                Common.activate(rc, neutrals[0].location, neutrals[0].type, LowStrategy.NONE);
-                return false;
-            }
-            // if(fate < 200) {
-                // target = null;
-                // for(int i=0; i<Common.partLocationsSize; ++i) {
-                    // MapLocation loc = Common.partLocations[i];
-                    // if(Common.mapParts[loc.x%Common.MAP_MOD][loc.y%Common.MAP_MOD] != 0) {
-                        // target = new Target(loc);
-                        // target.weights.put(Target.TargetType.MOVE, Target.TargetType.Level.PRIORITY);
-                        // break;
-                    // }
-                // }
-                // if(target != null) rc.setIndicatorLine(rc.getLocation(), target.loc, 0,255,0);
-            // }
-
-            computeMove(rc);
-            relaxMove(0.5);
-            RobotInfo[] nearbyZombies = rc.senseNearbyRobots(5, Team.ZOMBIE);
-            RobotInfo[] nearbyAllies = rc.senseNearbyRobots(5, Common.myTeam);
-            if(nearbyZombies.length > 0 && nearbyAllies.length > 0
-                    || dirPoints[DIR_NONE] < FORCED_MOVE_AWAY_THRESH
-                    || dirPoints[moveDir.ordinal()] > FORCED_MOVE_TO_THRESH) {
-                if(move(rc)) return false;
-            }
-
-            if(fate < Math.max(400, 800 - rc.getTeamParts())) {
-                if(target != null) {
-                    // rc.setIndicatorString(1, "Targeting " + target.loc);
-                    if(target.run(rc)) target = null;
-                    return false;
-                }
-                if(base != null && rc.getLocation().distanceSquaredTo(base.loc) >= Common.sightRadius) {
-                    // rc.setIndicatorString(1, "Targeting base at " + base.loc);
-                    base.run(rc);
-                    return false;
-                }
-                // rc.setIndicatorString(1, "Running fate");
-                // Check the rubble in that direction
-                if(rc.senseRubble(rc.getLocation().add(moveDir)) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
-                    // Too much rubble, so I should clear it
-                    rc.clearRubble(moveDir);
-                    // Check if I can move in this direction
-                } else {
-                    // Move
-                    if(move(rc)) return false;
-                }
-            } else {
-                // Choose a unit to build
-                // RobotType typeToBuild = Common.ROBOT_TYPES[fate % 8];
-                RobotType typeToBuild = RobotType.SCOUT;
-                // Check for sufficient parts
-                if(rc.hasBuildRequirements(typeToBuild)) {
-                    // Choose a direction to try to build in
-                    RobotInfo hostile = Common.closestRobot(rc.senseHostileRobots(rc.getLocation(), Common.sightRadius));
-                    Direction dirToBuild = hostile != null ? rc.getLocation().directionTo(hostile.location) : Common.DIRECTIONS[Common.rand.nextInt(8)];
-                    dirToBuild = Common.findPathDirection(rc, dirToBuild, typeToBuild);
-                    if(dirToBuild != Direction.NONE) Common.build(rc, dirToBuild, typeToBuild, LowStrategy.EXPLORE);
-                }
-            }
-        }
+        coreAction(rc);
 
         // heal
         RobotInfo[] allies = rc.senseNearbyRobots(Common.robotType.attackRadiusSquared, Common.myTeam);
@@ -103,24 +54,107 @@ class Archon extends Model {
         return false;
     }
 
+    static boolean coreAction(RobotController rc) throws GameActionException {
+        if(!rc.isCoreReady()) return false;
+
+        int fate = Common.rand.nextInt(1000);
+        RobotInfo[] neutrals = rc.senseNearbyRobots(2, Team.NEUTRAL);
+        if(neutrals.length > 0) {
+            Common.activate(rc, neutrals[0].location, neutrals[0].type, LowStrategy.NONE);
+            return true;
+        }
+        // if(fate < 200) {
+        // target = null;
+        // for(int i=0; i<Common.partLocationsSize; ++i) {
+        // MapLocation loc = Common.partLocations[i];
+        // if(Common.mapParts[loc.x%Common.MAP_MOD][loc.y%Common.MAP_MOD] != 0) {
+        // target = new Target(loc);
+        // target.weights.put(Target.TargetType.MOVE, Target.TargetType.Level.PRIORITY);
+        // break;
+        // }
+        // }
+        // if(target != null) rc.setIndicatorLine(rc.getLocation(), target.loc, 0,255,0);
+        // }
+
+        computeMove(rc);
+        relaxMove(0.5);
+        moveDirection();
+
+        String str = "";
+        for(int i=0; i<dirPoints.length; ++i) str += String.format("%s:%.2f ", Common.DIRECTIONS[i].toString().charAt(0), dirPoints[i]);
+        rc.setIndicatorString(1, str);
+
+        RobotInfo[] nearbyZombies = rc.senseNearbyRobots(5, Team.ZOMBIE);
+        RobotInfo[] nearbyAllies = rc.senseNearbyRobots(5, Common.myTeam);
+        RobotInfo closestRangedZombie = Common.closestRangedRobot(rc.senseNearbyRobots(24, Team.ZOMBIE));
+        if((nearbyZombies.length > 0 || closestRangedZombie != null) && nearbyAllies.length > 0
+                || dirPoints[DIR_NONE] < FORCED_MOVE_AWAY_THRESH
+                || dirPoints[moveDir.ordinal()] > FORCED_MOVE_TO_THRESH)
+        {
+            if(move(rc)) return true;
+        }
+
+        if(fate < Math.max(400, 800 - rc.getTeamParts())) {
+            if(target != null) {
+                // rc.setIndicatorString(1, "Targeting " + target.loc);
+                if(target.run(rc)) target = null;
+                if(!rc.isCoreReady()) return true;
+            } else if(base != null && rc.getLocation().distanceSquaredTo(base.loc) >= Common.sightRadius) {
+                // rc.setIndicatorString(1, "Targeting base at " + base.loc);
+                base.run(rc);
+                if(!rc.isCoreReady()) return true;
+            }
+            // rc.setIndicatorString(1, "Running fate");
+            if(move(rc)) return true;
+        } else {
+            // Choose a unit to build
+            // RobotType typeToBuild = Common.ROBOT_TYPES[fate % 8];
+            RobotType typeToBuild = RobotType.SCOUT;
+            // Check for sufficient parts
+            if(rc.hasBuildRequirements(typeToBuild)) {
+                // Choose a direction to try to build in
+                RobotInfo hostile = Common.closestRobot(rc.senseHostileRobots(rc.getLocation(), Common.sightRadius));
+                Direction dirToBuild = hostile != null ? rc.getLocation().directionTo(hostile.location) : Common.DIRECTIONS[Common.rand.nextInt(8)];
+                dirToBuild = Common.findPathDirection(rc, dirToBuild, typeToBuild);
+                if(dirToBuild != Direction.NONE) {
+                    Common.build(rc, dirToBuild, typeToBuild, LowStrategy.EXPLORE);
+                    return true;
+                }
+            }
+        }
+
+        if(rc.isCoreReady()) {
+            Direction clearDir = Common.findClearDirection(rc, moveDir);
+            if(clearDir != Direction.NONE) {
+                rc.clearRubble(clearDir);
+                return true;
+            }
+        }
+        return false;
+    }
+
     static void computeMove(RobotController rc) throws GameActionException {
         final int HOSTILE_RADIUS = 24;
+        final double POINTS_NONE = -2; // encourage movement
         final double POINTS_HOSTILE = -5;
         final double POINTS_HOSTILE_TURRET = -8;
         final double POINTS_HOSTILE_BIGZOMBIE = -8;
         final double POINTS_HOSTILE_ZOMBIEDEN = -8;
+        final double POINTS_ROBOT_OBSTRUCTION = 0;
         final double POINTS_PARTS = 0.05;
+        final int PARTS_RADIUS = 10;
         final double PARTS_RUBBLE_THRESH = GameConstants.RUBBLE_OBSTRUCTION_THRESH;
         final double POINTS_NEUTRAL = 0.1; // per part cost
         final double POINTS_NEUTRAL_ARCHON = 300;
-        final double POINTS_ZOMBIE_LEAD = -10;
+        final double POINTS_ZOMBIE_LEAD = -5;
         final double POINTS_HISTORY = -5;
-        final double HISTORY_DECAY = 0.75;
+        final double HISTORY_DECAY = 0.7;
         final int MAP_MOD = Common.MAP_MOD;
         final double sqrt[] = Common.sqrt;
         final double mapParts[][] = Common.mapParts;
         dirPoints = new double[NUM_DIRECTIONS];
         MapLocation loc = rc.getLocation();
+        dirPoints[Direction.NONE.ordinal()] += POINTS_NONE;
         for(RobotInfo bad : rc.senseHostileRobots(loc, HOSTILE_RADIUS)) {
             if(bad.type.attackPower > 0) {
                 dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE;
@@ -149,10 +183,18 @@ class Archon extends Model {
                 dirPoints[loc.directionTo(good.location).ordinal()] += POINTS_NEUTRAL * good.type.partCost / dist;
             }
         }
-        for(MapLocation ploc : rc.sensePartLocations(Common.sightRadius)) {
-            if(Common.mapRubble[ploc.x%MAP_MOD][ploc.y%MAP_MOD] < PARTS_RUBBLE_THRESH) {
-                double dist = sqrt[loc.distanceSquaredTo(ploc)];
-                dirPoints[loc.directionTo(ploc).ordinal()] += POINTS_PARTS * mapParts[ploc.x%MAP_MOD][ploc.y%MAP_MOD] / dist;
+        for(RobotInfo robot : rc.senseNearbyRobots(2)) {
+            dirPoints[loc.directionTo(robot.location).ordinal()] += POINTS_ROBOT_OBSTRUCTION;
+        }
+        for(MapLocation ploc : rc.sensePartLocations(PARTS_RADIUS)) {
+            MapLocation iploc = ploc.add(ploc.directionTo(loc));
+            MapLocation iloc = loc.add(loc.directionTo(ploc));
+            if(Common.mapRubble[ploc.x%MAP_MOD][ploc.y%MAP_MOD] < PARTS_RUBBLE_THRESH
+                    && Common.mapRubble[iploc.x%MAP_MOD][iploc.y%MAP_MOD] < PARTS_RUBBLE_THRESH
+                    && Common.mapRubble[iloc.x%MAP_MOD][iloc.y%MAP_MOD] < PARTS_RUBBLE_THRESH) {
+                // rc.setIndicatorDot(ploc, 255,0,0);
+                double sqrDist = loc.distanceSquaredTo(ploc);
+                dirPoints[loc.directionTo(ploc).ordinal()] += POINTS_PARTS * mapParts[ploc.x%MAP_MOD][ploc.y%MAP_MOD] / (sqrDist * sqrDist);
             }
         }
         for(int i=0; i<8; ++i) {
@@ -178,12 +220,17 @@ class Archon extends Model {
         for(int i=Signals.zombieLeadsBegin; i<Signals.zombieLeadsSize; ++i) {
             RobotInfo lead = Signals.zombieLeads[i];
             MapLocation leadLoc = lead.location;
+            int sqrDist = loc.distanceSquaredTo(leadLoc);
+            double dist = sqrDist < Common.sqrt.length ? Common.sqrt[sqrDist] : Math.sqrt(sqrDist);
             // if(rc.canSenseRobot(lead.ID)) leadLoc = rc.senseRobot(lead.ID).location;
-            dirPoints[loc.directionTo(leadLoc).ordinal()] += POINTS_ZOMBIE_LEAD;
+            dirPoints[loc.directionTo(leadLoc).ordinal()] += POINTS_ZOMBIE_LEAD / dist;
         }
         for(int i=0; i<=DIR_NONE; ++i) {
             dirPoints[i] += MOVE_RAND * Common.rand.nextDouble();
         }
+    }
+
+    static Direction moveDirection() {
         int bestDirIndex = DIR_NONE;
         movePoint = dirPoints[DIR_NONE];
         for(int i=0; i<DIR_NONE; ++i) {
@@ -193,12 +240,20 @@ class Archon extends Model {
             }
         }
         moveDir = Common.DIRECTIONS[bestDirIndex];
+        return moveDir;
     }
 
     static boolean move(RobotController rc) throws GameActionException {
-        moveDir = Common.findPathDirection(rc, moveDir);
-        if(moveDir != Direction.NONE) {
-            rc.move(moveDir);
+        if(!rc.isCoreReady()) return false;
+        Direction dir = Direction.NONE;
+        for(int i=0; i<DIR_NONE; ++i) {
+            if(dirPoints[i] > dirPoints[dir.ordinal()] && rc.canMove(Common.DIRECTIONS[i])) {
+                dir = Common.DIRECTIONS[i];
+            }
+        }
+        if(dir != Direction.NONE) {
+            moveDir = dir;
+            Common.move(rc, moveDir);
             return true;
         } else {
             return false;
@@ -214,6 +269,7 @@ class Archon extends Model {
             points[i] += partial * dirPoints[(i + 1) % DIR_NONE];
             points[i] += partial * dirPoints[(i + 7) % DIR_NONE];
         }
+        dirPoints = points;
     }
 
 }

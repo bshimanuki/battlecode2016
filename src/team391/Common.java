@@ -53,6 +53,9 @@ class Common {
     static Direction myBase;
     static Direction enemyBase;
 
+    // Map of robots, ignores id 0, mod ID_MOD
+    static int[][] mapRobots = new int[MAP_MOD][MAP_MOD];
+
     // Team vars
     static Team myTeam;
     static Team enemyTeam;
@@ -246,11 +249,9 @@ class Common {
             if(sendBoundariesHigh) Signals.addBoundsHigh(rc);
         }
         sent += Signals.sendQueue(rc, sendRadius);
-        rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d", sent, read, xMin, yMin, xMax, yMax));
         String str = "";
         for(int i=0; i<enemyArchonIdsSize; ++i) str += enemyArchonIds[i] + ":" + knownLocations[enemyArchonIds[i]%ID_MOD] + " ";
-        str += " ";
-        rc.setIndicatorString(1, str);
+        rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d; %s", sent, read, xMin, yMin, xMax, yMax, str));
     }
 
     static void updateMap(RobotController rc) throws GameActionException {
@@ -311,16 +312,28 @@ class Common {
      * @param dir
      */
     static void move(RobotController rc, Direction dir) throws GameActionException {
+        history[historySize++] = rc.getLocation();
         rc.move(dir);
         MapLocation loc = rc.getLocation();
-        history[historySize++] = loc;
         int roundNum = rc.getRoundNum();
+        MapLocation[] edges;
+        switch(robotType) {
+            case ARCHON:
+                edges = Archon.SIGHT_EDGE;
+                break;
+            case SCOUT:
+                edges = Scout.SIGHT_EDGE;
+                break;
+            default:
+                edges = Soldier.SIGHT_EDGE;
+                break;
+        }
         switch(dir) {
             case NORTH_EAST:
             case EAST:
             case SOUTH_EAST:
-                for(int y=-straightSight; y<=straightSight; ++y) {
-                    MapLocation senseLocation = loc.add(straightSight, y);
+                for(MapLocation edge : edges) {
+                    MapLocation senseLocation = loc.add(edge.x, edge.y);
                     if(rc.canSense(senseLocation)) {
                         rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
                         mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
@@ -330,8 +343,8 @@ class Common {
             case SOUTH_WEST:
             case WEST:
             case NORTH_WEST:
-                for(int y=-straightSight; y<=straightSight; ++y) {
-                    MapLocation senseLocation = loc.add(-straightSight, y);
+                for(MapLocation edge : edges) {
+                    MapLocation senseLocation = loc.add(-edge.x, edge.y);
                     if(rc.canSense(senseLocation)) {
                         rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
                         mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
@@ -345,8 +358,8 @@ class Common {
             case NORTH_WEST:
             case NORTH:
             case NORTH_EAST:
-                for(int x=-straightSight; x<=straightSight; ++x) {
-                    MapLocation senseLocation = loc.add(x, straightSight);
+                for(MapLocation edge : edges) {
+                    MapLocation senseLocation = loc.add(edge.y, -edge.x);
                     if(rc.canSense(senseLocation)) {
                         rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
                         mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
@@ -356,8 +369,8 @@ class Common {
             case SOUTH_EAST:
             case SOUTH:
             case SOUTH_WEST:
-                for(int x=-straightSight; x<=straightSight; ++x) {
-                    MapLocation senseLocation = loc.add(x, -straightSight);
+                for(MapLocation edge : edges) {
+                    MapLocation senseLocation = loc.add(edge.y, edge.x);
                     if(rc.canSense(senseLocation)) {
                         rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
                         mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
@@ -431,8 +444,15 @@ class Common {
         id = id % ID_MOD;
         knownTeams[id] = team;
         if(loc != null && !loc.equals(MAP_EMPTY)) {
+            if(knownLocations[id] != null) {
+                MapLocation oldLoc = knownLocations[id];
+                if(mapRobots[oldLoc.x%MAP_MOD][oldLoc.y%MAP_MOD] == id) {
+                    mapRobots[oldLoc.x%MAP_MOD][oldLoc.y%MAP_MOD] = 0;
+                }
+            }
             knownTimes[id] = rc.getRoundNum();
             knownLocations[id] = loc;
+            mapRobots[loc.x%MAP_MOD][loc.y%MAP_MOD] = id;
         }
     }
 
@@ -446,13 +466,11 @@ class Common {
         boolean newLoc = false;
         // use knownTypes because team, time, and location can come from intercepting signals
         boolean newRobot = knownTypes[id] == null;
-        knownTeams[id] = team;
-        knownTypes[id] = robotType;
         if(loc != null && !loc.equals(MAP_EMPTY)) {
             if(knownLocations[id] == null) newLoc = true;
-            knownTimes[id] = rc.getRoundNum();
-            knownLocations[id] = loc;
         }
+        addInfo(id, team, loc);
+        knownTypes[id] = robotType;
         if(robotType == RobotType.ARCHON && team == enemyTeam && newRobot)
             enemyArchonIds[enemyArchonIdsSize++] = id;
         if(rc.getType().canMessageSignal() && (newRobot || newLoc) && rc.getRoundNum() - enrollment > 10) {
@@ -670,6 +688,27 @@ class Common {
     }
     static Direction findPathDirection(RobotController rc, Direction dir) {
         return findPathDirection(rc, dir, null);
+    }
+
+    static Direction findClearDirection(RobotController rc, Direction dir) {
+        final int maxRotations = 8;
+        int diff = rand.nextInt(2);
+        double rubble = MAX_ID;
+        MapLocation loc = rc.getLocation();
+        Direction bestDir = Direction.NONE;
+        for(int i=0; i<=maxRotations; ++i) {
+            if((i + diff) % 2 == 0) {
+                for(int j=0; j<i; ++j) dir = dir.rotateLeft();
+            } else {
+                for(int j=0; j<i; ++j) dir = dir.rotateRight();
+            }
+            double newRubble = rc.senseRubble(loc.add(dir));
+            if(newRubble >= GameConstants.RUBBLE_OBSTRUCTION_THRESH && newRubble < rubble) {
+                bestDir = dir;
+                rubble = newRubble;
+            }
+        }
+        return bestDir;
     }
 
     static boolean kamikaze(RobotController rc, Direction dir) throws GameActionException {

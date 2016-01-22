@@ -379,7 +379,7 @@ class Target extends Model {
             RobotInfo[] allAllies = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
             RobotInfo archon = Common.closestArchon(allAllies);
             if(archon != null) {
-                if(curLocation.distanceSquaredTo(closestZombie.location) >= archon.location.distanceSquaredTo(closestZombie.location)) {
+                if(closestZombie != null && curLocation.distanceSquaredTo(closestZombie.location) >= archon.location.distanceSquaredTo(closestZombie.location)) {
                     targetDirection = curLocation.directionTo(closestZombie.location);
                 } else {
                     int ax = archon.location.x - curLocation.x;
