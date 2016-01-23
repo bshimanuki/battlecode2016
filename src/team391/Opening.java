@@ -20,7 +20,6 @@ class Opening extends Model {
         MapLocation loc = rc.getLocation();
         switch(round) {
             case 0:
-                Common.archonIds[Common.archonIdsSize++] = Common.id;
                 Common.sendBoundariesLow = true;
                 Common.sendBoundariesHigh = true;
                 // send a signal for map bounds and then ensure no more are sent

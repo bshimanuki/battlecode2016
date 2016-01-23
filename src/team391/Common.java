@@ -473,8 +473,10 @@ class Common {
         }
         addInfo(id, team, loc);
         knownTypes[id] = robotType;
-        if(robotType == RobotType.ARCHON && team == enemyTeam && newRobot)
-            enemyArchonIds[enemyArchonIdsSize++] = id;
+        if(robotType == RobotType.ARCHON && newRobot) {
+            if(team == myTeam) archonIds[archonIdsSize++] = id;
+            else if(team == enemyTeam) enemyArchonIds[enemyArchonIdsSize++] = id;
+        }
         if(rc.getType().canMessageSignal() && (newRobot || newLoc) && rc.getRoundNum() - enrollment > 10) {
             if(team == Team.NEUTRAL) {
                 SignalUnit s = new SignalUnit(id, team, robotType, loc);

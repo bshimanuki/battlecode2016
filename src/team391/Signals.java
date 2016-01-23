@@ -107,9 +107,6 @@ class Signals {
                 Signal s = signals[i];
                 Common.addInfo(s.getRobotID(), s.getTeam(), RobotType.ARCHON, s.getLocation());
                 if(myTeam == s.getTeam()) {
-                    if(Common.knownTypes[s.getID()%Common.ID_MOD] == null) {
-                        Common.archonIds[Common.archonIdsSize++] = s.getID();
-                    }
                     extract(s);
                 } else {
                 }

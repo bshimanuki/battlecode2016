@@ -136,6 +136,7 @@ class Archon extends Model {
         final int HOSTILE_RADIUS = 24;
         final double POINTS_NONE = 0.2; // discourage movement?
         final double POINTS_BASE = 0.05;
+        final double POINTS_HOSTILE_EDGE = -3; // force movement if possible when being attacked on the edge
         final double POINTS_HOSTILE = -5;
         final double POINTS_HOSTILE_TURRET = -8;
         final double POINTS_HOSTILE_BIGZOMBIE = -8;
@@ -146,6 +147,8 @@ class Archon extends Model {
         final double PARTS_RUBBLE_THRESH = GameConstants.RUBBLE_OBSTRUCTION_THRESH;
         final double POINTS_NEUTRAL = 0.2; // per part cost
         final double POINTS_NEUTRAL_ARCHON = 30;
+        final double POINTS_ALLY_ARCHON = -2; // encourage apreading out
+        final double POINTS_ENEMY_ARCHON = -4;
         final double POINTS_ZOMBIE_LEAD = -5;
         final double POINTS_HISTORY = -1;
         final double HISTORY_DECAY = 0.7;
@@ -196,6 +199,49 @@ class Archon extends Model {
         }
         for(RobotInfo robot : rc.senseNearbyRobots(2)) {
             dirPoints[loc.directionTo(robot.location).ordinal()] += POINTS_ROBOT_OBSTRUCTION;
+        }
+        RobotInfo[] hostileAdjacent = rc.senseHostileRobots(loc, 2);
+        if(loc.x == Common.xMin || loc.x == Common.xMax || loc.y == Common.yMin || loc.y == Common.yMax) {
+            int edges = 0;
+            if(loc.x == Common.xMin) ++edges;
+            if(loc.x == Common.xMax) ++edges;
+            if(loc.y == Common.yMin) ++edges;
+            if(loc.y == Common.yMax) ++edges;
+            dirPoints[Direction.NONE.ordinal()] += edges * hostileAdjacent.length * POINTS_HOSTILE_EDGE;
+        }
+        if(hostileAdjacent.length > 0) {
+            if(Common.xMin != Common.MAP_NONE) {
+                double amount = hostileAdjacent.length * POINTS_HOSTILE / (loc.x - Common.xMin);
+                dirPoints[Direction.WEST.ordinal()] += amount;
+                dirPoints[Direction.NONE.ordinal()] += amount;
+            }
+            if(Common.xMax != Common.MAP_NONE) {
+                double amount = hostileAdjacent.length * POINTS_HOSTILE / (Common.xMax - loc.x);
+                dirPoints[Direction.EAST.ordinal()] += amount;
+                dirPoints[Direction.NONE.ordinal()] += amount;
+            }
+            if(Common.yMin != Common.MAP_NONE) {
+                double amount = hostileAdjacent.length * POINTS_HOSTILE / (loc.y - Common.yMin);
+                dirPoints[Direction.NORTH.ordinal()] += amount;
+                dirPoints[Direction.NONE.ordinal()] += amount;
+            }
+            if(Common.yMax != Common.MAP_NONE) {
+                double amount = hostileAdjacent.length * POINTS_HOSTILE / (Common.yMax - loc.y);
+                dirPoints[Direction.SOUTH.ordinal()] += amount;
+                dirPoints[Direction.NONE.ordinal()] += amount;
+            }
+        }
+        for(int i=1; i<Common.archonIdsSize; ++i) {
+            if(rc.canSenseRobot(Common.archonIds[i])) {
+                RobotInfo archon = rc.senseRobot(Common.archonIds[i]);
+                dirPoints[loc.directionTo(archon.location).ordinal()] += POINTS_ALLY_ARCHON;
+            }
+        }
+        for(int i=1; i<Common.enemyArchonIdsSize; ++i) {
+            if(rc.canSenseRobot(Common.enemyArchonIds[i])) {
+                RobotInfo archon = rc.senseRobot(Common.enemyArchonIds[i]);
+                dirPoints[loc.directionTo(archon.location).ordinal()] += POINTS_ENEMY_ARCHON;
+            }
         }
         for(MapLocation ploc : rc.sensePartLocations(PARTS_RADIUS)) {
             MapLocation iploc = ploc.add(ploc.directionTo(loc));
