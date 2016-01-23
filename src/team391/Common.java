@@ -555,11 +555,14 @@ class Common {
     }
 
     static RobotInfo closestRobot(RobotInfo[] infos) {
+        return closestRobot(infos, false);
+    }
+    static RobotInfo closestRobot(RobotInfo[] infos, boolean zombieDen) {
         MapLocation curLocation = rc.getLocation();
         RobotInfo closest = null;
         int dist = MAX_DIST; // to be replaced
         // exclude dens
-        for(RobotInfo info : infos) if(info.type != RobotType.ZOMBIEDEN) {
+        for(RobotInfo info : infos) if(zombieDen || info.type != RobotType.ZOMBIEDEN) {
             int newdist = curLocation.distanceSquaredTo(info.location);
             if(newdist < dist) {
                 closest = info;
@@ -583,6 +586,32 @@ class Common {
             }
         }
         return closest;
+    }
+
+    static RobotInfo closestTurret(RobotInfo[] infos) {
+        MapLocation curLocation = rc.getLocation();
+        RobotInfo closest = null;
+        int dist = MAX_DIST; // to be replaced
+        for(RobotInfo info : infos) {
+            if(info.type == RobotType.TURRET) {
+                int newdist = curLocation.distanceSquaredTo(info.location);
+                if(newdist < dist) {
+                    closest = info;
+                    dist = newdist;
+                }
+            }
+        }
+        return closest;
+    }
+
+    static int numTurret(RobotInfo[] infos) {
+        int num = 0;
+        for(RobotInfo info : infos) {
+            if(info.type == RobotType.TURRET) {
+                ++num;
+            }
+        }
+        return num;
     }
 
     static RobotInfo closestArchon(RobotInfo[] infos) {
@@ -659,7 +688,7 @@ class Common {
         double hit = 0;
         for(RobotInfo robot : robots) {
             if(loc.distanceSquaredTo(robot.location) <= robot.type.attackRadiusSquared) {
-                hit += robot.attackPower;
+                hit += robot.attackPower / robot.type.attackDelay;
             }
         }
         return hit;

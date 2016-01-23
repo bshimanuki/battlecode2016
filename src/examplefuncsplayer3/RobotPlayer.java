@@ -100,6 +100,22 @@ public class RobotPlayer {
                         }
                     }
 
+                    if(rc.getType() == RobotType.ARCHON) {
+                        RobotInfo[] allies = rc.senseNearbyRobots(rc.getType().attackRadiusSquared, rc.getTeam());
+                        RobotInfo toHeal = null;
+                        double health = 500;
+                        for(RobotInfo ally : allies) if(ally.type != RobotType.ARCHON) {
+                            if(toHeal != null && toHeal.type == RobotType.SCOUT && ally.type != RobotType.SCOUT) {
+                                toHeal = ally;
+                                health = ally.health;
+                            } else if(ally.health < health) {
+                                toHeal = ally;
+                                health = ally.health;
+                            }
+                        }
+                        if(toHeal != null) rc.repair(toHeal.location);
+
+                    }
                     Clock.yield();
                 } catch (Exception e) {
                     System.out.println(e.getMessage());

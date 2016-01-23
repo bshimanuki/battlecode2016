@@ -54,6 +54,7 @@ class Target extends Model {
     int lastSight = -1; // last turn target was seen
     double rubbleLevel; // max rubble to clear
     boolean targetArchon = false; // special case
+    boolean zombieDen = false; // dens count as zombies
 
     // weights copied by reference
     Target(Direction dir, Map<TargetType, TargetType.Level> weights) {
@@ -256,12 +257,15 @@ class Target extends Model {
         }
         if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
             RobotInfo[] allies = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
-            RobotInfo[] enemies = rc.senseNearbyRobots(13, Common.enemyTeam);
+            RobotInfo[] enemies = rc.senseNearbyRobots(24, Common.enemyTeam);
+            RobotInfo[] allEnemies = rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam);
             RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
-            boolean aroundEnemies = enemies.length > 1 || enemies.length == 1 && enemies[0].type == RobotType.ARCHON;
             RobotInfo closestEnemy = Common.closestRobot(enemies);
+            RobotInfo closestEnemyTurret = Common.closestTurret(allEnemies);
             RobotInfo closestAlly = Common.closestNonKamikaze(allies);
             RobotInfo closestArchon = Common.closestArchon(allies);
+            if(closestEnemy == null) closestEnemy = closestEnemyTurret;
+            boolean aroundEnemies = closestEnemyTurret != null || enemies.length > 1 || enemies.length == 1 && enemies[0].type == RobotType.ARCHON;
             boolean closerToEnemies = closestEnemy != null && (closestAlly == null || curLocation.distanceSquaredTo(closestEnemy.location) < curLocation.distanceSquaredTo(closestAlly.location));
             if(aroundEnemies && closerToEnemies && closestArchon == null && zombies.length > 0) {
                 weights.put(TargetType.ZOMBIE_LEAD, TargetType.Level.INACTIVE);
@@ -313,7 +317,7 @@ class Target extends Model {
                 x /= Common.sqrt[2];
                 y /= Common.sqrt[2];
             }
-            RobotInfo closestZombie = Common.closestRobot(zombies);
+            RobotInfo closestZombie = Common.closestRobot(zombies, zombieDen);
             RobotInfo closestRangedZombie = Common.closestRangedRobot(zombies);
             RobotInfo[] closests = {closestZombie, closestRangedZombie};
             double dot = -Common.MAX_DIST;
@@ -330,10 +334,10 @@ class Target extends Model {
                     double distBuffer;
                     switch(closest.type) {
                         case RANGEDZOMBIE:
-                            distBuffer = 3;
+                            distBuffer = 3.5;
                             break;
                         case FASTZOMBIE:
-                            distBuffer = 2.5;
+                            distBuffer = 4;
                             break;
                         default:
                             distBuffer = 0.5;
@@ -353,11 +357,28 @@ class Target extends Model {
                     }
                 }
             }
-            RobotInfo[] allies = rc.senseNearbyRobots(curLocation.add(targetDirection.opposite()), 2, Common.myTeam);
+            if(curLocation.x == Common.xMin && dx < 0) {
+                dx = 0;
+                dy *= Common.sqrt[2];
+            }
+            if(curLocation.x == Common.xMax && dx > 0) {
+                dx = 0;
+                dy *= Common.sqrt[2];
+            }
+            if(curLocation.y == Common.yMin && dy < 0) {
+                dy = 0;
+                dx *= Common.sqrt[2];
+            }
+            if(curLocation.y == Common.yMax && dy > 0) {
+                dy = 0;
+                dx *= Common.sqrt[2];
+            }
             // MAP_MOD to approximate with better precision
             Direction nextDirection = new MapLocation(0, 0).directionTo(new MapLocation((int) (Common.MAP_MOD * dx), (int) (Common.MAP_MOD * dy)));
+            RobotInfo[] allies = rc.senseNearbyRobots(curLocation.add(targetDirection.opposite()), 2, Common.myTeam);
             boolean crowded = allies.length >= 3;
             boolean underAttack = Common.underAttack(zombies, curLocation.add(nextDirection));
+            rc.setIndicatorString(1, String.format("<%.2f %.2f> %s", dx, dy, underAttack));
             if(!crowded && !underAttack) {
                 if(dx * dx + dy * dy < 0.25) nextDirection = Direction.NONE;
                 targetDirection = nextDirection;
@@ -373,8 +394,9 @@ class Target extends Model {
                         else nextDirection = nextDirection.rotateRight();
                     }
                     double newHit = Common.amountAttack(zombies, curLocation.add(nextDirection));
+                    if(nextDirection == targetDirection) newHit -= 1;
                     if(nextDirection == curLocation.directionTo(new MapLocation(Common.twiceCenterX/2, Common.twiceCenterY/2)))
-                        newHit -= 5;
+                        newHit -= 0.5;
                     if(newHit < hit && rc.canMove(nextDirection)) {
                         bestDirection = nextDirection;
                         hit = newHit;

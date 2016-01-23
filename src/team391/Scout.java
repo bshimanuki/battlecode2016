@@ -64,15 +64,24 @@ class Scout extends Model {
                 }
             }
         } else if(round == Common.enrollment) {
-            int num = Math.max(50, 100 - 2 * rc.senseNearbyRobots(Common.sightRadius, Common.myTeam).length);
+            int num = Math.max(100, 200 - 4 * rc.senseNearbyRobots(Common.sightRadius, Common.myTeam).length);
             int rand = Common.rand.nextInt(num);
-            if(rand < 10) {
+            if(rand < 12) {
                 Target kill = getZombieTarget();
                 kill.setTrigger((_rc) -> kill.seesBoardEdge(_rc) && _rc.senseNearbyRobots(ZOMBIE_ACCEPT_RADIUS, Team.ZOMBIE).length == 0);
                 Common.models.addFirst(kill);
                 Target opening;
                 if(rand < 8) opening = new Target(Target.TargetType.ZOMBIE_LEAD, Common.DIRECTIONS[rand]);
-                else opening = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase);
+                else {
+                    if(rand % 2 == 0) opening = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase.rotateLeft());
+                    else opening = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase.rotateRight());
+                }
+                opening.setTrigger((_rc) -> opening.seesBoardEdge(_rc) || _rc.senseNearbyRobots(ZOMBIE_ACCEPT_RADIUS, Team.ZOMBIE).length > 0);
+                Common.models.addFirst(opening);
+            } else if(rand < 24) {
+                Target opening;
+                if(rand % 2 == 0) opening = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase.rotateLeft());
+                else opening = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase.rotateRight());
                 opening.setTrigger((_rc) -> opening.seesBoardEdge(_rc) || _rc.senseNearbyRobots(ZOMBIE_ACCEPT_RADIUS, Team.ZOMBIE).length > 0);
                 Common.models.addFirst(opening);
             }
@@ -85,18 +94,21 @@ class Scout extends Model {
             if(zombies.length > 12) {
                 target = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase);
             } else {
+                boolean zombieDen = false;
+                boolean leadsNearby = false;
                 MapLocation loc = rc.getLocation();
                 boolean[] notClosest = new boolean[zombies.length];
                 int[] dist = new int[zombies.length];
                 for(int i=0; i<zombies.length; ++i) {
                     dist[i] = loc.distanceSquaredTo(zombies[i].location);
-                    if(zombies[i].type == RobotType.ZOMBIEDEN) notClosest[i] = true;
                 }
                 for(int i=Signals.zombieLeadsBegin; i<Signals.zombieLeadsSize; ++i) {
                     RobotInfo lead = Signals.zombieLeads[i];
                     MapLocation lloc = lead.location;
-                    if(rc.canSenseRobot(lead.ID)) lloc = rc.senseRobot(lead.ID).location;
-                    else if(rc.canSense(lloc)) continue;
+                    if(rc.canSenseRobot(lead.ID)) {
+                        lloc = rc.senseRobot(lead.ID).location;
+                        leadsNearby = true;
+                    } else if(rc.canSense(lloc)) continue;
                     for(int j=0; j<zombies.length; ++j) {
                         RobotInfo zombie = zombies[j];
                         if(lloc.distanceSquaredTo(zombie.location) <= dist[j]) {
@@ -104,10 +116,17 @@ class Scout extends Model {
                         }
                     }
                 }
+                for(int i=0; i<zombies.length; ++i) {
+                    if(zombies[i].type == RobotType.ZOMBIEDEN) {
+                        notClosest[i] = leadsNearby || loc.distanceSquaredTo(zombies[i].location) > 25;
+                        if(!leadsNearby) zombieDen = true;
+                    }
+                }
                 boolean closest = false;
                 for(boolean c : notClosest) if(!c) closest = true;
                 if(closest) {
                     target = getZombieTarget();
+                    target.zombieDen = zombieDen;
                     Signals.addSelfZombieLead(rc, target.dir);
                 }
             }
@@ -144,6 +163,7 @@ class Scout extends Model {
         final double POINTS_HOSTILE = -1;
         final double POINTS_HOSTILE_TURRET = -3;
         final double POINTS_ZOMBIE_LEAD = -2;
+        final double POINTS_ALLY_ARCHON = -3; // only if not protectArchon
         final double POINTS_HISTORY = -1;
         final double HISTORY_DECAY = 0.7;
         double[] dirPoints = new double[NUM_DIRECTIONS];
@@ -169,6 +189,14 @@ class Scout extends Model {
                     break;
                 default:
                     break;
+            }
+        }
+        if(!protectArchon) {
+            for(int i=0; i<Common.archonIdsSize; ++i) {
+                if(rc.canSenseRobot(Common.archonIds[i])) {
+                    RobotInfo archon = rc.senseRobot(Common.archonIds[i]);
+                    dirPoints[loc.directionTo(archon.location).ordinal()] += POINTS_ALLY_ARCHON;
+                }
             }
         }
         double hpoints = POINTS_HISTORY;
