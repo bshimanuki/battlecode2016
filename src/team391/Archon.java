@@ -202,16 +202,16 @@ class Archon extends Model {
                 dirPoints[loc.directionTo(ploc).ordinal()] += POINTS_PARTS * mapParts[ploc.x%MAP_MOD][ploc.y%MAP_MOD] / sqrDist;
             }
         }
-        for(int i=0; i<8; ++i) {
-            Direction dir = Common.DIRECTIONS[i];
-            double rubble = Common.mapRubble[(loc.x + dir.dx) % Common.MAP_MOD][(loc.y + dir.dy) % Common.MAP_MOD];
-            if(rubble > GameConstants.RUBBLE_SLOW_THRESH) dirPoints[dir.ordinal()] += -.5;
-            if(rubble > GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -4;
-            if(rubble > 2*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -4;
-            if(rubble > 5*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -4;
-            if(rubble > 10*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -8;
-            if(rubble > 100*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -12;
-        }
+        // for(int i=0; i<8; ++i) {
+            // Direction dir = Common.DIRECTIONS[i];
+            // double rubble = Common.mapRubble[(loc.x + dir.dx) % Common.MAP_MOD][(loc.y + dir.dy) % Common.MAP_MOD];
+            // if(rubble > GameConstants.RUBBLE_SLOW_THRESH) dirPoints[dir.ordinal()] += -.5;
+            // if(rubble > GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -4;
+            // if(rubble > 2*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -4;
+            // if(rubble > 5*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -4;
+            // if(rubble > 10*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -8;
+            // if(rubble > 100*GameConstants.RUBBLE_OBSTRUCTION_THRESH) dirPoints[dir.ordinal()] += -12;
+        // }
         double hpoints = POINTS_HISTORY;
         for(int i=1; i<=Common.HISTORY_SIZE; ++i) {
             int index = Common.historySize - i;

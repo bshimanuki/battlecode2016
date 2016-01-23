@@ -117,6 +117,10 @@ class Target extends Model {
         // TODO: TURRET movement
         // TODO: aggregate robot sensing calls and loops
         MapLocation curLocation = rc.getLocation();
+        if(dir == Direction.OMNI) {
+            dir = null;
+            targetArchon = true;
+        }
 
         if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) {
             RobotInfo[] enemies = rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam);
@@ -129,7 +133,9 @@ class Target extends Model {
                 id = closest.ID;
                 weights.put(TargetType.MOVE, TargetType.Level.ACTIVE);
             }
-        } else if(targetArchon) {
+        }
+
+        if(targetArchon) {
             MapLocation archon = null;
             int dist = Common.MAX_DIST;
             for(int i=0; i<Common.enemyArchonIdsSize; ++i) {
@@ -142,7 +148,7 @@ class Target extends Model {
                     }
                 }
             }
-            if(rc.getRoundNum() < Signals.UNIT_SIGNAL_REFRESH) {
+            if(rc.getRoundNum() < 6 * Signals.UNIT_SIGNAL_REFRESH || Common.enemyBase == Direction.OMNI && archon == null) {
                 for(MapLocation newLoc : Common.enemyArchonHometowns) {
                     int newDist = curLocation.distanceSquaredTo(newLoc);
                     if(newDist < dist) {
@@ -325,7 +331,7 @@ class Target extends Model {
                     double distBuffer;
                     switch(closest.type) {
                         case RANGEDZOMBIE:
-                            distBuffer = 2.5;
+                            distBuffer = 3;
                             break;
                         case FASTZOMBIE:
                             distBuffer = 2.5;
