@@ -25,6 +25,7 @@ class Signals {
 
     final static int ZOMBIE_LEAD = 5;
     final static int ZOMBIE_KAMIKAZE = 6;
+    final static int VIPER_KAMIKAZE = 7;
     final static int ZOMBIE_SIGNAL_REFRESH = 5; // every 5 turns
     final static int UNIT_SIGNAL_REFRESH = 50; // broadcast unit positions
 
@@ -57,6 +58,10 @@ class Signals {
     static Direction[] zombieLeadsDir = new Direction[Common.MAX_ID]; // queue
     static int zombieLeadsSize = 0;
     static int zombieLeadsBegin = 0;
+    static RobotInfo[] viperKamikaze = new RobotInfo[Common.MAX_ID]; // queue
+    static int[] viperKamikazeTurn = new int[Common.MAX_ID]; // queue
+    static int viperKamikazeSize = 0;
+    static int viperKamikazeBegin = 0;
     static int[] status = new int[Common.MAX_ID];
     static int[] statusTurn = new int[Common.MAX_ID];
 
@@ -132,14 +137,25 @@ class Signals {
             ++zombieLeadsBegin;
         }
         if(zombieLeadsSize > zombieLeads.length - 1000) {
-            RobotInfo[] infos = new RobotInfo[Common.MAX_ID];
-            int[] turns = new int[Common.MAX_ID];
-            System.arraycopy(zombieLeads, zombieLeadsBegin, infos, 0, zombieLeadsSize - zombieLeadsBegin);
-            System.arraycopy(zombieLeadsTurn, zombieLeadsBegin, turns, 0, zombieLeadsSize - zombieLeadsBegin);
-            zombieLeads = infos;
-            zombieLeadsTurn = turns;
+            System.arraycopy(zombieLeads, zombieLeadsBegin, zombieLeads, 0, zombieLeadsSize - zombieLeadsBegin);
+            System.arraycopy(zombieLeadsTurn, zombieLeadsBegin, zombieLeadsTurn, 0, zombieLeadsSize - zombieLeadsBegin);
+            System.arraycopy(zombieLeadsDir, zombieLeadsBegin, zombieLeadsDir, 0, zombieLeadsSize - zombieLeadsBegin);
             zombieLeadsSize = zombieLeadsSize - zombieLeadsBegin;
             zombieLeadsBegin = 0;
+        }
+        while(viperKamikazeBegin < viperKamikazeSize && viperKamikazeTurn[viperKamikazeBegin] < round) {
+            int idMod = viperKamikaze[viperKamikazeBegin].ID % Common.MAX_ID;
+            if(statusTurn[idMod] < round) {
+                status[idMod] = 0;
+                statusTurn[idMod] = rc.getRoundNum();
+            }
+            ++viperKamikazeBegin;
+        }
+        if(viperKamikazeSize > viperKamikaze.length - 1000) {
+            System.arraycopy(viperKamikaze, viperKamikazeBegin, viperKamikaze, 0, viperKamikazeSize - viperKamikazeBegin);
+            System.arraycopy(viperKamikazeTurn, viperKamikazeBegin, viperKamikazeTurn, 0, viperKamikazeSize - viperKamikazeBegin);
+            viperKamikazeSize = viperKamikazeSize - viperKamikazeBegin;
+            viperKamikazeBegin = 0;
         }
         return num;
     }
@@ -161,9 +177,9 @@ class Signals {
                 int idMod = s.getID()%Common.MAX_ID;
                 status[idMod] = s.getMessage()[0];
                 statusTurn[idMod] = Common.rc.getRoundNum();
+                SignalSelf sig = new SignalSelf(s.getID(), s.getLocation(), s.getMessage()[1]);
                 switch(s.getMessage()[0]) {
                     case ZOMBIE_LEAD:
-                        SignalSelf sig = new SignalSelf(s.getID(), s.getLocation(), s.getMessage()[1]);
                         zombieLeads[zombieLeadsSize] = sig.info;
                         zombieLeadsTurn[zombieLeadsSize] = Common.rc.getRoundNum();
                         zombieLeadsDir[zombieLeadsSize++] = sig.dir;
@@ -171,6 +187,10 @@ class Signals {
                         break;
                     case ZOMBIE_KAMIKAZE:
                         // TODO: handle
+                        break;
+                    case VIPER_KAMIKAZE:
+                        viperKamikaze[viperKamikazeSize] = sig.info;
+                        viperKamikazeTurn[viperKamikazeSize++] = Common.rc.getRoundNum();
                         break;
                     default:
                         break;
@@ -285,6 +305,9 @@ class Signals {
         // destruction is assumed, so don't worry about coreDelay
         if(dir == null) dir = Direction.NONE;
         new Signals(ZOMBIE_KAMIKAZE, new SignalSelf(rc.senseRobot(rc.getID()), dir).toInt(), Common.MAX_DIST).add();
+    }
+    static void addSelfViperKamikaze(RobotController rc) throws GameActionException {
+        new Signals(VIPER_KAMIKAZE, new SignalSelf(rc.senseRobot(rc.getID()), Direction.NONE).toInt()).add();
     }
 
     static int reduceCoordinate(int x) {

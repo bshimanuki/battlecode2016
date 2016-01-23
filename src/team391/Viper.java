@@ -12,14 +12,19 @@ class Viper extends Model {
         if(rc.getRoundNum() == Common.enrollment) {
             target = new Target(Common.enemyBase);
             target.weights.put(Target.TargetType.ZOMBIE_ATTACK, Target.TargetType.Level.INACTIVE);
-            Common.models.addFirst(target);
         }
-        move(rc);
-        attack(rc, rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam));
+        kamikazeInfect(rc);
+        if(target != null) {
+            if(target.run(rc)) target = null;
+        } else {
+            move(rc);
+            attack(rc, rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam));
+        }
         return false;
     }
 
     static boolean attack(RobotController rc, RobotInfo[] infos) throws GameActionException {
+        if(!rc.isWeaponReady()) return false;
         RobotInfo best = null;
         double points = -Common.INF;
         for(RobotInfo info : infos) {
@@ -49,6 +54,21 @@ class Viper extends Model {
             Common.move(rc, dir);
             last = dir;
         }
+    }
+
+    static boolean kamikazeInfect(RobotController rc) throws GameActionException {
+        if(!rc.isWeaponReady()) return false;
+        for(int i=Signals.viperKamikazeBegin; i<Signals.viperKamikazeSize; ++i) {
+            RobotInfo info = Signals.viperKamikaze[i];
+            if(rc.canSenseRobot(info.ID)) {
+                info = rc.senseRobot(info.ID);
+                if(info.zombieInfectedTurns < 3 && info.viperInfectedTurns < 3 && rc.canAttackLocation(info.location)) {
+                    rc.attackLocation(info.location);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 }
