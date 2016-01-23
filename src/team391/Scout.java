@@ -22,7 +22,11 @@ class Scout extends Model {
         new MapLocation(2, -7),
     };
 
+    final static int DIR_NONE = 8;
+    final static int NUM_DIRECTIONS = Common.DIRECTIONS.length;
+    final static double MOVE_RAND = 1;
     final static int ZOMBIE_ACCEPT_RADIUS = 35;
+
     static Direction last;
     static Target target;
     static boolean protectArchon = false;
@@ -83,13 +87,12 @@ class Scout extends Model {
                     dist[i] = loc.distanceSquaredTo(zombies[i].location);
                 for(int i=Signals.zombieLeadsBegin; i<Signals.zombieLeadsSize; ++i) {
                     RobotInfo lead = Signals.zombieLeads[i];
-                    if(rc.canSenseRobot(lead.ID)) {
-                        lead = rc.senseRobot(lead.ID);
-                        for(int j=0; j<zombies.length; ++j) {
-                            RobotInfo zombie = zombies[j];
-                            if(lead.location.distanceSquaredTo(zombie.location) <= dist[j]) {
-                                notClosest[j] = true;
-                            }
+                    MapLocation lloc = lead.location;
+                    if(rc.canSenseRobot(lead.ID)) lloc = rc.senseRobot(lead.ID).location;
+                    for(int j=0; j<zombies.length; ++j) {
+                        RobotInfo zombie = zombies[j];
+                        if(lloc.distanceSquaredTo(zombie.location) <= dist[j]) {
+                            notClosest[j] = true;
                         }
                     }
                 }
@@ -129,15 +132,77 @@ class Scout extends Model {
     }
 
     static void move(RobotController rc) throws GameActionException {
-        int rand = Common.rand.nextInt(9);
-        Direction dir;
-        if(rand == 8 && last != null) dir = last;
-        else dir = Common.DIRECTIONS[rand];
+        final double POINTS_NONE = -5;
+        final double POINTS_BASE = 0.05;
+        final double POINTS_HOSTILE = -1;
+        final double POINTS_HOSTILE_TURRET = -3;
+        final double POINTS_ZOMBIE_LEAD = -2;
+        final double POINTS_HISTORY = -1;
+        final double HISTORY_DECAY = 0.7;
+        double[] dirPoints = new double[NUM_DIRECTIONS];
+        MapLocation loc = rc.getLocation();
+        dirPoints[DIR_NONE] += POINTS_NONE;
+        dirPoints[Common.myBase.ordinal()] += POINTS_BASE;
+        for(RobotInfo bad : rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam)) {
+            switch(bad.type) {
+                case SOLDIER:
+                case GUARD:
+                    for(int i=0; i<9; ++i) {
+                        int dist = loc.add(Common.DIRECTIONS[i]).distanceSquaredTo(bad.location);
+                        if(dist <= bad.type.attackRadiusSquared)
+                            dirPoints[i] += POINTS_HOSTILE;
+                    }
+                    break;
+                case TURRET:
+                    for(int i=0; i<9; ++i) {
+                        int dist = loc.add(Common.DIRECTIONS[i]).distanceSquaredTo(bad.location);
+                        if(dist >= GameConstants.TURRET_MINIMUM_RANGE && dist <= bad.type.attackRadiusSquared)
+                            dirPoints[i] += POINTS_HOSTILE_TURRET;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        double hpoints = POINTS_HISTORY;
+        for(int i=1; i<=Common.HISTORY_SIZE; ++i) {
+            int index = Common.historySize - i;
+            if(index < 0) break;
+            MapLocation hloc = Common.history[index];
+            Direction dir = loc.directionTo(hloc);
+            if(dir == Direction.OMNI) dir = Direction.NONE;
+            dirPoints[dir.ordinal()] += hpoints;
+            hpoints *= HISTORY_DECAY;
+        }
+        for(int i=Signals.zombieLeadsBegin; i<Signals.zombieLeadsSize; ++i) {
+            RobotInfo lead = Signals.zombieLeads[i];
+            MapLocation leadLoc = lead.location;
+            int sqrDist = loc.distanceSquaredTo(leadLoc);
+            double dist = sqrDist < Common.sqrt.length ? Common.sqrt[sqrDist] : Math.sqrt(sqrDist);
+            // if(rc.canSenseRobot(lead.ID)) leadLoc = rc.senseRobot(lead.ID).location;
+            dirPoints[loc.directionTo(leadLoc).ordinal()] += POINTS_ZOMBIE_LEAD / dist;
+        }
+        for(int i=0; i<=DIR_NONE; ++i) {
+            dirPoints[i] += MOVE_RAND * Common.rand.nextDouble();
+        }
+        int bestDirIndex = DIR_NONE;
+        double movePoint = dirPoints[DIR_NONE];
+        for(int i=0; i<DIR_NONE; ++i) {
+            if(dirPoints[i] > movePoint && rc.canMove(Common.DIRECTIONS[i])) {
+                bestDirIndex = i;
+                movePoint = dirPoints[i];
+            }
+        }
+        Direction dir = Common.DIRECTIONS[bestDirIndex];
         // fraction of scouts stay near archons
         if(protectArchon) {
             RobotInfo archon = Common.closestArchon(rc.senseNearbyRobots(Common.sightRadius, Common.myTeam));
             if(archon != null && rc.getLocation().distanceSquaredTo(archon.location) > 24)
                 dir = rc.getLocation().directionTo(archon.location);
+        } else {
+            String str = "";
+            for(int i=0; i<dirPoints.length; ++i) str += String.format("%s:%.2f ", Common.DIRECTIONS[i].toString().charAt(0), dirPoints[i]);
+            rc.setIndicatorString(1, str);
         }
         dir = Common.findPathDirection(rc, dir);
         if(rc.isCoreReady() && rc.canMove(dir)) {
