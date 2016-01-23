@@ -62,6 +62,10 @@ class Signals {
     static int[] viperKamikazeTurn = new int[Common.MAX_ID]; // queue
     static int viperKamikazeSize = 0;
     static int viperKamikazeBegin = 0;
+    static int[] viperIds = new int[Common.MAX_ID];
+    static int[] viperIdsTurn = new int[Common.MAX_ID];
+    static int viperIdsSize = 0;
+    static int viperIdsBegin = 0;
     static int[] status = new int[Common.MAX_ID];
     static int[] statusTurn = new int[Common.MAX_ID];
 
@@ -101,14 +105,13 @@ class Signals {
         if(rc.getRoundNum() < Common.MIN_BUILD_TIME) {
             for(int i=0; i<num; ++i) {
                 Signal s = signals[i];
+                Common.addInfo(s.getRobotID(), s.getTeam(), RobotType.ARCHON, s.getLocation());
                 if(myTeam == s.getTeam()) {
                     if(Common.knownTypes[s.getID()%Common.ID_MOD] == null) {
                         Common.archonIds[Common.archonIdsSize++] = s.getID();
                     }
-                    Common.addInfo(s.getRobotID(), s.getTeam(), RobotType.ARCHON, s.getLocation());
                     extract(s);
                 } else {
-                    Common.addInfo(s.getRobotID(), s.getTeam(), RobotType.ARCHON, s.getLocation());
                 }
             }
         } else if(scanAll) {
@@ -157,6 +160,16 @@ class Signals {
             viperKamikazeSize = viperKamikazeSize - viperKamikazeBegin;
             viperKamikazeBegin = 0;
         }
+        round = rc.getRoundNum() - 2 * Viper.SIGNAL_PERIOD;
+        while(viperIdsBegin < viperIdsSize && viperIdsTurn[viperIdsBegin] < round) {
+            ++viperIdsBegin;
+        }
+        if(viperIdsSize > viperIds.length - 1000) {
+            System.arraycopy(viperIds, viperIdsBegin, viperIds, 0, viperIdsSize - viperIdsBegin);
+            System.arraycopy(viperIdsTurn, viperIdsBegin, viperIdsTurn, 0, viperIdsSize - viperIdsBegin);
+            viperIdsSize = viperIdsSize - viperIdsBegin;
+            viperIdsBegin = 0;
+        }
         return num;
     }
 
@@ -196,6 +209,10 @@ class Signals {
                         break;
                 }
             }
+        } else {
+            // Viper signal
+            viperIds[viperIdsSize] = s.getID();
+            viperIdsTurn[viperIdsSize++] = Common.rc.getRoundNum();
         }
     }
 
