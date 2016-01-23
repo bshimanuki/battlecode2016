@@ -23,6 +23,8 @@ hs_err_pid*
 /lib
 /bin
 /doc
+/replays
+/output
 
 # unneeded eclipse info
 .metadata/
