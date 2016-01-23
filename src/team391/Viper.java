@@ -4,6 +4,10 @@ import battlecode.common.*;
 
 class Viper extends Model {
 
+    final static int SIGNAL_RADIUS = 192;
+    final static int SIGNAL_PERIOD = 10;
+    final static int KAMIKAZE_ARCHON_DIST = 100; // min distance to infect self
+
     static Target target;
     static Direction last;
 
@@ -14,12 +18,28 @@ class Viper extends Model {
             target.weights.put(Target.TargetType.ZOMBIE_ATTACK, Target.TargetType.Level.INACTIVE);
         }
         kamikazeInfect(rc);
+        if(rc.getHealth() < 10 && rc.getInfectedTurns() < 3) {
+            // turn into zombie soon
+            MapLocation loc = rc.getLocation();
+            int dist = Common.MAX_DIST;
+            for(int i=0; i<Common.archonIdsSize; ++i) {
+                int id = Common.archonIds[i] % Common.ID_MOD;
+                if(Common.knownLocations[id] != null) {
+                    int newDist = loc.distanceSquaredTo(Common.knownLocations[id]);
+                    if(newDist < dist) {
+                        dist = newDist;
+                    }
+                }
+            }
+            if(dist < KAMIKAZE_ARCHON_DIST && rc.isWeaponReady()) rc.attackLocation(loc);
+        }
         if(target != null) {
             if(target.run(rc)) target = null;
         } else {
             move(rc);
             attack(rc, rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam));
         }
+        if((rc.getRoundNum() + Common.id) % SIGNAL_PERIOD == 0) rc.broadcastSignal(SIGNAL_RADIUS);
         return false;
     }
 
