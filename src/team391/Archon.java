@@ -151,7 +151,6 @@ class Archon extends Model {
         final double HISTORY_DECAY = 0.7;
         final double POINTS_DIAGONAL = -0.1;
         final int MAP_MOD = Common.MAP_MOD;
-        final double sqrt[] = Common.sqrt;
         final double mapParts[][] = Common.mapParts;
         dirPoints = new double[NUM_DIRECTIONS];
         MapLocation loc = rc.getLocation();
@@ -181,11 +180,18 @@ class Archon extends Model {
             }
         }
         for(RobotInfo good : rc.senseNearbyRobots(Common.sightRadius, Team.NEUTRAL)) {
-            double dist = sqrt[loc.distanceSquaredTo(good.location)];
-            if(good.type == RobotType.ARCHON) {
-                dirPoints[loc.directionTo(good.location).ordinal()] += POINTS_NEUTRAL_ARCHON / dist;
-            } else {
-                dirPoints[loc.directionTo(good.location).ordinal()] += POINTS_NEUTRAL * good.type.partCost / dist;
+            MapLocation rloc = good.location;
+            MapLocation iploc = rloc.add(rloc.directionTo(loc));
+            MapLocation iloc = loc.add(loc.directionTo(rloc));
+            if(Common.mapRubble[iploc.x%MAP_MOD][iploc.y%MAP_MOD] < PARTS_RUBBLE_THRESH
+                    && Common.mapRubble[iloc.x%MAP_MOD][iloc.y%MAP_MOD] < PARTS_RUBBLE_THRESH)
+            {
+                double sqrDist = loc.distanceSquaredTo(rloc);
+                if(good.type == RobotType.ARCHON) {
+                    dirPoints[loc.directionTo(good.location).ordinal()] += POINTS_NEUTRAL_ARCHON / sqrDist;
+                } else {
+                    dirPoints[loc.directionTo(good.location).ordinal()] += POINTS_NEUTRAL * good.type.partCost / sqrDist;
+                }
             }
         }
         for(RobotInfo robot : rc.senseNearbyRobots(2)) {
@@ -196,7 +202,8 @@ class Archon extends Model {
             MapLocation iloc = loc.add(loc.directionTo(ploc));
             if(Common.mapRubble[ploc.x%MAP_MOD][ploc.y%MAP_MOD] < PARTS_RUBBLE_THRESH
                     && Common.mapRubble[iploc.x%MAP_MOD][iploc.y%MAP_MOD] < PARTS_RUBBLE_THRESH
-                    && Common.mapRubble[iloc.x%MAP_MOD][iloc.y%MAP_MOD] < PARTS_RUBBLE_THRESH) {
+                    && Common.mapRubble[iloc.x%MAP_MOD][iloc.y%MAP_MOD] < PARTS_RUBBLE_THRESH)
+            {
                 // rc.setIndicatorDot(ploc, 255,0,0);
                 double sqrDist = loc.distanceSquaredTo(ploc);
                 dirPoints[loc.directionTo(ploc).ordinal()] += POINTS_PARTS * mapParts[ploc.x%MAP_MOD][ploc.y%MAP_MOD] / sqrDist;

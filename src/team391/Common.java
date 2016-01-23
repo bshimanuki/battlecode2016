@@ -334,7 +334,7 @@ class Common {
             case SOUTH_EAST:
                 for(MapLocation edge : edges) {
                     MapLocation senseLocation = loc.add(edge.x, edge.y);
-                    if(rc.canSense(senseLocation)) {
+                    if(rc.canSense(senseLocation) && rc.onTheMap(senseLocation)) {
                         rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
                         mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
                     }
@@ -345,7 +345,7 @@ class Common {
             case NORTH_WEST:
                 for(MapLocation edge : edges) {
                     MapLocation senseLocation = loc.add(-edge.x, edge.y);
-                    if(rc.canSense(senseLocation)) {
+                    if(rc.canSense(senseLocation) && rc.onTheMap(senseLocation)) {
                         rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
                         mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
                     }
@@ -360,7 +360,7 @@ class Common {
             case NORTH_EAST:
                 for(MapLocation edge : edges) {
                     MapLocation senseLocation = loc.add(edge.y, -edge.x);
-                    if(rc.canSense(senseLocation)) {
+                    if(rc.canSense(senseLocation) && rc.onTheMap(senseLocation)) {
                         rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
                         mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
                     }
@@ -371,7 +371,7 @@ class Common {
             case SOUTH_WEST:
                 for(MapLocation edge : edges) {
                     MapLocation senseLocation = loc.add(edge.y, edge.x);
-                    if(rc.canSense(senseLocation)) {
+                    if(rc.canSense(senseLocation) && rc.onTheMap(senseLocation)) {
                         rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
                         mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
                     }
@@ -517,7 +517,7 @@ class Common {
         for(int x=-straightSight; x<=straightSight; ++x) {
             for(int y=-straightSight; y<=straightSight; ++y) {
                 MapLocation loc = rc.getLocation().add(x, y);
-                if(rc.canSense(loc)) {
+                if(rc.canSense(loc) && rc.onTheMap(loc)) {
                     rubbleTimes[loc.x%MAP_MOD][loc.y%MAP_MOD] = roundNum;
                     mapRubble[loc.x%MAP_MOD][loc.y%MAP_MOD] = rc.senseRubble(loc);
                 }
@@ -540,7 +540,7 @@ class Common {
             // ListIterator<MapLocation> it = partLocations.listIterator();
             // while(it.hasNext()) {
                 // MapLocation loc = it.next();
-                // if(rc.canSense(loc) && rc.senseParts(loc) == 0) it.remove();
+                // if(rc.canSense(loc) && rc.onTheMap(loc) && rc.senseParts(loc) == 0) it.remove();
             // }
         // }
     }
