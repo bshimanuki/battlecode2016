@@ -202,6 +202,9 @@ class Signals {
      * @throws GameActionException
      */
     static int sendQueue(RobotController rc, int radius) throws GameActionException {
+        if(!Common.canMessageSignal) {
+            return 0;
+        }
         int sending = 0;
         MapLocation loc = rc.getLocation();
         int knownX = Common.MAP_MOD;

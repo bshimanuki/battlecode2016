@@ -16,8 +16,15 @@ class Soldier extends Model {
         new MapLocation(2, -4),
     };
 
+    Target target;
+
     @Override
     public boolean runInner(RobotController rc) throws GameActionException {
+        if(target != null) {
+            if(target.run(rc)) target = null;
+            return false;
+        }
+
         int myAttackRange = rc.getType().attackRadiusSquared;
         int fate = Common.rand.nextInt(1000);
 
@@ -57,28 +64,24 @@ class Soldier extends Model {
                     if(rc.isWeaponReady()) {
                         rc.attackLocation(zombiesWithinRange[index].location);
                     }
+                } else {
+                    RobotInfo archon = Common.closestArchon(rc.senseNearbyRobots(Common.sightRadius, Common.myTeam));
+                    if(archon == null || rc.getLocation().distanceSquaredTo(archon.location) >= 13) {
+                        setTarget();
+                        if(target.run(rc)) target = null;
+                        return false;
+                    }
                 }
             }
         }
 
         if(!shouldAttack) {
             if(rc.isCoreReady()) {
-                if(fate < 600) {
-                    // Choose a random direction to try to move in
-                    Direction dirToMove = Common.DIRECTIONS[fate % 8];
-                    MapLocation aloc = null;
-                    int adist = Common.MAX_DIST;
-                    for(int i=0; i<Common.archonIdsSize; ++i) {
-                        if(rc.canSenseRobot(Common.archonIds[i])) {
-                            MapLocation loc = rc.senseRobot(Common.archonIds[i]).location;
-                            int dist = rc.getLocation().distanceSquaredTo(loc);
-                            if(dist < adist) {
-                                aloc = loc;
-                                adist = dist;
-                            }
-                        }
-                    }
-                    if(aloc != null && adist > 13) dirToMove = rc.getLocation().directionTo(aloc);
+                Direction dirToMove = Common.DIRECTIONS[fate % 8];
+                RobotInfo archon = Common.closestArchon(rc.senseNearbyRobots(Common.sightRadius, Common.myTeam));
+                if(archon != null) {
+                    if(rc.getLocation().distanceSquaredTo(archon.location) > 13)
+                        dirToMove = rc.getLocation().directionTo(archon.location);
                     // Check the rubble in that direction
                     if(rc.senseRubble(rc.getLocation().add(dirToMove)) >= GameConstants.RUBBLE_OBSTRUCTION_THRESH) {
                         // Too much rubble, so I should clear it
@@ -88,10 +91,17 @@ class Soldier extends Model {
                         // Move
                         rc.move(dirToMove);
                     }
+                } else {
+                    setTarget();
+                    if(target.run(rc)) target = null;
                 }
             }
         }
         return false;
+    }
+
+    void setTarget() {
+        if(target == null) target = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase);
     }
 
 }
