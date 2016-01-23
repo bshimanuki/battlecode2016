@@ -30,9 +30,14 @@ class Scout extends Model {
     static Direction last;
     static Target target;
     static boolean protectArchon = false;
+    static boolean canBroadcastFull = true;
 
     @Override
     public boolean runInner(RobotController rc) throws GameActionException {
+        canBroadcastFull = target == null
+            || target.weights.get(Target.TargetType.ZOMBIE_LEAD).compareTo(Target.TargetType.Level.ACTIVE) < 0
+            && (target.weights.get(Target.TargetType.ZOMBIE_KAMIKAZE).compareTo(Target.TargetType.Level.ACTIVE) < 0
+                    || rc.getInfectedTurns() != 0);
         int round = rc.getRoundNum();
         // first or second Scout
         if(round < 50 && round == Common.enrollment) {
@@ -62,7 +67,7 @@ class Scout extends Model {
             int num = Math.max(50, 100 - 2 * rc.senseNearbyRobots(Common.sightRadius, Common.myTeam).length);
             int rand = Common.rand.nextInt(num);
             if(rand < 10) {
-                Target kill = new Target(Target.TargetType.ZOMBIE_LEAD, true);
+                Target kill = getZombieTarget();
                 kill.setTrigger((_rc) -> kill.seesBoardEdge(_rc) && _rc.senseNearbyRobots(ZOMBIE_ACCEPT_RADIUS, Team.ZOMBIE).length == 0);
                 Common.models.addFirst(kill);
                 Target opening;
@@ -83,12 +88,15 @@ class Scout extends Model {
                 MapLocation loc = rc.getLocation();
                 boolean[] notClosest = new boolean[zombies.length];
                 int[] dist = new int[zombies.length];
-                for(int i=0; i<zombies.length; ++i)
+                for(int i=0; i<zombies.length; ++i) {
                     dist[i] = loc.distanceSquaredTo(zombies[i].location);
+                    if(zombies[i].type == RobotType.ZOMBIEDEN) notClosest[i] = true;
+                }
                 for(int i=Signals.zombieLeadsBegin; i<Signals.zombieLeadsSize; ++i) {
                     RobotInfo lead = Signals.zombieLeads[i];
                     MapLocation lloc = lead.location;
                     if(rc.canSenseRobot(lead.ID)) lloc = rc.senseRobot(lead.ID).location;
+                    else if(rc.canSense(lloc)) continue;
                     for(int j=0; j<zombies.length; ++j) {
                         RobotInfo zombie = zombies[j];
                         if(lloc.distanceSquaredTo(zombie.location) <= dist[j]) {
@@ -99,8 +107,7 @@ class Scout extends Model {
                 boolean closest = false;
                 for(boolean c : notClosest) if(!c) closest = true;
                 if(closest) {
-                    if(rc.getRoundNum() < Common.ROUNDS_TARGET_BASE) target = new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase);
-                    else target = new Target(Target.TargetType.ZOMBIE_LEAD, true);
+                    target = getZombieTarget();
                     Signals.addSelfZombieLead(rc, target.dir);
                 }
             }
@@ -209,6 +216,11 @@ class Scout extends Model {
             Common.move(rc, dir);
             last = dir;
         }
+    }
+
+    static Target getZombieTarget() throws GameActionException {
+        if(Common.rc.getRoundNum() < Common.ROUNDS_TARGET_BASE) return new Target(Target.TargetType.ZOMBIE_LEAD, Common.enemyBase);
+        else return new Target(Target.TargetType.ZOMBIE_LEAD, true);
     }
 
     @Override

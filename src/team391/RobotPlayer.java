@@ -43,6 +43,7 @@ public class RobotPlayer {
         // Target target = new Target(loc, Target.defaultWeights());
 
         while(true) {
+            int round = rc.getRoundNum();
             try {
                 Common.runBefore(rc);
 
@@ -60,7 +61,7 @@ public class RobotPlayer {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
             }
-            Clock.yield();
+            if(round == rc.getRoundNum()) Clock.yield();
         }
     }
 }

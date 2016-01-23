@@ -307,12 +307,11 @@ class Target extends Model {
         if(targetDirection == Direction.OMNI) return false;
         if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
             RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
-            boolean underAttack = Common.underAttack(zombies, curLocation);
             double x = targetDirection.dx;
             double y = targetDirection.dy;
             if(targetDirection.isDiagonal()) {
-                x /= 2;
-                y /= 2;
+                x /= Common.sqrt[2];
+                y /= Common.sqrt[2];
             }
             RobotInfo closestZombie = Common.closestRobot(zombies);
             RobotInfo closestRangedZombie = Common.closestRangedRobot(zombies);
@@ -355,17 +354,18 @@ class Target extends Model {
                 }
             }
             RobotInfo[] allies = rc.senseNearbyRobots(curLocation.add(targetDirection.opposite()), 2, Common.myTeam);
+            // MAP_MOD to approximate with better precision
+            Direction nextDirection = new MapLocation(0, 0).directionTo(new MapLocation((int) (Common.MAP_MOD * dx), (int) (Common.MAP_MOD * dy)));
             boolean crowded = allies.length >= 3;
+            boolean underAttack = Common.underAttack(zombies, curLocation.add(nextDirection));
             if(!crowded && !underAttack) {
-                // MAP_MOD to approximate with better precision
-                Direction nextDirection = new MapLocation(0, 0).directionTo(new MapLocation((int) (Common.MAP_MOD * dx), (int) (Common.MAP_MOD * dy)));
-                if(dx * dx + dy * dy < 0.3) nextDirection = Direction.NONE;
-                if(!Common.underAttack(zombies, curLocation.add(nextDirection)))
-                    targetDirection = nextDirection;
-            } else if(underAttack) {
-                Direction nextDirection = targetDirection;
+                if(dx * dx + dy * dy < 0.25) nextDirection = Direction.NONE;
+                targetDirection = nextDirection;
+            }
+            if(underAttack || targetDirection != Direction.NONE && !rc.canMove(targetDirection)) {
+                nextDirection = targetDirection;
                 int rand = Common.rand.nextInt(2);
-                double hit = Common.MAX_ID;
+                double hit = Common.INF;
                 Direction bestDirection = null;
                 for(int i=0; i<3; ++i) {
                     for(int j=0; j<i; ++j) {
@@ -374,13 +374,13 @@ class Target extends Model {
                     }
                     double newHit = Common.amountAttack(zombies, curLocation.add(nextDirection));
                     if(nextDirection == curLocation.directionTo(new MapLocation(Common.twiceCenterX/2, Common.twiceCenterY/2)))
-                        newHit += 5;
-                    if(newHit < hit) {
+                        newHit -= 5;
+                    if(newHit < hit && rc.canMove(nextDirection)) {
                         bestDirection = nextDirection;
                         hit = newHit;
                     }
                 }
-                targetDirection = bestDirection;
+                if(bestDirection != null) targetDirection = bestDirection;
             }
             RobotInfo[] allAllies = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
             RobotInfo archon = Common.closestArchon(allAllies);
@@ -445,7 +445,7 @@ class Target extends Model {
                 if(toMove) Common.move(rc, moveDirection);
                 else if(rubble > 0) {
                     if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
-
+                        if(rc.getCoreDelay() >= Common.EPS) break;
                     }
                     rc.clearRubble(targetDirection);
                 }

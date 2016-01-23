@@ -38,7 +38,7 @@ class Archon extends Model {
         // heal
         RobotInfo[] allies = rc.senseNearbyRobots(Common.robotType.attackRadiusSquared, Common.myTeam);
         RobotInfo toHeal = null;
-        double health = Common.MAX_ID;
+        double health = Common.INF;
         for(RobotInfo ally : allies) if(ally.type != RobotType.ARCHON) {
             if(toHeal != null && toHeal.type == RobotType.SCOUT && ally.type != RobotType.SCOUT) {
                 toHeal = ally;

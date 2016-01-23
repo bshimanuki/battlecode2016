@@ -21,10 +21,11 @@ class Common {
     final static int MAP_MAX = 600;
     final static MapLocation MAP_EMPTY = new MapLocation(MAP_NONE, MAP_NONE);
     final static int MIN_BUILD_TIME = 10;
-    final static int MAX_ID = 65536;
+    final static int MAX_ID = 16384;
     final static int ID_MOD = 4096;
     final static int BUILD_LAG = 1; // Delay between built and first turn
     final static double EPS = 1e-2;
+    final static int INF = (int) 1e6;
     final static double[] sqrt = new double[60]; // faster than Math.sqrt, cache for everything in sight
     final static int MAX_DIST = 2 * GameConstants.MAP_MAX_WIDTH * GameConstants.MAP_MAX_WIDTH;
     final static int MAX_ARCHONS = 8;
@@ -312,6 +313,7 @@ class Common {
      * @param dir
      */
     static void move(RobotController rc, Direction dir) throws GameActionException {
+        if(dir == null || dir == Direction.NONE || dir == Direction.OMNI) System.out.println("asdf");
         history[historySize++] = rc.getLocation();
         rc.move(dir);
         MapLocation loc = rc.getLocation();
@@ -422,7 +424,7 @@ class Common {
     static void addInfo(RobotInfo info) throws GameActionException {
         seenRobots[info.ID] = info;
         seenTimes[info.ID] = rc.getRoundNum();
-        if(robotType == RobotType.SCOUT && rc.getRoundNum() > enrollment + 10) {
+        if(robotType == RobotType.SCOUT && Scout.canBroadcastFull && rc.getRoundNum() > enrollment + 10) {
             switch(info.type) {
                 case ARCHON:
                     if(SignalUnit.broadcastTurn[info.ID%ID_MOD] < rc.getRoundNum() - Signals.UNIT_SIGNAL_REFRESH)
@@ -693,7 +695,7 @@ class Common {
     static Direction findClearDirection(RobotController rc, Direction dir) {
         final int maxRotations = 8;
         int diff = rand.nextInt(2);
-        double rubble = MAX_ID;
+        double rubble = INF;
         MapLocation loc = rc.getLocation();
         Direction bestDir = Direction.NONE;
         for(int i=0; i<=maxRotations; ++i) {

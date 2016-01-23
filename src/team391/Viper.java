@@ -21,7 +21,7 @@ class Viper extends Model {
 
     static boolean attack(RobotController rc, RobotInfo[] infos) throws GameActionException {
         RobotInfo best = null;
-        double points = -Common.MAX_ID;
+        double points = -Common.INF;
         for(RobotInfo info : infos) {
             double newPoints = 300 - info.health;
             newPoints /= Math.max(3, Math.max(info.viperInfectedTurns, info.zombieInfectedTurns));
