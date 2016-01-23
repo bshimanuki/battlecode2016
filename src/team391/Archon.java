@@ -22,8 +22,7 @@ class Archon extends Model {
     final static int NUM_DIRECTIONS = Common.DIRECTIONS.length;
     final static double FORCED_MOVE_AWAY_THRESH = -3;
     final static double FORCED_MOVE_TO_THRESH = 5;
-    // final static double MOVE_RAND = 0.5;
-    final static double MOVE_RAND = 0;
+    final static double MOVE_RAND = 0.5;
 
     static Target target;
     static Target base;
@@ -135,26 +134,32 @@ class Archon extends Model {
 
     static void computeMove(RobotController rc) throws GameActionException {
         final int HOSTILE_RADIUS = 24;
-        final double POINTS_NONE = -2; // encourage movement
+        final double POINTS_NONE = 0.2; // discourage movement?
+        final double POINTS_BASE = 0.05;
         final double POINTS_HOSTILE = -5;
         final double POINTS_HOSTILE_TURRET = -8;
         final double POINTS_HOSTILE_BIGZOMBIE = -8;
         final double POINTS_HOSTILE_ZOMBIEDEN = -8;
         final double POINTS_ROBOT_OBSTRUCTION = 0;
-        final double POINTS_PARTS = 0.05;
+        final double POINTS_PARTS = 0.2;
         final int PARTS_RADIUS = 10;
         final double PARTS_RUBBLE_THRESH = GameConstants.RUBBLE_OBSTRUCTION_THRESH;
-        final double POINTS_NEUTRAL = 0.1; // per part cost
-        final double POINTS_NEUTRAL_ARCHON = 300;
+        final double POINTS_NEUTRAL = 0.2; // per part cost
+        final double POINTS_NEUTRAL_ARCHON = 30;
         final double POINTS_ZOMBIE_LEAD = -5;
-        final double POINTS_HISTORY = -5;
+        final double POINTS_HISTORY = -1;
         final double HISTORY_DECAY = 0.7;
+        final double POINTS_DIAGONAL = -0.1;
         final int MAP_MOD = Common.MAP_MOD;
         final double sqrt[] = Common.sqrt;
         final double mapParts[][] = Common.mapParts;
         dirPoints = new double[NUM_DIRECTIONS];
         MapLocation loc = rc.getLocation();
         dirPoints[Direction.NONE.ordinal()] += POINTS_NONE;
+        dirPoints[Common.myBase.ordinal()] += POINTS_BASE;
+        for(Direction dir : Common.DIRECTIONS) {
+            if(dir.isDiagonal()) dirPoints[dir.ordinal()] += POINTS_DIAGONAL;
+        }
         for(RobotInfo bad : rc.senseHostileRobots(loc, HOSTILE_RADIUS)) {
             if(bad.type.attackPower > 0) {
                 dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE;
@@ -194,7 +199,7 @@ class Archon extends Model {
                     && Common.mapRubble[iloc.x%MAP_MOD][iloc.y%MAP_MOD] < PARTS_RUBBLE_THRESH) {
                 // rc.setIndicatorDot(ploc, 255,0,0);
                 double sqrDist = loc.distanceSquaredTo(ploc);
-                dirPoints[loc.directionTo(ploc).ordinal()] += POINTS_PARTS * mapParts[ploc.x%MAP_MOD][ploc.y%MAP_MOD] / (sqrDist * sqrDist);
+                dirPoints[loc.directionTo(ploc).ordinal()] += POINTS_PARTS * mapParts[ploc.x%MAP_MOD][ploc.y%MAP_MOD] / sqrDist;
             }
         }
         for(int i=0; i<8; ++i) {
