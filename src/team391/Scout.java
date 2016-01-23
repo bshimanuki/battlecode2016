@@ -24,8 +24,8 @@ class Scout extends Model {
 
     final static int ZOMBIE_ACCEPT_RADIUS = 35;
     static Direction last;
-
-    Target target;
+    static Target target;
+    static boolean protectArchon = false;
 
     @Override
     public boolean runInner(RobotController rc) throws GameActionException {
@@ -65,6 +65,8 @@ class Scout extends Model {
                 opening.setTrigger((_rc) -> opening.seesBoardEdge(_rc) || _rc.senseNearbyRobots(ZOMBIE_ACCEPT_RADIUS, Team.ZOMBIE).length > 0);
                 Common.models.addFirst(opening);
             }
+            RobotInfo[] allies = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
+            if(allies.length == 0 || Common.rand.nextInt(allies.length * allies.length) < 5) protectArchon = true;
         }
 
         if(target == null) {
@@ -83,7 +85,7 @@ class Scout extends Model {
                         lead = rc.senseRobot(lead.ID);
                         for(int j=0; j<zombies.length; ++j) {
                             RobotInfo zombie = zombies[j];
-                            if(lead.location.distanceSquaredTo(zombie.location) < dist[j]) {
+                            if(lead.location.distanceSquaredTo(zombie.location) <= dist[j]) {
                                 notClosest[j] = true;
                             }
                         }
@@ -129,6 +131,12 @@ class Scout extends Model {
         Direction dir;
         if(rand == 8 && last != null) dir = last;
         else dir = Common.DIRECTIONS[rand];
+        // fraction of scouts stay near archons
+        if(protectArchon) {
+            RobotInfo archon = Common.closestArchon(rc.senseNearbyRobots(Common.sightRadius, Common.myTeam));
+            if(archon != null && rc.getLocation().distanceSquaredTo(archon.location) > 24)
+                dir = rc.getLocation().directionTo(archon.location);
+        }
         dir = Common.findPathDirection(rc, dir);
         if(rc.isCoreReady() && rc.canMove(dir)) {
             Common.move(rc, dir);

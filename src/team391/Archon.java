@@ -83,7 +83,7 @@ class Archon extends Model {
         for(int i=0; i<dirPoints.length; ++i) str += String.format("%s:%.2f ", Common.DIRECTIONS[i].toString().charAt(0), dirPoints[i]);
         rc.setIndicatorString(1, str);
 
-        RobotInfo[] nearbyZombies = rc.senseNearbyRobots(5, Team.ZOMBIE);
+        RobotInfo[] nearbyZombies = rc.senseNearbyRobots(13, Team.ZOMBIE);
         RobotInfo[] nearbyAllies = rc.senseNearbyRobots(5, Common.myTeam);
         RobotInfo closestRangedZombie = Common.closestRangedRobot(rc.senseNearbyRobots(24, Team.ZOMBIE));
         if((nearbyZombies.length > 0 || closestRangedZombie != null) && nearbyAllies.length > 0
