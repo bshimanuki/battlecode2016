@@ -150,6 +150,7 @@ class Archon extends Model {
         final double POINTS_HOSTILE_TURRET = -8;
         final double POINTS_HOSTILE_BIGZOMBIE = -8;
         final double POINTS_HOSTILE_ZOMBIEDEN = -20;
+        final double POINTS_ENEMY_UNDER_ATTACK = 1; // lead zombies to enemy
         final double POINTS_ROBOT_OBSTRUCTION = 0;
         final double POINTS_PARTS = 0.2;
         final int PARTS_RADIUS = 10;
@@ -168,16 +169,29 @@ class Archon extends Model {
         MapLocation loc = rc.getLocation();
         dirPoints[Direction.NONE.ordinal()] += POINTS_NONE;
         dirPoints[Common.myBase.ordinal()] += POINTS_BASE;
+        RobotInfo[] zombies = rc.senseNearbyRobots(HOSTILE_RADIUS, Team.ZOMBIE);
+        RobotInfo[] enemies = rc.senseNearbyRobots(HOSTILE_RADIUS, Common.enemyTeam);
+        boolean underAttack = Common.underAttack(zombies, loc);
         for(Direction dir : Common.DIRECTIONS) {
             if(dir.isDiagonal()) dirPoints[dir.ordinal()] += POINTS_DIAGONAL;
         }
-        for(RobotInfo bad : rc.senseHostileRobots(loc, HOSTILE_RADIUS)) {
-            if(bad.type.attackPower > 0) {
-                dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE;
+        for(RobotInfo zombie : zombies) {
+            if(zombie.type.attackPower > 0) {
+                dirPoints[loc.directionTo(zombie.location).ordinal()] += POINTS_HOSTILE;
                 dirPoints[DIR_NONE] += POINTS_HOSTILE / 4;
-                if(bad.type == RobotType.BIGZOMBIE) {
-                    dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE_BIGZOMBIE;
+                if(zombie.type == RobotType.BIGZOMBIE) {
+                    dirPoints[loc.directionTo(zombie.location).ordinal()] += POINTS_HOSTILE_BIGZOMBIE;
                     dirPoints[DIR_NONE] += POINTS_HOSTILE_BIGZOMBIE / 4;
+                }
+            }
+        }
+        for(RobotInfo enemy : enemies) {
+            if(underAttack) {
+                dirPoints[loc.directionTo(enemy.location).ordinal()] += POINTS_ENEMY_UNDER_ATTACK;
+            } else {
+                if(enemy.type.attackPower > 0) {
+                    dirPoints[loc.directionTo(enemy.location).ordinal()] += POINTS_HOSTILE;
+                    dirPoints[DIR_NONE] += POINTS_HOSTILE / 4;
                 }
             }
         }
