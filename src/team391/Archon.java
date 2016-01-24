@@ -83,10 +83,19 @@ class Archon extends Model {
         for(int i=0; i<dirPoints.length; ++i) str += String.format("%s:%.2f ", Common.DIRECTIONS[i].toString().charAt(0), dirPoints[i]);
         rc.setIndicatorString(1, str);
 
-        RobotInfo[] nearbyZombies = rc.senseNearbyRobots(24, Team.ZOMBIE);
+        RobotInfo[] nearbyZombies = Common.closestRobots(rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE));
         RobotInfo[] nearbyAllies = rc.senseNearbyRobots(13, Common.myTeam);
-        RobotInfo closestRangedZombie = Common.closestRangedRobot(rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE));
-        if((nearbyZombies.length > 0 || closestRangedZombie != null) && nearbyAllies.length > 0
+        RobotInfo closestStandardZombie = nearbyZombies[SignalUnit.typeSignal.get(RobotType.STANDARDZOMBIE)];
+        RobotInfo closestBigZombie = nearbyZombies[SignalUnit.typeSignal.get(RobotType.BIGZOMBIE)];
+        RobotInfo closestFastZombie = nearbyZombies[SignalUnit.typeSignal.get(RobotType.FASTZOMBIE)];
+        RobotInfo closestRangedZombie = nearbyZombies[SignalUnit.typeSignal.get(RobotType.RANGEDZOMBIE)];
+        boolean avoidZombie = false;
+        MapLocation loc = rc.getLocation();
+        if(closestStandardZombie != null && loc.distanceSquaredTo(closestStandardZombie.location) <= 13) avoidZombie = true;
+        if(closestBigZombie != null && loc.distanceSquaredTo(closestBigZombie.location) <= 13) avoidZombie = true;
+        if(closestFastZombie != null) avoidZombie = true;
+        if(closestRangedZombie != null) avoidZombie = true;
+        if(avoidZombie && nearbyAllies.length > 0
                 || dirPoints[DIR_NONE] < FORCED_MOVE_AWAY_THRESH
                 || dirPoints[moveDir.ordinal()] > FORCED_MOVE_TO_THRESH)
         {

@@ -8,7 +8,7 @@ import battlecode.common.*;
 class Target extends Model {
 
     enum TargetType {
-        MOVE(Level.INACTIVE), // within sight, on target
+        MOVE(Level.INACTIVE), // within sight, next to target, on target
         ATTACK(Level.ACTIVE), // no attack, attack when extra action, always attack
         RUBBLE(Level.INACTIVE), // clear to move, full clear to move, clear even if scout (though not full clear)
         ZOMBIE_ATTACK(Level.ACTIVE), // ignore zombies, attack zombies
@@ -240,10 +240,16 @@ class Target extends Model {
 
         if(id == ID_NONE) {
             if(loc != null) {
-                if(weights.get(TargetType.MOVE) == TargetType.Level.INACTIVE) {
-                    if(rc.canSense(loc)) return finish();
-                } else { // ACTIVE
-                    if(curLocation.equals(loc)) return finish();
+                switch(weights.get(TargetType.MOVE)) {
+                    case INACTIVE:
+                        if(rc.canSense(loc)) return finish();
+                        break;
+                    case ACTIVE:
+                        if(curLocation.distanceSquaredTo(loc) <= 2) return finish();
+                        break;
+                    case PRIORITY:
+                        if(curLocation.equals(loc)) return finish();
+                        break;
                 }
             } else { // dir != null
                 int dx = dir.dx;
@@ -485,16 +491,16 @@ class Target extends Model {
                         Direction rdir = targetDirection.rotateRight();
                         double ldot = ax * ldir.dx + ay * ldir.dy;
                         double rdot = ax * rdir.dx + ay * rdir.dy;
-                        if(ldot < ddot) {
+                        if(ldot < ddot && rc.canMove(ldir)) {
                             nextDirection = ldir;
                             ddot = ldot;
                         }
-                        if(rdot < ddot) {
+                        if(rdot < ddot && rc.canMove(rdir)) {
                             nextDirection = rdir;
                             ddot = rdot;
                         }
                         MapLocation nextLoc = curLocation.add(nextDirection);
-                        if(Common.sqrt[nextLoc.distanceSquaredTo(closestZombie.location)] < zombieBuffer.get(closestZombie.type) + 1 - Common.EPS) {
+                        if(closestZombie == null || Common.sqrt[nextLoc.distanceSquaredTo(closestZombie.location)] < zombieBuffer.get(closestZombie.type) + 1 - Common.EPS) {
                             targetDirection = nextDirection;
                         } else {
                             targetDirection = Direction.NONE;

@@ -495,6 +495,14 @@ class Common {
                     case TURRET:
                     case TTM:
                         if(robotType != RobotType.VIPER && team != enemyTeam) break;
+                        if(robotType != RobotType.VIPER && newLoc) {
+                            if(Common.robotType == RobotType.SCOUT && Scout.target == null) {
+                                if(Common.rand.nextInt(8) == 0) {
+                                    Scout.target = new Target(Target.TargetType.MOVE, loc);
+                                    Scout.target.weights.put(Target.TargetType.MOVE, Target.TargetType.Level.ACTIVE);
+                                }
+                            }
+                        }
                     case ARCHON:
                     case BIGZOMBIE:
                         new SignalUnit(id, team, robotType, loc).add();
