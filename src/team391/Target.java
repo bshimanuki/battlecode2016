@@ -320,6 +320,8 @@ class Target extends Model {
             RobotInfo closestZombie = Common.closestRobot(zombies, zombieDen);
             RobotInfo closestRangedZombie = Common.closestRangedRobot(zombies);
             RobotInfo[] closests = {closestZombie, closestRangedZombie};
+            RobotInfo[] allAllies = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
+            RobotInfo archon = Common.closestArchon(allAllies);
             double dot = -Common.MAX_DIST;
             double dx = x;
             double dy = y;
@@ -375,37 +377,88 @@ class Target extends Model {
             }
             // MAP_MOD to approximate with better precision
             Direction nextDirection = new MapLocation(0, 0).directionTo(new MapLocation((int) (Common.MAP_MOD * dx), (int) (Common.MAP_MOD * dy)));
-            RobotInfo[] allies = rc.senseNearbyRobots(curLocation.add(targetDirection.opposite()), 2, Common.myTeam);
-            boolean crowded = allies.length >= 3;
-            boolean underAttack = Common.underAttack(zombies, curLocation.add(nextDirection));
-            rc.setIndicatorString(1, String.format("<%.2f %.2f> %s", dx, dy, underAttack));
-            if(!crowded && !underAttack) {
-                if(dx * dx + dy * dy < 0.25) nextDirection = Direction.NONE;
-                targetDirection = nextDirection;
-            }
-            if(underAttack || targetDirection != Direction.NONE && !rc.canMove(targetDirection)) {
-                nextDirection = targetDirection;
-                int rand = Common.rand.nextInt(2);
-                double hit = Common.INF;
-                Direction bestDirection = null;
-                for(int i=0; i<3; ++i) {
-                    for(int j=0; j<i; ++j) {
-                        if((rand + i) % 2 == 0) nextDirection = nextDirection.rotateLeft();
-                        else nextDirection = nextDirection.rotateRight();
-                    }
-                    double newHit = Common.amountAttack(zombies, curLocation.add(nextDirection));
-                    if(nextDirection == targetDirection) newHit -= 1;
-                    if(nextDirection == curLocation.directionTo(new MapLocation(Common.twiceCenterX/2, Common.twiceCenterY/2)))
-                        newHit -= 0.5;
-                    if(newHit < hit && rc.canMove(nextDirection)) {
-                        bestDirection = nextDirection;
-                        hit = newHit;
+            if(closestZombie != null && closestZombie.type == RobotType.FASTZOMBIE && (curLocation.distanceSquaredTo(closestZombie.location) > 2 || archon == null || archon.location.distanceSquaredTo(closestZombie.location) > 5)) {
+                int fx = targetDirection.dx;
+                int fy = targetDirection.dy;
+                if(!targetDirection.isDiagonal()) {
+                    fx *= 2;
+                    fy *= 2;
+                }
+                Direction zombieDir = curLocation.directionTo(closestZombie.location);
+                fx -= zombieDir.dx;
+                fy -= zombieDir.dy;
+                nextDirection = new MapLocation(0, 0).directionTo(new MapLocation(fx, fy));
+                rc.setIndicatorString(1, fx + " " + fy + " " + targetDirection);
+                if(nextDirection == Direction.OMNI) {
+                    fx = closestZombie.location.x - curLocation.x;
+                    fy = closestZombie.location.y - curLocation.y;
+                    int cross = targetDirection.dx * fy - targetDirection.dy * fx;
+                    if(cross > 0) nextDirection = targetDirection.rotateRight().rotateRight();
+                    else if(cross < 0) nextDirection = targetDirection.rotateLeft().rotateLeft();
+                    else {
+                        if(archon != null) {
+                            fx = curLocation.x - archon.location.x;
+                            fy = curLocation.y - archon.location.y;
+                            cross = targetDirection.dx * fy - targetDirection.dy * fx;
+                            if(cross > 0) nextDirection = targetDirection.rotateLeft().rotateLeft();
+                            else if(cross < 0) nextDirection = targetDirection.rotateRight().rotateRight();
+                        }
+                        if(nextDirection == Direction.OMNI) {
+                            int[] count = new int[8];
+                            for(RobotInfo zombie : zombies) {
+                                ++count[curLocation.directionTo(zombie.location).ordinal()];
+                            }
+                            int diff = count[targetDirection.rotateLeft().ordinal()] + count[targetDirection.rotateLeft().rotateLeft().ordinal()] - count[targetDirection.rotateRight().ordinal()] - count[targetDirection.rotateRight().rotateRight().ordinal()];
+                            if(diff > 0) nextDirection = targetDirection.rotateRight().rotateRight();
+                            else if(diff < 0) nextDirection = targetDirection.rotateLeft().rotateLeft();
+                            else {
+                                count = new int[8];
+                                for(RobotInfo ally : allAllies) {
+                                    ++count[curLocation.directionTo(ally.location).ordinal()];
+                                }
+                                diff = count[targetDirection.rotateLeft().ordinal()] + count[targetDirection.rotateLeft().rotateLeft().ordinal()] - count[targetDirection.rotateRight().ordinal()] - count[targetDirection.rotateRight().rotateRight().ordinal()];
+                                if(diff > 0) nextDirection = targetDirection.rotateRight().rotateRight();
+                                else if(diff < 0) nextDirection = targetDirection.rotateLeft().rotateLeft();
+                                else {
+                                    if(Common.rand.nextInt(2) == 0) nextDirection = targetDirection.rotateRight().rotateRight();
+                                    else nextDirection = targetDirection.rotateLeft().rotateLeft();
+                                }
+                            }
+                        }
                     }
                 }
-                if(bestDirection != null) targetDirection = bestDirection;
+                targetDirection = nextDirection;
+            } else {
+                RobotInfo[] allies = rc.senseNearbyRobots(curLocation.add(targetDirection.opposite()), 2, Common.myTeam);
+                boolean crowded = allies.length >= 3;
+                boolean underAttack = Common.underAttack(zombies, curLocation.add(nextDirection));
+                rc.setIndicatorString(1, String.format("<%.2f %.2f> %s", dx, dy, underAttack));
+                if(!crowded && !underAttack) {
+                    if(dx * dx + dy * dy < 0.25) nextDirection = Direction.NONE;
+                    targetDirection = nextDirection;
+                }
+                if(underAttack || targetDirection != Direction.NONE && !rc.canMove(targetDirection)) {
+                    nextDirection = targetDirection;
+                    int rand = Common.rand.nextInt(2);
+                    double hit = Common.INF;
+                    Direction bestDirection = null;
+                    for(int i=0; i<3; ++i) {
+                        for(int j=0; j<i; ++j) {
+                            if((rand + i) % 2 == 0) nextDirection = nextDirection.rotateLeft();
+                            else nextDirection = nextDirection.rotateRight();
+                        }
+                        double newHit = Common.amountAttack(zombies, curLocation.add(nextDirection));
+                        if(nextDirection == targetDirection) newHit -= 1;
+                        if(nextDirection == curLocation.directionTo(new MapLocation(Common.twiceCenterX/2, Common.twiceCenterY/2)))
+                            newHit -= 0.5;
+                        if(newHit < hit && rc.canMove(nextDirection)) {
+                            bestDirection = nextDirection;
+                            hit = newHit;
+                        }
+                    }
+                    if(bestDirection != null) targetDirection = bestDirection;
+                }
             }
-            RobotInfo[] allAllies = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
-            RobotInfo archon = Common.closestArchon(allAllies);
             if(archon != null) {
                 if(closestZombie != null && curLocation.distanceSquaredTo(closestZombie.location) >= archon.location.distanceSquaredTo(closestZombie.location)) {
                     targetDirection = curLocation.directionTo(closestZombie.location);
