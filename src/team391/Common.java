@@ -277,6 +277,7 @@ class Common {
             int y = -straightSight;
             while(!rc.onTheMap(loc.add(0, ++y)));
             yMin = loc.y + y;
+            if(rotation) yMax = twiceCenterY - yMin;
             sendBoundariesLow = true;
             mapBoundUpdate = true;
         }
@@ -284,6 +285,7 @@ class Common {
             int y = straightSight;
             while(!rc.onTheMap(loc.add(0, --y)));
             yMax = loc.y + y;
+            if(rotation) yMin = twiceCenterY - yMax;
             sendBoundariesHigh = true;
             mapBoundUpdate = true;
         }
@@ -644,6 +646,26 @@ class Common {
             }
         }
         return closest;
+    }
+
+    /**
+     * Get the closest robot of each type in the order used by SignalUnit
+     * @param infos
+     * @return closest of each class
+     */
+    static RobotInfo[] closestRobots(RobotInfo[] infos) {
+        MapLocation curLocation = rc.getLocation();
+        RobotInfo[] closests = new RobotInfo[6];
+        int[] dist = {MAX_DIST, MAX_DIST, MAX_DIST, MAX_DIST, MAX_DIST, MAX_DIST};
+        for(RobotInfo info : infos) {
+            int newdist = curLocation.distanceSquaredTo(info.location);
+            int index = SignalUnit.typeSignal.get(info.type);
+            if(newdist < dist[index]) {
+                closests[index] = info;
+                dist[index] = newdist;
+            }
+        }
+        return closests;
     }
 
     static MapLocation closestLocation(MapLocation[] locs) {

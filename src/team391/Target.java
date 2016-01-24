@@ -33,6 +33,7 @@ class Target extends Model {
    final static int ID_NONE = -1;
    final static Map<TargetType, TargetType.Level> defaultWeights;
    final static Map<TargetType, TargetType.Level> defaultZombieLeadWeights;
+   final static Map<RobotType, Double> zombieBuffer;
    static {
         Map<TargetType, TargetType.Level> weights = new EnumMap<>(TargetType.class);
         for(TargetType type : TargetType.values())
@@ -43,6 +44,14 @@ class Target extends Model {
         weights.put(TargetType.ZOMBIE_ATTACK, TargetType.Level.INACTIVE);
         weights.put(TargetType.ZOMBIE_LEAD, TargetType.Level.ACTIVE);
         defaultZombieLeadWeights = weights;
+
+        Map<RobotType, Double> buffer = new EnumMap<>(RobotType.class);
+        buffer.put(RobotType.ZOMBIEDEN, 2.);
+        buffer.put(RobotType.STANDARDZOMBIE, 2.);
+        buffer.put(RobotType.RANGEDZOMBIE, 4.);
+        buffer.put(RobotType.FASTZOMBIE, 3.);
+        buffer.put(RobotType.BIGZOMBIE, 2.);
+        zombieBuffer = buffer;
     }
 
     Map<TargetType, TargetType.Level> weights;
@@ -318,8 +327,7 @@ class Target extends Model {
                 y /= Common.sqrt[2];
             }
             RobotInfo closestZombie = Common.closestRobot(zombies, zombieDen);
-            RobotInfo closestRangedZombie = Common.closestRangedRobot(zombies);
-            RobotInfo[] closests = {closestZombie, closestRangedZombie};
+            RobotInfo[] closests = Common.closestRobots(zombies);
             RobotInfo[] allAllies = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
             RobotInfo archon = Common.closestArchon(allAllies);
             double dot = -Common.MAX_DIST;
@@ -327,6 +335,7 @@ class Target extends Model {
             double dy = y;
             for(RobotInfo closest : closests) {
                 if(closest != null) {
+                    if(!zombieDen && closest.type == RobotType.ZOMBIEDEN) continue;
                     double tx = x;
                     double ty = y;
                     double zx = closest.location.x - curLocation.x;
@@ -471,17 +480,24 @@ class Target extends Model {
                     if(targetDirection.isDiagonal()) ddot /= Common.sqrt[2];
                     else ddot *= Common.sqrt[2];
                     if(ddot > 0) {
+                        nextDirection = targetDirection;
                         Direction ldir = targetDirection.rotateLeft();
                         Direction rdir = targetDirection.rotateRight();
                         double ldot = ax * ldir.dx + ay * ldir.dy;
                         double rdot = ax * rdir.dx + ay * rdir.dy;
                         if(ldot < ddot) {
-                            targetDirection = ldir;
+                            nextDirection = ldir;
                             ddot = ldot;
                         }
                         if(rdot < ddot) {
-                            targetDirection = rdir;
+                            nextDirection = rdir;
                             ddot = rdot;
+                        }
+                        MapLocation nextLoc = curLocation.add(nextDirection);
+                        if(Common.sqrt[nextLoc.distanceSquaredTo(closestZombie.location)] < zombieBuffer.get(closestZombie.type) + 1 - Common.EPS) {
+                            targetDirection = nextDirection;
+                        } else {
+                            targetDirection = Direction.NONE;
                         }
                     }
                 }
@@ -493,7 +509,7 @@ class Target extends Model {
         Direction moveDirection = Common.findPathDirection(rc, targetDirection);
         if(moveDirection == Direction.NONE) toMove = false;
         MapLocation toTargetLocation = curLocation.add(targetDirection);
-        if(targetDirection.dx * moveDirection.dx + targetDirection.dy * moveDirection.dy < -Common.EPS) toMove = false;
+        if(targetDirection.dx * moveDirection.dx + targetDirection.dy * moveDirection.dy < 0) toMove = false;
         if(toMove) {
             Direction testDir = moveDirection.opposite();
             int upper = moveDirection.isDiagonal() ? 5 : 3;

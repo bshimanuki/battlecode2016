@@ -83,9 +83,9 @@ class Archon extends Model {
         for(int i=0; i<dirPoints.length; ++i) str += String.format("%s:%.2f ", Common.DIRECTIONS[i].toString().charAt(0), dirPoints[i]);
         rc.setIndicatorString(1, str);
 
-        RobotInfo[] nearbyZombies = rc.senseNearbyRobots(13, Team.ZOMBIE);
-        RobotInfo[] nearbyAllies = rc.senseNearbyRobots(5, Common.myTeam);
-        RobotInfo closestRangedZombie = Common.closestRangedRobot(rc.senseNearbyRobots(24, Team.ZOMBIE));
+        RobotInfo[] nearbyZombies = rc.senseNearbyRobots(24, Team.ZOMBIE);
+        RobotInfo[] nearbyAllies = rc.senseNearbyRobots(13, Common.myTeam);
+        RobotInfo closestRangedZombie = Common.closestRangedRobot(rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE));
         if((nearbyZombies.length > 0 || closestRangedZombie != null) && nearbyAllies.length > 0
                 || dirPoints[DIR_NONE] < FORCED_MOVE_AWAY_THRESH
                 || dirPoints[moveDir.ordinal()] > FORCED_MOVE_TO_THRESH)
@@ -140,7 +140,7 @@ class Archon extends Model {
         final double POINTS_HOSTILE = -5;
         final double POINTS_HOSTILE_TURRET = -8;
         final double POINTS_HOSTILE_BIGZOMBIE = -8;
-        final double POINTS_HOSTILE_ZOMBIEDEN = -8;
+        final double POINTS_HOSTILE_ZOMBIEDEN = -20;
         final double POINTS_ROBOT_OBSTRUCTION = 0;
         final double POINTS_PARTS = 0.2;
         final int PARTS_RADIUS = 10;
@@ -170,9 +170,14 @@ class Archon extends Model {
                     dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE_BIGZOMBIE;
                     dirPoints[DIR_NONE] += POINTS_HOSTILE_BIGZOMBIE / 4;
                 }
-            } else if(bad.type == RobotType.ZOMBIEDEN) {
-                dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE_ZOMBIEDEN;
-                dirPoints[DIR_NONE] += POINTS_HOSTILE_ZOMBIEDEN / 4;
+            }
+        }
+        for(int i=0; i<Common.zombieDenIdsSize; ++i) {
+            MapLocation den = Common.knownLocations[Common.zombieDenIds[i]];
+            if(den != null) {
+                int sqrDist = loc.distanceSquaredTo(den);
+                dirPoints[loc.directionTo(den).ordinal()] += POINTS_HOSTILE_ZOMBIEDEN / sqrDist;
+                dirPoints[DIR_NONE] += POINTS_HOSTILE_ZOMBIEDEN / sqrDist / 4;
             }
         }
         for(RobotInfo bad : rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam)) {
