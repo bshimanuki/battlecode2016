@@ -377,7 +377,9 @@ class Target extends Model {
             }
             // MAP_MOD to approximate with better precision
             Direction nextDirection = new MapLocation(0, 0).directionTo(new MapLocation((int) (Common.MAP_MOD * dx), (int) (Common.MAP_MOD * dy)));
-            if(closestZombie != null && closestZombie.type == RobotType.FASTZOMBIE && (curLocation.distanceSquaredTo(closestZombie.location) > 2 || archon == null || archon.location.distanceSquaredTo(closestZombie.location) > 5)) {
+            int numFast = 0;
+            for(RobotInfo zombie : zombies) if(zombie.type == RobotType.FASTZOMBIE) ++ numFast;
+            if(closestZombie != null && closestZombie.type == RobotType.FASTZOMBIE && curLocation.distanceSquaredTo(closestZombie.location) > 2 && numFast >= 3) {
                 int fx = targetDirection.dx;
                 int fy = targetDirection.dy;
                 if(!targetDirection.isDiagonal()) {
