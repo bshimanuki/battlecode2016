@@ -1,5 +1,8 @@
 *.class
 
+# archon changes
+bc.conf
+
 # player jars
 *.jar
 
