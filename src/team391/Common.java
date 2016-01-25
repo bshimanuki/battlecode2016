@@ -801,14 +801,13 @@ class Common {
         return bestDir;
     }
 
-    static int buildSpaces(RobotController rc) throws GameActionException {
-        int filled = 0;
-        MapLocation loc = rc.getLocation();
-        if(loc.x == xMin || loc.x == xMax) filled += 3;
-        if(loc.y == yMin || loc.y == yMax) filled += 3;
-        if(filled > 5) filled = 5;
-        filled += rc.senseNearbyRobots(2).length;
-        return 8 - filled;
+    static int buildSpaces(RobotController rc, RobotType robotType) throws GameActionException {
+        int available = 0;
+        for(int i=0; i<8; ++i) {
+            if(rc.canBuild(DIRECTIONS[i], robotType))
+                ++available;
+        }
+        return available;
     }
 
     static boolean kamikaze(RobotController rc, Direction dir) throws GameActionException {

@@ -40,19 +40,26 @@ class Archon extends Model {
         // heal
         RobotInfo[] allies = rc.senseNearbyRobots(Common.robotType.attackRadiusSquared, Common.myTeam);
         RobotInfo toHeal = null;
-        double health = Common.INF;
         for(RobotInfo ally : allies) if(ally.type != RobotType.ARCHON) {
-            if(toHeal != null && toHeal.type == RobotType.SCOUT && ally.type != RobotType.SCOUT) {
-                toHeal = ally;
-                health = ally.health;
-            } else if(ally.health < health) {
-                toHeal = ally;
-                health = ally.health;
-            }
+            toHeal = betterHeal(toHeal, ally);
         }
         if(toHeal != null) rc.repair(toHeal.location);
 
         return false;
+    }
+
+    static RobotInfo betterHeal(RobotInfo a, RobotInfo b) {
+        if(a == null) return b;
+        if(b == null) return a;
+        // don't heal Scout
+        if(a.type == RobotType.SCOUT && b.type != RobotType.SCOUT) return b;
+        if(b.type == RobotType.SCOUT && a.type != RobotType.SCOUT) return a;
+        // heal Turret
+        if(a.type == RobotType.TURRET && b.type != RobotType.TURRET) return a;
+        if(b.type == RobotType.TURRET && a.type != RobotType.TURRET) return b;
+        // heal lower health
+        if(a.health <= b.health) return a;
+        return b;
     }
 
     static boolean coreAction(RobotController rc) throws GameActionException {
@@ -121,12 +128,15 @@ class Archon extends Model {
             RobotType typeToBuild = RobotType.SCOUT;
             if(rc.getRoundNum() > 40 && canBuildViper && !Common.hasViper)
                 typeToBuild = RobotType.VIPER;
+            else if(rc.getTeamParts() > 500 && Common.buildSpaces(rc, RobotType.TURRET) > 4){
+                // typeToBuild = RobotType.TURRET;
+            }
             // Check for sufficient parts
             if(rc.hasBuildRequirements(typeToBuild)) {
                 // Choose a direction to try to build in
                 RobotInfo hostile = Common.closestRobot(rc.senseHostileRobots(rc.getLocation(), Common.sightRadius));
                 Direction dirToBuild = hostile != null ? rc.getLocation().directionTo(hostile.location) : Common.DIRECTIONS[Common.rand.nextInt(8)];
-                if(typeToBuild == RobotType.VIPER) {
+                if(typeToBuild != RobotType.SCOUT) {
                     Direction dirToBuildViper = rc.getLocation().directionTo(new MapLocation(Common.twiceCenterX/2, Common.twiceCenterY/2));
                     if(dirToBuildViper != Direction.OMNI) dirToBuild = dirToBuildViper;
                 }
