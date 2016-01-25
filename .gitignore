@@ -9,6 +9,10 @@ bc.conf
 # keep ivy jar
 !.ivy/ivy-2.4.0.jar
 
+# others' code
+/src/team*
+!/src/team391
+
 # vim
 .*sw?
 
