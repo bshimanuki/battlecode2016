@@ -174,6 +174,7 @@ class Archon extends Model {
         final double POINTS_ROBOT_OBSTRUCTION = 0;
         final double POINTS_PARTS = 0.2;
         final int PARTS_RADIUS = 10;
+        final double PARTS_THRESH = 500; // after this, don't care about parts
         final double PARTS_RUBBLE_THRESH = GameConstants.RUBBLE_OBSTRUCTION_THRESH;
         final double POINTS_NEUTRAL = 0.2; // per part cost
         final double POINTS_NEUTRAL_ARCHON = 30;
@@ -294,16 +295,18 @@ class Archon extends Model {
                 dirPoints[loc.directionTo(archon.location).ordinal()] += POINTS_ENEMY_ARCHON;
             }
         }
-        for(MapLocation ploc : rc.sensePartLocations(PARTS_RADIUS)) {
-            MapLocation iploc = ploc.add(ploc.directionTo(loc));
-            MapLocation iloc = loc.add(loc.directionTo(ploc));
-            if(Common.mapRubble[ploc.x%MAP_MOD][ploc.y%MAP_MOD] < PARTS_RUBBLE_THRESH
-                    && Common.mapRubble[iploc.x%MAP_MOD][iploc.y%MAP_MOD] < PARTS_RUBBLE_THRESH
-                    && Common.mapRubble[iloc.x%MAP_MOD][iloc.y%MAP_MOD] < PARTS_RUBBLE_THRESH)
-            {
-                // rc.setIndicatorDot(ploc, 255,0,0);
-                double sqrDist = loc.distanceSquaredTo(ploc);
-                dirPoints[loc.directionTo(ploc).ordinal()] += POINTS_PARTS * mapParts[ploc.x%MAP_MOD][ploc.y%MAP_MOD] / sqrDist;
+        if(rc.getTeamParts() < PARTS_THRESH) {
+            for(MapLocation ploc : rc.sensePartLocations(PARTS_RADIUS)) {
+                MapLocation iploc = ploc.add(ploc.directionTo(loc));
+                MapLocation iloc = loc.add(loc.directionTo(ploc));
+                if(Common.mapRubble[ploc.x%MAP_MOD][ploc.y%MAP_MOD] < PARTS_RUBBLE_THRESH
+                        && Common.mapRubble[iploc.x%MAP_MOD][iploc.y%MAP_MOD] < PARTS_RUBBLE_THRESH
+                        && Common.mapRubble[iloc.x%MAP_MOD][iloc.y%MAP_MOD] < PARTS_RUBBLE_THRESH)
+                {
+                    // rc.setIndicatorDot(ploc, 255,0,0);
+                    double sqrDist = loc.distanceSquaredTo(ploc);
+                    dirPoints[loc.directionTo(ploc).ordinal()] += POINTS_PARTS * mapParts[ploc.x%MAP_MOD][ploc.y%MAP_MOD] / sqrDist;
+                }
             }
         }
         // for(int i=0; i<8; ++i) {
