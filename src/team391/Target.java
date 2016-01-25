@@ -475,7 +475,7 @@ class Target extends Model {
                 boolean crowded = allies.length >= 3;
                 forcedArchonMove |= crowded;
                 boolean underAttack = Common.underAttack(zombies, curLocation.add(nextDirection));
-                forcedArchonMove |= underAttack;
+                forcedArchonMove |= Common.underAttack(zombies, curLocation);
                 rc.setIndicatorString(1, String.format("<%.2f %.2f> %s %s %s", dx, dy, underAttack, crowded, targetDirection));
                 if(!crowded && !underAttack) {
                     if(dx * dx + dy * dy < 0.25) nextDirection = Direction.NONE;
@@ -534,7 +534,8 @@ class Target extends Model {
                             ddot = rdot;
                         }
                         MapLocation nextLoc = curLocation.add(nextDirection);
-                        for(RobotInfo closest : closests) {
+                        if(zombies.length == 0) forcedArchonMove = true;
+                        else for(RobotInfo closest : closests) {
                             if(closest != null) {
                                 if(!zombieDen && closest.type == RobotType.ZOMBIEDEN) continue;
                                 if(Common.sqrt[nextLoc.distanceSquaredTo(closest.location)] < zombieBuffer.get(closest.type) + 1 - Common.EPS)
