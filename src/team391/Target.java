@@ -30,11 +30,11 @@ class Target extends Model {
         }
     }
 
-   final static int ID_NONE = -1;
-   final static Map<TargetType, TargetType.Level> defaultWeights;
-   final static Map<TargetType, TargetType.Level> defaultZombieLeadWeights;
-   final static Map<RobotType, Double> zombieBuffer;
-   static {
+    final static int ID_NONE = -1;
+    final static Map<TargetType, TargetType.Level> defaultWeights;
+    final static Map<TargetType, TargetType.Level> defaultZombieLeadWeights;
+    final static Map<RobotType, Double> zombieBuffer;
+    static {
         Map<TargetType, TargetType.Level> weights = new EnumMap<>(TargetType.class);
         for(TargetType type : TargetType.values())
             weights.put(type, type.defaultLevel);
