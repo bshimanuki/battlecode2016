@@ -62,6 +62,7 @@ public class RobotPlayer {
                 e.printStackTrace();
             }
             if(round == rc.getRoundNum()) Clock.yield();
+            else System.out.println("bytecode limit exceeded");
         }
     }
 }
