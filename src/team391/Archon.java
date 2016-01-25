@@ -250,24 +250,24 @@ class Archon extends Model {
         }
         if(hostileAdjacent.length > 0) {
             if(Common.xMin != Common.MAP_NONE) {
-                double amount = hostileAdjacent.length * POINTS_HOSTILE / (loc.x - Common.xMin + 1);
+                double amount = hostileAdjacent.length * POINTS_HOSTILE / (loc.x - Common.xMin);
                 dirPoints[Direction.WEST.ordinal()] += amount;
-                dirPoints[Direction.NONE.ordinal()] += amount;
+                // dirPoints[Direction.NONE.ordinal()] += amount;
             }
             if(Common.xMax != Common.MAP_NONE) {
-                double amount = hostileAdjacent.length * POINTS_HOSTILE / (Common.xMax - loc.x + 1);
+                double amount = hostileAdjacent.length * POINTS_HOSTILE / (Common.xMax - loc.x);
                 dirPoints[Direction.EAST.ordinal()] += amount;
-                dirPoints[Direction.NONE.ordinal()] += amount;
+                // dirPoints[Direction.NONE.ordinal()] += amount;
             }
             if(Common.yMin != Common.MAP_NONE) {
-                double amount = hostileAdjacent.length * POINTS_HOSTILE / (loc.y - Common.yMin + 1);
+                double amount = hostileAdjacent.length * POINTS_HOSTILE / (loc.y - Common.yMin);
                 dirPoints[Direction.NORTH.ordinal()] += amount;
-                dirPoints[Direction.NONE.ordinal()] += amount;
+                // dirPoints[Direction.NONE.ordinal()] += amount;
             }
             if(Common.yMax != Common.MAP_NONE) {
-                double amount = hostileAdjacent.length * POINTS_HOSTILE / (Common.yMax - loc.y + 1);
+                double amount = hostileAdjacent.length * POINTS_HOSTILE / (Common.yMax - loc.y);
                 dirPoints[Direction.SOUTH.ordinal()] += amount;
-                dirPoints[Direction.NONE.ordinal()] += amount;
+                // dirPoints[Direction.NONE.ordinal()] += amount;
             }
         }
         for(int i=1; i<Common.archonIdsSize; ++i) {
