@@ -101,11 +101,13 @@ class Archon extends Model {
         RobotInfo closestRangedZombie = nearbyZombies[SignalUnit.typeSignal.get(RobotType.RANGEDZOMBIE)];
         boolean avoidZombie = false;
         MapLocation loc = rc.getLocation();
-        if(closestStandardZombie != null && loc.distanceSquaredTo(closestStandardZombie.location) <= 13) avoidZombie = true;
-        if(closestBigZombie != null && loc.distanceSquaredTo(closestBigZombie.location) <= 13) avoidZombie = true;
-        if(closestFastZombie != null) avoidZombie = true;
-        if(closestRangedZombie != null) avoidZombie = true;
-        if(avoidZombie && (nearbyAllies.length > 0 || nearbyEnemies.length > 0)
+        boolean nearbyRobots = nearbyAllies.length > 0 || nearbyEnemies.length > 0;
+        boolean anyRobots = Common.allies.length > 0 || Common.enemies.length > 0;
+        if(closestStandardZombie != null && loc.distanceSquaredTo(closestStandardZombie.location) <= 13 && nearbyRobots) avoidZombie = true;
+        if(closestBigZombie != null && loc.distanceSquaredTo(closestBigZombie.location) <= 13 && nearbyRobots) avoidZombie = true;
+        if(closestFastZombie != null && anyRobots) avoidZombie = true;
+        if(closestRangedZombie != null && anyRobots) avoidZombie = true;
+        if(avoidZombie
                 || dirPoints[DIR_NONE] < FORCED_MOVE_AWAY_THRESH
                 || dirPoints[moveDir.ordinal()] > FORCED_MOVE_TO_THRESH)
         {
@@ -129,7 +131,7 @@ class Archon extends Model {
             RobotType typeToBuild = RobotType.SCOUT;
             if(rc.getRoundNum() > 40 && canBuildViper && !Common.hasViper)
                 typeToBuild = RobotType.VIPER;
-            else if(rc.getTeamParts() > 500 && Common.buildSpaces(rc, RobotType.TURRET) > 4){
+            else if(rc.getTeamParts() > 500 && Common.numScouts(Common.allies) > 3 && Common.buildSpaces(rc, RobotType.TURRET) > 4){
                 if(Common.rand.nextInt(Common.numTurret(Common.allies) + 1) == 0)
                     typeToBuild = RobotType.TURRET;
             }
