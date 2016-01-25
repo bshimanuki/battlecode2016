@@ -240,7 +240,7 @@ class Target extends Model {
                     if(viper != null) {
                         if(curLocation.distanceSquaredTo(viper) > RobotType.VIPER.attackRadiusSquared)
                             move(rc, viper);
-                        if(Common.sqrt[curLocation.distanceSquaredTo(viper)] < Common.sqrt[RobotType.VIPER.attackRadiusSquared] + 2)
+                        if(curLocation.distanceSquaredTo(viper) <= 35)
                             Signals.addSelfViperKamikaze(rc);
                     }
                     else Scout.move(rc);

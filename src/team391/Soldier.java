@@ -54,7 +54,7 @@ class Soldier extends Model {
                 int index = Common.rand.nextInt(zombiesWithinRange.length);
                 RobotInfo attackTarget = null;
                 for(int i=0; i<zombiesWithinRange.length; ++i) {
-                    if(attackTarget.type != RobotType.RANGEDZOMBIE && zombiesWithinRange[index].type == RobotType.RANGEDZOMBIE)
+                    if((attackTarget == null || attackTarget.type != RobotType.RANGEDZOMBIE) && zombiesWithinRange[index].type == RobotType.RANGEDZOMBIE)
                         attackTarget = zombiesWithinRange[index];
                     else if(closeToArchon[index])
                         attackTarget = zombiesWithinRange[index];

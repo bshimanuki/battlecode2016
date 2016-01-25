@@ -158,7 +158,7 @@ class Archon extends Model {
         final double POINTS_HOSTILE_BIGZOMBIE = -8;
         final double POINTS_HOSTILE_ZOMBIEDEN = -20;
         final double POINTS_ENEMY_UNDER_ATTACK = 1; // lead zombies to enemy
-        final double POINTS_ENEMY_ARCHON_UNDER_ATTACK = 3;
+        final double POINTS_ENEMY_ARCHON_UNDER_ATTACK = 5;
         final double POINTS_ROBOT_OBSTRUCTION = 0;
         final double POINTS_PARTS = 0.2;
         final int PARTS_RADIUS = 10;

@@ -62,7 +62,10 @@ public class RobotPlayer {
                 e.printStackTrace();
             }
             if(round == rc.getRoundNum()) Clock.yield();
-            else System.out.println("bytecode limit exceeded");
+            else {
+                if(round == Common.enrollment) System.out.println("bytecode limit exceeded on initialization");
+                else System.out.println("bytecode limit exceeded");
+            }
         }
     }
 }
