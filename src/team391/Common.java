@@ -641,6 +641,16 @@ class Common {
         return closest;
     }
 
+    static int numScouts(RobotInfo[] infos) {
+        int num = 0;
+        for(RobotInfo info : infos) {
+            if(info.type == RobotType.SCOUT) {
+                ++num;
+            }
+        }
+        return num;
+    }
+
     static int numTurret(RobotInfo[] infos) {
         int num = 0;
         for(RobotInfo info : infos) {
