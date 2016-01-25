@@ -128,7 +128,7 @@ class Archon extends Model {
             RobotType typeToBuild = RobotType.SCOUT;
             if(rc.getRoundNum() > 40 && canBuildViper && !Common.hasViper)
                 typeToBuild = RobotType.VIPER;
-            else if(rc.getTeamParts() > 500 && Common.numScouts(Common.allies) > 3 && Common.archonIdsSize <= 2 && Common.buildSpaces(rc, RobotType.TURRET) > 4){
+            else if(rc.getTeamParts() > 500 && Common.numScouts(Common.allies) > 3 && Common.archonIdsSize <= 2 && Common.buildSpaces(rc, RobotType.TURRET) > 3){
                 if(Common.rand.nextInt(Common.numTurret(Common.allies) + 1) == 0)
                     typeToBuild = RobotType.TURRET;
             }
