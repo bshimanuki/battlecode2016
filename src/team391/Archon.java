@@ -94,6 +94,7 @@ class Archon extends Model {
 
         RobotInfo[] nearbyZombies = Common.closestZombies;
         RobotInfo[] nearbyAllies = rc.senseNearbyRobots(13, Common.myTeam);
+        RobotInfo[] nearbyEnemies = rc.senseNearbyRobots(13, Common.enemyTeam);
         RobotInfo closestStandardZombie = nearbyZombies[SignalUnit.typeSignal.get(RobotType.STANDARDZOMBIE)];
         RobotInfo closestBigZombie = nearbyZombies[SignalUnit.typeSignal.get(RobotType.BIGZOMBIE)];
         RobotInfo closestFastZombie = nearbyZombies[SignalUnit.typeSignal.get(RobotType.FASTZOMBIE)];
@@ -104,7 +105,7 @@ class Archon extends Model {
         if(closestBigZombie != null && loc.distanceSquaredTo(closestBigZombie.location) <= 13) avoidZombie = true;
         if(closestFastZombie != null) avoidZombie = true;
         if(closestRangedZombie != null) avoidZombie = true;
-        if(avoidZombie && nearbyAllies.length > 0
+        if(avoidZombie && (nearbyAllies.length > 0 || nearbyEnemies.length > 0)
                 || dirPoints[DIR_NONE] < FORCED_MOVE_AWAY_THRESH
                 || dirPoints[moveDir.ordinal()] > FORCED_MOVE_TO_THRESH)
         {
