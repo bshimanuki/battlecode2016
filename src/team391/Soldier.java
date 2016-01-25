@@ -68,7 +68,7 @@ class Soldier extends Model {
                         rc.attackLocation(zombiesWithinRange[index].location);
                     }
                 } else {
-                    RobotInfo archon = Common.closestArchon(rc.senseNearbyRobots(Common.sightRadius, Common.myTeam));
+                    RobotInfo archon = Common.closestAllies[SignalUnit.typeSignal.get(RobotType.ARCHON)];
                     if(archon == null || rc.getLocation().distanceSquaredTo(archon.location) >= 13) {
                         setTarget();
                         if(target.run(rc)) target = null;
@@ -81,7 +81,7 @@ class Soldier extends Model {
         if(!shouldAttack) {
             if(rc.isCoreReady()) {
                 Direction dirToMove = Common.DIRECTIONS[fate % 8];
-                RobotInfo archon = Common.closestArchon(rc.senseNearbyRobots(Common.sightRadius, Common.myTeam));
+                RobotInfo archon = Common.closestAllies[SignalUnit.typeSignal.get(RobotType.ARCHON)];
                 if(archon != null) {
                     if(rc.getLocation().distanceSquaredTo(archon.location) > 13)
                         dirToMove = rc.getLocation().directionTo(archon.location);

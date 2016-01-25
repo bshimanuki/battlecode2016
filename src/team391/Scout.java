@@ -64,7 +64,7 @@ class Scout extends Model {
                 }
             }
         } else if(round == Common.enrollment) {
-            int num = Math.max(100, 200 - 4 * rc.senseNearbyRobots(Common.sightRadius, Common.myTeam).length);
+            int num = Math.max(100, 200 - 4 * Common.allies.length);
             int rand = Common.rand.nextInt(num);
             if(rand < 12) {
                 Target kill = getZombieTarget();
@@ -85,7 +85,7 @@ class Scout extends Model {
                 opening.setTrigger((_rc) -> opening.seesBoardEdge(_rc) || _rc.senseNearbyRobots(ZOMBIE_ACCEPT_RADIUS, Team.ZOMBIE).length > 0);
                 Common.models.addFirst(opening);
             }
-            RobotInfo[] allies = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
+            RobotInfo[] allies = Common.allies;
             if(allies.length == 0 || Common.rand.nextInt(allies.length * allies.length) < 5) protectArchon = true;
         }
 
@@ -129,9 +129,8 @@ class Scout extends Model {
                     target.zombieDen = zombieDen;
                     Signals.addSelfZombieLead(rc, target.dir);
                 } else {
-                    RobotInfo[] enemies = rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam);
-                    RobotInfo[] allies = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
-                    RobotInfo[] closestAllies = Common.closestRobots(allies);
+                    RobotInfo[] enemies = Common.enemies;
+                    RobotInfo[] closestAllies = Common.closestAllies;
                     if(enemies.length >= 3 && closestAllies[SignalUnit.typeSignal.get(RobotType.ARCHON)] == null && closestAllies[SignalUnit.typeSignal.get(RobotType.VIPER)] != null) {
                         target = getZombieTarget();
                         target.weights.put(Target.TargetType.ZOMBIE_LEAD, Target.TargetType.Level.INACTIVE);
@@ -141,7 +140,7 @@ class Scout extends Model {
                 }
             }
         } else {
-            RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
+            RobotInfo[] zombies = Common.zombies;
             if(zombies.length == 0 && rc.getInfectedTurns() > 1) {
                 boolean kamikaze = true;
                 int numAllies = 0;
@@ -180,7 +179,7 @@ class Scout extends Model {
         MapLocation loc = rc.getLocation();
         dirPoints[DIR_NONE] += POINTS_NONE;
         dirPoints[Common.myBase.ordinal()] += POINTS_BASE;
-        for(RobotInfo bad : rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam)) {
+        for(RobotInfo bad : Common.enemies) {
             switch(bad.type) {
                 case SOLDIER:
                 case GUARD:
@@ -241,7 +240,7 @@ class Scout extends Model {
         Direction dir = Common.DIRECTIONS[bestDirIndex];
         // fraction of scouts stay near archons
         if(protectArchon) {
-            RobotInfo archon = Common.closestArchon(rc.senseNearbyRobots(Common.sightRadius, Common.myTeam));
+            RobotInfo archon = Common.closestAllies[SignalUnit.typeSignal.get(RobotType.ARCHON)];
             if(archon != null && rc.getLocation().distanceSquaredTo(archon.location) > 24)
                 dir = rc.getLocation().directionTo(archon.location);
         } else {

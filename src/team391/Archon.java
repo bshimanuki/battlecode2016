@@ -85,7 +85,7 @@ class Archon extends Model {
         for(int i=0; i<dirPoints.length; ++i) str += String.format("%s:%.2f ", Common.DIRECTIONS[i].toString().charAt(0), dirPoints[i]);
         rc.setIndicatorString(1, str);
 
-        RobotInfo[] nearbyZombies = Common.closestRobots(rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE));
+        RobotInfo[] nearbyZombies = Common.closestZombies;
         RobotInfo[] nearbyAllies = rc.senseNearbyRobots(13, Common.myTeam);
         RobotInfo closestStandardZombie = nearbyZombies[SignalUnit.typeSignal.get(RobotType.STANDARDZOMBIE)];
         RobotInfo closestBigZombie = nearbyZombies[SignalUnit.typeSignal.get(RobotType.BIGZOMBIE)];
@@ -214,7 +214,7 @@ class Archon extends Model {
                 dirPoints[DIR_NONE] += POINTS_HOSTILE_ZOMBIEDEN / sqrDist / 4;
             }
         }
-        for(RobotInfo bad : rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam)) {
+        for(RobotInfo bad : Common.enemies) {
             if(bad.type == RobotType.TURRET) {
                 if(loc.distanceSquaredTo(bad.location) >= GameConstants.TURRET_MINIMUM_RANGE)
                     dirPoints[loc.directionTo(bad.location).ordinal()] += POINTS_HOSTILE_TURRET;

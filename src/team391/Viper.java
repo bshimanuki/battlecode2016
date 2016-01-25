@@ -37,7 +37,7 @@ class Viper extends Model {
             if(target.run(rc)) target = null;
         } else {
             move(rc);
-            attack(rc, rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam));
+            attack(rc, Common.enemies);
         }
         if((rc.getRoundNum() + Common.id) % SIGNAL_PERIOD == 0) rc.broadcastSignal(SIGNAL_RADIUS);
         return false;

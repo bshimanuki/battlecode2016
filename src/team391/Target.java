@@ -138,9 +138,8 @@ class Target extends Model {
         }
 
         if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) {
-            RobotInfo[] enemies = rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam);
-            RobotInfo archon = Common.closestArchon(enemies);
-            RobotInfo closest = Common.closestRobot(enemies);
+            RobotInfo archon = Common.closestEnemies[SignalUnit.typeSignal.get(RobotType.ARCHON)];
+            RobotInfo closest = Common.closestRobot(Common.enemies);
             if(archon != null) {
                 id = archon.ID;
                 weights.put(TargetType.MOVE, TargetType.Level.ACTIVE);
@@ -223,7 +222,7 @@ class Target extends Model {
             attack(rc);
         if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) {
             if(rc.getInfectedTurns() == 0) {
-                RobotInfo closestZombie = Common.closestRobot(rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE));
+                RobotInfo closestZombie = Common.closestRobot(Common.zombies);
                 if(closestZombie != null) move(rc, closestZombie.location);
                 else {
                     MapLocation viper = null;
@@ -251,7 +250,7 @@ class Target extends Model {
                 boolean atTarget = loc != null && rc.getLocation().distanceSquaredTo(loc) <= 2;
                 if(atTarget) return finish();
                 if(rc.isCoreReady()) {
-                    RobotInfo closestZombie = Common.closestRobot(rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE));
+                    RobotInfo closestZombie = Common.closestRobot(Common.zombies);
                     if(closestZombie != null && curLocation.distanceSquaredTo(closestZombie.location) <= 2)
                         return finish();
                 }
@@ -296,10 +295,10 @@ class Target extends Model {
             }
         }
         if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
-            RobotInfo[] allies = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
+            RobotInfo[] allies = Common.allies;
             RobotInfo[] enemies = rc.senseNearbyRobots(24, Common.enemyTeam);
-            RobotInfo[] allEnemies = rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam);
-            RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
+            RobotInfo[] allEnemies = Common.enemies;
+            RobotInfo[] zombies = Common.zombies;
             RobotInfo closestEnemy = Common.closestRobot(enemies);
             RobotInfo closestEnemyTurret = Common.closestTurret(allEnemies);
             RobotInfo closestAlly = Common.closestNonKamikaze(allies);
@@ -350,7 +349,7 @@ class Target extends Model {
         Direction targetDirection = loc != null ? rc.getLocation().directionTo(loc) : dir;
         if(targetDirection == Direction.OMNI) return false;
         if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
-            RobotInfo[] zombies = rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE);
+            RobotInfo[] zombies = Common.zombies;
             double x = targetDirection.dx;
             double y = targetDirection.dy;
             if(targetDirection.isDiagonal()) {
@@ -359,7 +358,7 @@ class Target extends Model {
             }
             RobotInfo closestZombie = Common.closestRobot(zombies, zombieDen);
             RobotInfo[] closests = Common.closestRobots(zombies);
-            RobotInfo[] allAllies = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
+            RobotInfo[] allAllies = Common.allies;
             RobotInfo archon = Common.closestArchon(allAllies);
             double dot = -Common.MAX_DIST;
             double dx = x;
@@ -601,7 +600,7 @@ class Target extends Model {
             weights.put(TargetType.ZOMBIE_LEAD, TargetType.Level.INACTIVE);
             weights.put(TargetType.ZOMBIE_KAMIKAZE, TargetType.Level.ACTIVE);
             return false;
-        } else if(Common.closestArchon(Common.rc.senseNearbyRobots(Common.sightRadius, Common.myTeam)) == null) {
+        } else if(Common.closestAllies[SignalUnit.typeSignal.get(RobotType.ARCHON)] == null) {
             weights.put(TargetType.ZOMBIE_LEAD, TargetType.Level.INACTIVE);
             weights.put(TargetType.ZOMBIE_KAMIKAZE, TargetType.Level.ACTIVE);
             return false;

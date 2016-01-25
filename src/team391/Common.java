@@ -84,7 +84,6 @@ class Common {
     static int neutralTypesSize = 0;
     static MapLocation[] neutralLocations = new MapLocation[MAX_ID];
     static int neutralLocationsSize = 0;
-    static RobotInfo[] robotInfos;
 
     static boolean hasViper = false;
     static double[] teamParts;
@@ -119,9 +118,18 @@ class Common {
     static boolean sendBoundariesHigh;
     static int sendRadius;
 
+    // Nearby robots
+    static RobotInfo[] allRobots;
+    static RobotInfo[] enemies;
+    static RobotInfo[] zombies;
+    static RobotInfo[] allies;
+    static RobotInfo[] closestEnemies;
+    static RobotInfo[] closestZombies;
+    static RobotInfo[] closestAllies;
+
     // Threshholds and Constants
-    static int PART_KEEP_THRESH = 50; // min amount to keep in location list
-    static int MAP_UPDATE_MESSAGE_FACTOR = 4;
+    final static int PART_KEEP_THRESH = 50; // min amount to keep in location list
+    final static int MAP_UPDATE_MESSAGE_FACTOR = 4;
 
     static void init(RobotController rc) {
         int roundLimit = rc.getRoundLimit() + 1;
@@ -219,11 +227,15 @@ class Common {
             senseParts(rc);
         }
 
-        if(turn > 5) {
-            robotInfos = rc.senseNearbyRobots();
-            for(RobotInfo info : robotInfos) {
-                addInfo(info);
-            }
+        allRobots = rc.senseNearbyRobots();
+        enemies = rc.senseNearbyRobots(sightRadius, enemyTeam);
+        zombies = rc.senseNearbyRobots(sightRadius, Team.ZOMBIE);
+        allies = rc.senseNearbyRobots(sightRadius, myTeam);
+        closestEnemies = closestRobots(enemies);
+        closestZombies = closestRobots(zombies);
+        closestAllies = closestRobots(allies);
+        for(RobotInfo info : allRobots) {
+            addInfo(info);
         }
 
         if(nextUnitInfo == rc.getRoundNum()) { // Archon only, after building new units
@@ -779,6 +791,16 @@ class Common {
             }
         }
         return bestDir;
+    }
+
+    static int buildSpaces(RobotController rc) throws GameActionException {
+        int filled = 0;
+        MapLocation loc = rc.getLocation();
+        if(loc.x == xMin || loc.x == xMax) filled += 3;
+        if(loc.y == yMin || loc.y == yMax) filled += 3;
+        if(filled > 5) filled = 5;
+        filled += rc.senseNearbyRobots(2).length;
+        return 8 - filled;
     }
 
     static boolean kamikaze(RobotController rc, Direction dir) throws GameActionException {
