@@ -21,12 +21,14 @@ class Turret extends Model {
                     }
                 }
             } else if(zombiesWithinRange.length > 0) {
+                RobotInfo target = null;
                 for(RobotInfo zombie : zombiesWithinRange) {
                     if(rc.canAttackLocation(zombie.location)) {
-                        rc.attackLocation(zombie.location);
-                        break;
+                        if(target == null || zombie.type == RobotType.RANGEDZOMBIE && target.type != RobotType.RANGEDZOMBIE)
+                            target = zombie;
                     }
                 }
+                if(target != null) rc.attackLocation(target.location);
             }
         }
         return false;

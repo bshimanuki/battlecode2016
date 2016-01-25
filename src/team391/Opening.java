@@ -47,6 +47,18 @@ class Opening extends Model {
                 ++Common.sent;
                 // if(!scoutExplore) new SignalStrategy(Common.highStrategy, LowStrategy.EXPLORE, Target.TargetType.MOVE, Common.enemyBase, Common.lastBuiltId).send(rc, buildRadius);
                 break;
+            case 4:
+                boolean closestToEnemy = true;
+                for(MapLocation hometown : Common.myArchonHometowns) {
+                    int x = hometown.x - Common.hometown.x;
+                    int y = hometown.y - Common.hometown.y;
+                    if(x * Common.enemyBase.dx + y * Common.enemyBase.dy > 0) closestToEnemy = false;
+                }
+                boolean noEarlyZombies = false;
+                int[] waves = rc.getZombieSpawnSchedule().getRounds();
+                if(waves.length == 0 || waves[0] > 150) noEarlyZombies = true;
+                if(closestToEnemy && noEarlyZombies) Archon.canBuildViper = true;
+                break;
             case 20:
                 if(Common.myArchonHometowns.length != 1) return true;
                 break;

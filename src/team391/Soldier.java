@@ -52,11 +52,14 @@ class Soldier extends Model {
                 }
             } else if(zombiesWithinRange.length > 0) {
                 int index = Common.rand.nextInt(zombiesWithinRange.length);
+                RobotInfo attackTarget = null;
                 for(int i=0; i<zombiesWithinRange.length; ++i) {
-                    if(!closeToArchon[index]) {
-                        ++index;
-                        index %= zombiesWithinRange.length;
-                    } else break;
+                    if(attackTarget.type != RobotType.RANGEDZOMBIE && zombiesWithinRange[index].type == RobotType.RANGEDZOMBIE)
+                        attackTarget = zombiesWithinRange[index];
+                    else if(closeToArchon[index])
+                        attackTarget = zombiesWithinRange[index];
+                    ++index;
+                    index %= zombiesWithinRange.length;
                 }
                 if(closeToArchon[index]) {
                     shouldAttack = true;

@@ -31,6 +31,8 @@ class Archon extends Model {
     static Direction moveDir;
     static double movePoint; // points for moveDir
 
+    static boolean canBuildViper = false;
+
     @Override
     public boolean runInner(RobotController rc) throws GameActionException {
         coreAction(rc);
@@ -116,13 +118,18 @@ class Archon extends Model {
             if(move(rc)) return true;
         } else {
             // Choose a unit to build
-            // RobotType typeToBuild = Common.ROBOT_TYPES[fate % 8];
             RobotType typeToBuild = RobotType.SCOUT;
+            if(rc.getRoundNum() > 40 && canBuildViper && !Common.hasViper)
+                typeToBuild = RobotType.VIPER;
             // Check for sufficient parts
             if(rc.hasBuildRequirements(typeToBuild)) {
                 // Choose a direction to try to build in
                 RobotInfo hostile = Common.closestRobot(rc.senseHostileRobots(rc.getLocation(), Common.sightRadius));
                 Direction dirToBuild = hostile != null ? rc.getLocation().directionTo(hostile.location) : Common.DIRECTIONS[Common.rand.nextInt(8)];
+                if(typeToBuild == RobotType.VIPER) {
+                    Direction dirToBuildViper = rc.getLocation().directionTo(new MapLocation(Common.twiceCenterX/2, Common.twiceCenterY/2));
+                    if(dirToBuildViper != Direction.OMNI) dirToBuild = dirToBuildViper;
+                }
                 dirToBuild = Common.findPathDirection(rc, dirToBuild, typeToBuild);
                 if(dirToBuild != Direction.NONE) {
                     Common.build(rc, dirToBuild, typeToBuild, LowStrategy.EXPLORE);
@@ -151,6 +158,7 @@ class Archon extends Model {
         final double POINTS_HOSTILE_BIGZOMBIE = -8;
         final double POINTS_HOSTILE_ZOMBIEDEN = -20;
         final double POINTS_ENEMY_UNDER_ATTACK = 1; // lead zombies to enemy
+        final double POINTS_ENEMY_ARCHON_UNDER_ATTACK = 3;
         final double POINTS_ROBOT_OBSTRUCTION = 0;
         final double POINTS_PARTS = 0.2;
         final int PARTS_RADIUS = 10;
@@ -187,7 +195,10 @@ class Archon extends Model {
         }
         for(RobotInfo enemy : enemies) {
             if(underAttack) {
-                dirPoints[loc.directionTo(enemy.location).ordinal()] += POINTS_ENEMY_UNDER_ATTACK;
+                if(enemy.type == RobotType.ARCHON)
+                    dirPoints[loc.directionTo(enemy.location).ordinal()] += POINTS_ENEMY_ARCHON_UNDER_ATTACK;
+                else
+                    dirPoints[loc.directionTo(enemy.location).ordinal()] += POINTS_ENEMY_UNDER_ATTACK;
             } else {
                 if(enemy.type.attackPower > 0) {
                     dirPoints[loc.directionTo(enemy.location).ordinal()] += POINTS_HOSTILE;

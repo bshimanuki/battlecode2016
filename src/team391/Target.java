@@ -109,6 +109,11 @@ class Target extends Model {
             case ZOMBIE_LEAD:
                 weights = new EnumMap<>(defaultZombieLeadWeights);
                 break;
+            case ZOMBIE_KAMIKAZE:
+                weights = new EnumMap<>(defaultZombieLeadWeights);
+                weights.put(TargetType.ZOMBIE_LEAD, TargetType.Level.INACTIVE);
+                weights.put(TargetType.ZOMBIE_KAMIKAZE, TargetType.Level.ACTIVE);
+                break;
             default:
                 weights = new EnumMap<>(defaultWeights);
                 break;
@@ -219,8 +224,28 @@ class Target extends Model {
         if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) {
             if(rc.getInfectedTurns() == 0) {
                 RobotInfo closestZombie = Common.closestRobot(rc.senseNearbyRobots(Common.sightRadius, Team.ZOMBIE));
-                if(closestZombie == null) Scout.move(rc);
-                else move(rc, closestZombie == null ? loc : closestZombie.location);
+                if(closestZombie != null) move(rc, closestZombie.location);
+                else {
+                    MapLocation viper = null;
+                    int dist = Common.INF;
+                    for(int i=Signals.viperIdsBegin; i<Signals.viperIdsSize; ++i) {
+                        MapLocation newLoc = Common.knownLocations[Signals.viperIds[i]];
+                        if(newLoc != null) {
+                            int newDist = curLocation.distanceSquaredTo(newLoc);
+                            if(newDist < dist) {
+                                viper = newLoc;
+                                dist = newDist;
+                            }
+                        }
+                    }
+                    if(viper != null) {
+                        if(curLocation.distanceSquaredTo(viper) > RobotType.VIPER.attackRadiusSquared)
+                            move(rc, viper);
+                        if(Common.sqrt[curLocation.distanceSquaredTo(viper)] < Common.sqrt[RobotType.VIPER.attackRadiusSquared] + 2)
+                            Signals.addSelfViperKamikaze(rc);
+                    }
+                    else Scout.move(rc);
+                }
             } else {
                 move(rc, loc);
                 boolean atTarget = loc != null && rc.getLocation().distanceSquaredTo(loc) <= 2;

@@ -128,6 +128,16 @@ class Scout extends Model {
                     target = getZombieTarget();
                     target.zombieDen = zombieDen;
                     Signals.addSelfZombieLead(rc, target.dir);
+                } else {
+                    RobotInfo[] enemies = rc.senseNearbyRobots(Common.sightRadius, Common.enemyTeam);
+                    RobotInfo[] allies = rc.senseNearbyRobots(Common.sightRadius, Common.myTeam);
+                    RobotInfo[] closestAllies = Common.closestRobots(allies);
+                    if(enemies.length >= 3 && closestAllies[SignalUnit.typeSignal.get(RobotType.ARCHON)] == null && closestAllies[SignalUnit.typeSignal.get(RobotType.VIPER)] != null) {
+                        target = getZombieTarget();
+                        target.weights.put(Target.TargetType.ZOMBIE_LEAD, Target.TargetType.Level.INACTIVE);
+                        target.weights.put(Target.TargetType.ZOMBIE_KAMIKAZE, Target.TargetType.Level.ACTIVE);
+                        Signals.addSelfViperKamikaze(rc);
+                    }
                 }
             }
         } else {

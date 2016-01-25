@@ -86,6 +86,9 @@ class Common {
     static int neutralLocationsSize = 0;
     static RobotInfo[] robotInfos;
 
+    static boolean hasViper = false;
+    static double[] teamParts;
+
     // Robot vars
     static RobotController rc;
     static Random rand;
@@ -121,7 +124,7 @@ class Common {
     static int MAP_UPDATE_MESSAGE_FACTOR = 4;
 
     static void init(RobotController rc) {
-        int roundLimit = rc.getRoundLimit();
+        int roundLimit = rc.getRoundLimit() + 1;
         Common.rc = rc;
         rand = new Random(rc.getID());
         id = rc.getID();
@@ -137,6 +140,7 @@ class Common {
         canMessageSignal = robotType.canMessageSignal();
         Signals.buildTarget = new MapLocation[roundLimit];
         Signals.buildStrategy = new SignalStrategy[roundLimit];
+        teamParts = new double[roundLimit];
         try {
             addInfo(rc.senseRobot(id));
             myArchonHometowns = rc.getInitialArchonLocations(myTeam);
@@ -187,6 +191,8 @@ class Common {
         read = Signals.readSignals(rc);
         sent = 0;
         int turn = rc.getRoundNum();
+        teamParts[turn] = rc.getTeamParts();
+        if(turn > 0 && teamParts[turn-1] - teamParts[turn] > 110) hasViper = true;
 
         switch(turn - enrollment) {
             case 0:
@@ -492,6 +498,7 @@ class Common {
                 switch(robotType) {
                     case VIPER:
                         if(team != myTeam) break;
+                        Common.hasViper = true;
                     case TURRET:
                     case TTM:
                         if(robotType != RobotType.VIPER && team != enemyTeam) break;
