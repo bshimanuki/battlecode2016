@@ -375,7 +375,7 @@ class Target extends Model {
                     double distBuffer;
                     switch(closest.type) {
                         case RANGEDZOMBIE:
-                            distBuffer = 2.5;
+                            distBuffer = 2.75;
                             break;
                         case FASTZOMBIE:
                             distBuffer = 4;
