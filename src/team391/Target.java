@@ -351,7 +351,7 @@ class Target extends Model {
                     double distBuffer;
                     switch(closest.type) {
                         case RANGEDZOMBIE:
-                            distBuffer = 3.5;
+                            distBuffer = 2.5;
                             break;
                         case FASTZOMBIE:
                             distBuffer = 4;
@@ -473,7 +473,14 @@ class Target extends Model {
                             hit = newHit;
                         }
                     }
-                    if(bestDirection != null) targetDirection = bestDirection;
+                    if(bestDirection != null) {
+                        targetDirection = bestDirection;
+                        Direction trueDirection = loc != null ? rc.getLocation().directionTo(loc) : dir;
+                        double ddot = targetDirection.dx * trueDirection.dx + targetDirection.dy * trueDirection.dy;
+                        if(ddot < 0 && Common.underAttack(zombies, curLocation.add(targetDirection)) && !Common.underAttack(zombies, curLocation)) {
+                            targetDirection = Direction.NONE;
+                        }
+                    }
                 }
             }
             if(archon != null) {
