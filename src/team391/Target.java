@@ -414,6 +414,7 @@ class Target extends Model {
                 dy = 0;
                 dx *= Common.sqrt[2];
             }
+            boolean forcedArchonMove = false; // to force move when archon, for things like crowded and underAttack
             // MAP_MOD to approximate with better precision
             Direction nextDirection = new MapLocation(0, 0).directionTo(new MapLocation((int) (Common.MAP_MOD * dx), (int) (Common.MAP_MOD * dy)));
             int numFast = 0;
@@ -472,8 +473,10 @@ class Target extends Model {
             } else {
                 RobotInfo[] allies = rc.senseNearbyRobots(curLocation.add(targetDirection.opposite()), 2, Common.myTeam);
                 boolean crowded = allies.length >= 3;
+                forcedArchonMove |= crowded;
                 boolean underAttack = Common.underAttack(zombies, curLocation.add(nextDirection));
-                rc.setIndicatorString(1, String.format("<%.2f %.2f> %s", dx, dy, underAttack));
+                forcedArchonMove |= underAttack;
+                rc.setIndicatorString(1, String.format("<%.2f %.2f> %s %s %s", dx, dy, underAttack, crowded, targetDirection));
                 if(!crowded && !underAttack) {
                     if(dx * dx + dy * dy < 0.25) nextDirection = Direction.NONE;
                     targetDirection = nextDirection;
@@ -531,7 +534,14 @@ class Target extends Model {
                             ddot = rdot;
                         }
                         MapLocation nextLoc = curLocation.add(nextDirection);
-                        if(closestZombie == null || Common.sqrt[nextLoc.distanceSquaredTo(closestZombie.location)] < zombieBuffer.get(closestZombie.type) + 1 - Common.EPS) {
+                        for(RobotInfo closest : closests) {
+                            if(closest != null) {
+                                if(!zombieDen && closest.type == RobotType.ZOMBIEDEN) continue;
+                                if(Common.sqrt[nextLoc.distanceSquaredTo(closest.location)] < zombieBuffer.get(closest.type) + 1 - Common.EPS)
+                                    forcedArchonMove = true;
+                            }
+                        }
+                        if(forcedArchonMove) {
                             targetDirection = nextDirection;
                         } else {
                             targetDirection = Direction.NONE;

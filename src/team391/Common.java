@@ -26,7 +26,7 @@ class Common {
     final static int BUILD_LAG = 1; // Delay between built and first turn
     final static double EPS = 1e-2;
     final static int INF = (int) 1e6;
-    final static double[] sqrt = new double[60]; // faster than Math.sqrt, cache for everything in sight
+    final static double[] sqrt = new double[75]; // faster than Math.sqrt, cache for everything in sight
     final static int MAX_DIST = 2 * GameConstants.MAP_MAX_WIDTH * GameConstants.MAP_MAX_WIDTH;
     final static int MAX_ARCHONS = 8;
     final static int ARCHON_STRAIGHT_SIGHT = 5;
