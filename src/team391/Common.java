@@ -109,6 +109,7 @@ class Common {
     static MapLocation lastBuiltLocation;
     static int lastBuiltId;
     static int nextUnitInfo;
+    static boolean shouldSenseRubble = false; // currently only being used by archons
 
     // Message vars
     static int read;
@@ -141,7 +142,11 @@ class Common {
         history = new MapLocation[roundLimit];
         robotType = rc.getType();
         enrollment = rc.getRoundNum();
-        if(robotType != RobotType.ARCHON) birthday = enrollment - robotType.buildTurns - BUILD_LAG;
+        if(robotType == RobotType.ARCHON) {
+            shouldSenseRubble = true;
+        } else {
+            birthday = enrollment - robotType.buildTurns - BUILD_LAG;
+        }
         hometown = rc.getLocation();
         sightRadius = robotType.sensorRadiusSquared;
         straightSight = (int) Math.sqrt(sightRadius);
@@ -337,72 +342,74 @@ class Common {
         history[historySize++] = rc.getLocation();
         rc.move(dir);
         MapLocation loc = rc.getLocation();
-        int roundNum = rc.getRoundNum();
-        MapLocation[] edges;
-        switch(robotType) {
-            case ARCHON:
-                edges = Archon.SIGHT_EDGE;
-                break;
-            case SCOUT:
-                edges = Scout.SIGHT_EDGE;
-                break;
-            default:
-                edges = Soldier.SIGHT_EDGE;
-                break;
-        }
-        switch(dir) {
-            case NORTH_EAST:
-            case EAST:
-            case SOUTH_EAST:
-                for(MapLocation edge : edges) {
-                    MapLocation senseLocation = loc.add(edge.x, edge.y);
-                    if(rc.canSense(senseLocation) && rc.onTheMap(senseLocation)) {
-                        rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
-                        mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
-                    }
-                }
-                break;
-            case SOUTH_WEST:
-            case WEST:
-            case NORTH_WEST:
-                for(MapLocation edge : edges) {
-                    MapLocation senseLocation = loc.add(-edge.x, edge.y);
-                    if(rc.canSense(senseLocation) && rc.onTheMap(senseLocation)) {
-                        rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
-                        mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
-                    }
-                }
-                break;
-            default:
-                break;
-        }
-        switch(dir) {
-            case NORTH_WEST:
-            case NORTH:
-            case NORTH_EAST:
-                for(MapLocation edge : edges) {
-                    MapLocation senseLocation = loc.add(edge.y, -edge.x);
-                    if(rc.canSense(senseLocation) && rc.onTheMap(senseLocation)) {
-                        rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
-                        mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
-                    }
-                }
-                break;
-            case SOUTH_EAST:
-            case SOUTH:
-            case SOUTH_WEST:
-                for(MapLocation edge : edges) {
-                    MapLocation senseLocation = loc.add(edge.y, edge.x);
-                    if(rc.canSense(senseLocation) && rc.onTheMap(senseLocation)) {
-                        rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
-                        mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
-                    }
-                }
-                break;
-            default:
-                break;
-        }
         if(robotType == RobotType.ARCHON) mapParts[loc.x%MAP_MOD][loc.y%MAP_MOD] = 0;
+        if(shouldSenseRubble) {
+            int roundNum = rc.getRoundNum();
+            MapLocation[] edges;
+            switch(robotType) {
+                case ARCHON:
+                    edges = Archon.SIGHT_EDGE;
+                    break;
+                case SCOUT:
+                    edges = Scout.SIGHT_EDGE;
+                    break;
+                default:
+                    edges = Soldier.SIGHT_EDGE;
+                    break;
+            }
+            switch(dir) {
+                case NORTH_EAST:
+                case EAST:
+                case SOUTH_EAST:
+                    for(MapLocation edge : edges) {
+                        MapLocation senseLocation = loc.add(edge.x, edge.y);
+                        if(rc.canSense(senseLocation) && rc.onTheMap(senseLocation)) {
+                            rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
+                            mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
+                        }
+                    }
+                    break;
+                case SOUTH_WEST:
+                case WEST:
+                case NORTH_WEST:
+                    for(MapLocation edge : edges) {
+                        MapLocation senseLocation = loc.add(-edge.x, edge.y);
+                        if(rc.canSense(senseLocation) && rc.onTheMap(senseLocation)) {
+                            rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
+                            mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+            switch(dir) {
+                case NORTH_WEST:
+                case NORTH:
+                case NORTH_EAST:
+                    for(MapLocation edge : edges) {
+                        MapLocation senseLocation = loc.add(edge.y, -edge.x);
+                        if(rc.canSense(senseLocation) && rc.onTheMap(senseLocation)) {
+                            rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
+                            mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
+                        }
+                    }
+                    break;
+                case SOUTH_EAST:
+                case SOUTH:
+                case SOUTH_WEST:
+                    for(MapLocation edge : edges) {
+                        MapLocation senseLocation = loc.add(edge.y, edge.x);
+                        if(rc.canSense(senseLocation) && rc.onTheMap(senseLocation)) {
+                            rubbleTimes[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = roundNum;
+                            mapRubble[senseLocation.x%MAP_MOD][senseLocation.y%MAP_MOD] = rc.senseRubble(senseLocation);
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     static void buildCommon(RobotController rc, Direction dir, RobotType robotType) throws GameActionException {
@@ -546,6 +553,7 @@ class Common {
      * @throws GameActionException
      */
     static void senseRubble(RobotController rc) throws GameActionException {
+        if(!shouldSenseRubble) return;
         int roundNum = rc.getRoundNum();
         for(int x=-straightSight; x<=straightSight; ++x) {
             for(int y=-straightSight; y<=straightSight; ++y) {
