@@ -241,6 +241,10 @@ class Common {
         closestZombies = closestRobots(zombies);
         closestAllies = closestRobots(allies);
         for(RobotInfo info : allRobots) {
+            if(robotType == RobotType.SCOUT && info.type == RobotType.ARCHON) {
+                if(knownLocations[info.ID%ID_MOD] == null || knownLocations[info.ID%ID_MOD].distanceSquaredTo(info.location) > 200)
+                    new SignalUnit(info).addFull();
+            }
             addInfo(info);
         }
 
