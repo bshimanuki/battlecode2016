@@ -162,7 +162,7 @@ class Target extends Model {
                     }
                 }
             }
-            if(rc.getRoundNum() < 6 * Signals.UNIT_SIGNAL_REFRESH || Common.enemyBase == Direction.OMNI && archon == null) {
+            if(rc.getRoundNum() < 5 * Signals.UNIT_SIGNAL_REFRESH || Common.enemyBase == Direction.OMNI && archon == null) {
                 for(MapLocation newLoc : Common.enemyArchonHometowns) {
                     int newDist = curLocation.distanceSquaredTo(newLoc);
                     if(newDist < dist) {
