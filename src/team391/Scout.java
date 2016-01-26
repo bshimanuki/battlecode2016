@@ -151,7 +151,7 @@ class Scout extends Model {
                 for(int i=0; i<Common.archonIdsSize; ++i)
                     if(rc.canSenseRobot(Common.archonIds[i])) kamikaze = false;
                 if(kamikaze) {
-                    Common.kamikaze(rc, target.dir);
+                    Common.zombieKamikaze = true;
                 } else {
                     target = null;
                 }

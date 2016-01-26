@@ -449,7 +449,7 @@ class Archon extends Model {
         }
         double myTurns = me.health / mePerTurn;
         if(myTurns < minEnemyTurns - 5) {
-            if(rc.getInfectedTurns() > 3) Common.disintegrate = true;
+            if(rc.getInfectedTurns() > 3) Common.zombieKamikaze = true;
         }
         rc.setIndicatorString(1, String.format("%.2f %.2f", myTurns, minEnemyTurns));
     }
