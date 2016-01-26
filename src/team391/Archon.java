@@ -106,15 +106,12 @@ class Archon extends Model {
 
         if(fate < Math.max(400, 800 - rc.getTeamParts())) {
             if(target != null) {
-                // rc.setIndicatorString(1, "Targeting " + target.loc);
                 if(target.run(rc)) target = null;
                 if(!rc.isCoreReady()) return true;
             } else if(base != null && rc.getLocation().distanceSquaredTo(base.loc) >= Common.sightRadius) {
-                // rc.setIndicatorString(1, "Targeting base at " + base.loc);
                 base.run(rc);
                 if(!rc.isCoreReady()) return true;
             }
-            // rc.setIndicatorString(1, "Running fate");
             if(move(rc)) return true;
         } else if(closestRangedZombie == null) {
             // Choose a unit to build
@@ -438,7 +435,6 @@ class Archon extends Model {
         if(myTurns < minEnemyTurns - 5) {
             if(rc.getInfectedTurns() > 3) Common.zombieKamikaze = true;
         }
-        // rc.setIndicatorString(1, String.format("%.2f %.2f", myTurns, minEnemyTurns));
     }
 
 }

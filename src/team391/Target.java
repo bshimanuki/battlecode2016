@@ -297,16 +297,15 @@ class Target extends Model {
         if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
             RobotInfo[] allies = Common.allies;
             RobotInfo[] enemies = rc.senseNearbyRobots(24, Common.enemyTeam);
-            RobotInfo[] allEnemies = Common.enemies;
             RobotInfo[] zombies = Common.zombies;
             RobotInfo closestEnemy = Common.closestRobot(enemies);
-            RobotInfo closestEnemyTurret = Common.closestTurret(allEnemies);
+            RobotInfo closestEnemyTurret = Common.closestEnemies[SignalUnit.typeSignal.get(RobotType.TURRET)];
             RobotInfo closestAlly = Common.closestNonKamikaze(allies);
             RobotInfo closestArchon = Common.closestArchon(allies);
             if(closestEnemy == null) closestEnemy = closestEnemyTurret;
             boolean aroundEnemies = closestEnemyTurret != null || enemies.length > 1 || enemies.length == 1 && enemies[0].type == RobotType.ARCHON;
             boolean closerToEnemies = closestEnemy != null && (closestAlly == null || curLocation.distanceSquaredTo(closestEnemy.location) < curLocation.distanceSquaredTo(closestAlly.location));
-            if(aroundEnemies && closerToEnemies && closestArchon == null && zombies.length > 0) {
+            if(aroundEnemies && closerToEnemies && (closestArchon == null || closestEnemy.type == RobotType.ARCHON) && zombies.length > 0) {
                 weights.put(TargetType.ZOMBIE_LEAD, TargetType.Level.INACTIVE);
                 weights.put(TargetType.ZOMBIE_KAMIKAZE, TargetType.Level.ACTIVE);
             }

@@ -229,7 +229,7 @@ class Common {
         closestZombies = closestRobots(zombies);
         closestAllies = closestRobots(allies);
         for(RobotInfo info : allRobots) {
-            if(robotType == RobotType.SCOUT && info.type == RobotType.ARCHON) {
+            if(robotType == RobotType.SCOUT && info.type == RobotType.ARCHON && info.team == enemyTeam) {
                 if(knownLocations[info.ID%ID_MOD] == null || knownLocations[info.ID%ID_MOD].distanceSquaredTo(info.location) > 200)
                     new SignalUnit(info).addFull();
             }
@@ -500,11 +500,12 @@ class Common {
                     case VIPER:
                         if(team != myTeam) break;
                         Common.hasViper = true;
+                        break;
                     case TURRET:
                     case TTM:
                         if(robotType != RobotType.VIPER && team != enemyTeam) break;
                         if(robotType != RobotType.VIPER && newLoc) {
-                            if(Common.robotType == RobotType.SCOUT && Scout.target == null) {
+                            if(Common.robotType == RobotType.SCOUT && Scout.target == null && rc.canSenseRobot(id)) {
                                 if(Common.rand.nextInt(8) == 0) {
                                     Scout.target = new Target(Target.TargetType.MOVE, loc);
                                     Scout.target.weights.put(Target.TargetType.MOVE, Target.TargetType.Level.ACTIVE);
@@ -512,7 +513,8 @@ class Common {
                             }
                         }
                     case ARCHON:
-                    case BIGZOMBIE:
+                        if(team != enemyTeam) break;
+                    // case BIGZOMBIE:
                         new SignalUnit(id, team, robotType, loc).add();
                         if(newRobot) typeSignals[typeSignalsSize++] = new SignalUnit(id, team, robotType).toInt();
                         break;
