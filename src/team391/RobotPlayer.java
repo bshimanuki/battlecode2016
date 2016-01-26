@@ -9,11 +9,17 @@ public class RobotPlayer {
      * If this method returns, the robot dies!
      **/
     public static void run(RobotController rc) {
-
         final Model robot;
 
         RobotType robotType = rc.getType();
-        switch(robotType) {
+
+        if(rc.isArmageddon()) {
+            robot = new Armageddon();
+            if(rc.getRoundNum() == 0) {
+                if(rc.getRobotCount() > 1) rc.disintegrate();
+                Common.models.add(new Opening());
+            }
+        } else switch(robotType) {
             case ARCHON:
                 robot = new Archon();
                 if(rc.getRoundNum() == 0)
