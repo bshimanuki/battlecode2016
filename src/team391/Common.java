@@ -110,6 +110,7 @@ class Common {
     static int lastBuiltId;
     static int nextUnitInfo;
     static boolean shouldSenseRubble = false; // currently only being used by archons
+    static boolean disintegrate = false; // set to true when suiciding
 
     // Message vars
     static int read;
@@ -276,6 +277,8 @@ class Common {
         String str = "";
         for(int i=0; i<enemyArchonIdsSize; ++i) str += enemyArchonIds[i] + ":" + knownLocations[enemyArchonIds[i]%ID_MOD] + " ";
         rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d; %s", sent, read, xMin, yMin, xMax, yMax, str));
+
+        if(disintegrate) rc.disintegrate();
     }
 
     static void updateMap(RobotController rc) throws GameActionException {
@@ -639,6 +642,16 @@ class Common {
             }
         }
         return closest;
+    }
+
+    static int numArchons(RobotInfo[] infos) {
+        int num = 0;
+        for(RobotInfo info : infos) {
+            if(info.type == RobotType.ARCHON) {
+                ++num;
+            }
+        }
+        return num;
     }
 
     static int numScouts(RobotInfo[] infos) {

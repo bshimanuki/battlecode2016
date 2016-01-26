@@ -45,6 +45,8 @@ class Archon extends Model {
         }
         if(toHeal != null) rc.repair(toHeal.location);
 
+        archonKamikaze(rc);
+
         return false;
     }
 
@@ -392,6 +394,64 @@ class Archon extends Model {
             points[i] += partial * dirPoints[(i + 7) % DIR_NONE];
         }
         dirPoints = points;
+    }
+
+    static void archonKamikaze(RobotController rc) throws GameActionException {
+        RobotInfo enemyArchon = Common.closestEnemies[SignalUnit.typeSignal.get(RobotType.ARCHON)];
+        MapLocation loc = rc.getLocation();
+        if(enemyArchon == null || loc.distanceSquaredTo(enemyArchon.location) > 2) return;
+        if(Common.allies.length > 0) return;
+        if(Common.numArchons(Common.enemies) != Common.enemies.length) return;
+        for(int i=0; i<8; ++i) {
+            MapLocation adj = loc.add(Common.DIRECTIONS[i]);
+            if(rc.onTheMap(adj)) {
+                RobotInfo robot = rc.senseRobotAtLocation(adj);
+                if(robot == null) return;
+                if(robot.team == Team.ZOMBIE) continue;
+                if(robot.team == Common.enemyTeam && robot.type == RobotType.ARCHON) continue;
+                return;
+            }
+            adj = enemyArchon.location.add(Common.DIRECTIONS[i]);
+            if(!adj.equals(loc) && rc.onTheMap(adj)) {
+                RobotInfo robot = rc.senseRobotAtLocation(adj);
+                if(robot == null) return;
+                if(robot.team == Team.ZOMBIE) continue;
+                if(robot.team == Common.enemyTeam && robot.type == RobotType.ARCHON) continue;
+                return;
+            }
+        }
+        RobotInfo me = rc.senseRobot(Common.id);
+        RobotInfo[] enemies = Common.enemies;
+        double[] perTurn = new double[enemies.length];
+        double mePerTurn = 0;
+        for(RobotInfo zombie : Common.zombies) {
+            int dist = loc.distanceSquaredTo(zombie.location);
+            int[] dists = new int[enemies.length];
+            for(int i=0; i<enemies.length; ++i) {
+                dists[i] = enemies[i].location.distanceSquaredTo(zombie.location);
+                if(dists[i] < dist) dist = dists[i];
+            }
+            if(dist <= zombie.type.attackRadiusSquared) {
+                boolean attacksMe = true;
+                for(int i=0; i<enemies.length; ++i) {
+                    if(dist == dists[i]) {
+                        perTurn[i] += zombie.attackPower / zombie.type.attackDelay;
+                        attacksMe = false;
+                    }
+                }
+                if(attacksMe) mePerTurn += zombie.attackPower / zombie.type.attackDelay;
+            }
+        }
+        double minEnemyTurns = Common.INF;
+        for(int i=0; i<enemies.length; ++i) {
+            double turns = enemies[i].health / perTurn[i];
+            if(turns < minEnemyTurns) minEnemyTurns = turns;
+        }
+        double myTurns = me.health / mePerTurn;
+        if(myTurns < minEnemyTurns - 5) {
+            if(rc.getInfectedTurns() > 3) Common.disintegrate = true;
+        }
+        rc.setIndicatorString(1, String.format("%.2f %.2f", myTurns, minEnemyTurns));
     }
 
 }
