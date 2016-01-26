@@ -817,13 +817,13 @@ class Common {
     static boolean kamikaze(RobotController rc) throws GameActionException {
         // bc bug: dieing on last turn of infection does not spawn zombie
         if(Common.rc.getInfectedTurns() > 1) {
-            System.out.println("Zombie Kamikaze!");
+            // System.out.println("Zombie Kamikaze!");
             // Signals.addSelfZombieKamikaze(Common.rc, Direction.NONE);
             rc.disintegrate();
             return true;
         }
         else {
-            System.out.println("Zombie Kamikaze FAILED");
+            // System.out.println("Zombie Kamikaze FAILED");
             zombieKamikaze = false;
             return false;
         }

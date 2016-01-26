@@ -141,12 +141,31 @@ class Target extends Model {
             RobotInfo archon = Common.closestEnemies[SignalUnit.typeSignal.get(RobotType.ARCHON)];
             RobotInfo closest = Common.closestRobot(Common.enemies);
             if(archon != null) {
-                id = archon.ID;
-                weights.put(TargetType.MOVE, TargetType.Level.ACTIVE);
+                RobotInfo[] zombies = rc.senseNearbyRobots(24, Team.ZOMBIE);
+                if(zombies.length > 0) {
+                    int[] dirPoints = new int[8];
+                    for(RobotInfo zombie : zombies) {
+                        ++dirPoints[zombie.location.directionTo(archon.location).ordinal()];
+                    }
+                    int index = 0;
+                    for(int i=1; i<8; ++i)
+                        if(dirPoints[i] > dirPoints[index])
+                            index = i;
+                    Direction tarDir = Common.DIRECTIONS[index];
+                    id = ID_NONE;
+                    loc = archon.location.add(tarDir);
+                    weights.put(TargetType.MOVE, TargetType.Level.PRIORITY);
+                } else {
+                    id = archon.ID;
+                    weights.put(TargetType.MOVE, TargetType.Level.ACTIVE);
+                }
             } else if(closest != null) {
                 id = closest.ID;
                 weights.put(TargetType.MOVE, TargetType.Level.ACTIVE);
             }
+        } else if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.ACTIVE) >= 0) {
+            RobotInfo archon = Common.closestEnemies[SignalUnit.typeSignal.get(RobotType.ARCHON)];
+            if(archon != null) id = archon.ID;
         }
 
         if(targetArchon) {
@@ -247,7 +266,17 @@ class Target extends Model {
                 }
             } else {
                 move(rc, loc);
-                boolean atTarget = loc != null && rc.getLocation().distanceSquaredTo(loc) <= 2;
+                boolean atTarget = false;
+                if(loc != null) {
+                   if(weights.get(TargetType.MOVE) == TargetType.Level.PRIORITY) {
+                       atTarget = rc.getLocation().equals(loc);
+                       RobotInfo archon = Common.closestEnemies[SignalUnit.typeSignal.get(RobotType.ARCHON)];
+                       if(archon != null && rc.isCoreReady() && rc.getLocation().distanceSquaredTo(archon.location) <= 2)
+                           atTarget = true;
+                   } else {
+                       atTarget = rc.getLocation().distanceSquaredTo(loc) <= 2;
+                   }
+                }
                 if(atTarget) return finish();
                 if(rc.isCoreReady()) {
                     RobotInfo closestZombie = Common.closestRobot(Common.zombies);

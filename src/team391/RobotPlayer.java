@@ -48,7 +48,7 @@ public class RobotPlayer {
                 Common.runBefore(rc);
 
                 if(Common.models.getFirst().run(rc)) {
-                    if(!(Common.models.getFirst() instanceof Target)) System.out.println("Finished " + Common.models.getFirst());
+                    // if(!(Common.models.getFirst() instanceof Target)) System.out.println("Finished " + Common.models.getFirst());
                     Common.models.removeFirst();
                 }
                 // robot.run(rc);
@@ -62,10 +62,10 @@ public class RobotPlayer {
                 e.printStackTrace();
             }
             if(round == rc.getRoundNum()) Clock.yield();
-            else {
-                if(round == Common.enrollment) System.out.println("bytecode limit exceeded on initialization");
-                else System.out.println("bytecode limit exceeded");
-            }
+            // else {
+                // if(round == Common.enrollment) System.out.println("bytecode limit exceeded on initialization");
+                // else System.out.println("bytecode limit exceeded");
+            // }
         }
     }
 }
