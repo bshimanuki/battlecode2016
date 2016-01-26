@@ -140,8 +140,7 @@ class Scout extends Model {
                 }
             }
         } else {
-            RobotInfo[] zombies = Common.zombies;
-            if(zombies.length == 0 && rc.getInfectedTurns() > 1) {
+            if(Common.enemies.length == 0 && Common.zombies.length == 0 && rc.getInfectedTurns() > 1) {
                 boolean kamikaze = true;
                 int numAllies = 0;
                 for(int i=Signals.zombieLeadsBegin; i<Signals.zombieLeadsSize; ++i) {
@@ -151,7 +150,7 @@ class Scout extends Model {
                 for(int i=0; i<Common.archonIdsSize; ++i)
                     if(rc.canSenseRobot(Common.archonIds[i])) kamikaze = false;
                 if(kamikaze) {
-                    Common.kamikaze(rc, target.dir);
+                    Common.zombieKamikaze = true;
                 } else {
                     target = null;
                 }

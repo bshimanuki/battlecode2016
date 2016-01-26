@@ -162,7 +162,7 @@ class Target extends Model {
                     }
                 }
             }
-            if(rc.getRoundNum() < 6 * Signals.UNIT_SIGNAL_REFRESH || Common.enemyBase == Direction.OMNI && archon == null) {
+            if(rc.getRoundNum() < 5 * Signals.UNIT_SIGNAL_REFRESH || Common.enemyBase == Direction.OMNI && archon == null) {
                 for(MapLocation newLoc : Common.enemyArchonHometowns) {
                     int newDist = curLocation.distanceSquaredTo(newLoc);
                     if(newDist < dist) {
@@ -605,8 +605,8 @@ class Target extends Model {
 
     boolean finish() throws GameActionException {
         if(weights.get(TargetType.ZOMBIE_KAMIKAZE).compareTo(TargetType.Level.ACTIVE) >= 0) {
-            Direction targetDir = loc != null ? Common.rc.getLocation().directionTo(loc) : dir;
-            return Common.kamikaze(Common.rc, targetDir);
+            Common.zombieKamikaze = true;
+            return false; // in case it fails
         } else if(weights.get(TargetType.ZOMBIE_LEAD).compareTo(TargetType.Level.PRIORITY) >= 0) {
             weights.put(TargetType.ZOMBIE_LEAD, TargetType.Level.INACTIVE);
             weights.put(TargetType.ZOMBIE_KAMIKAZE, TargetType.Level.ACTIVE);

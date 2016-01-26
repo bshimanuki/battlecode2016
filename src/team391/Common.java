@@ -110,6 +110,7 @@ class Common {
     static int lastBuiltId;
     static int nextUnitInfo;
     static boolean shouldSenseRubble = false; // currently only being used by archons
+    static boolean zombieKamikaze = false; // set to true when suiciding
 
     // Message vars
     static int read;
@@ -280,6 +281,8 @@ class Common {
         String str = "";
         for(int i=0; i<enemyArchonIdsSize; ++i) str += enemyArchonIds[i] + ":" + knownLocations[enemyArchonIds[i]%ID_MOD] + " ";
         rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d; %s", sent, read, xMin, yMin, xMax, yMax, str));
+
+        if(zombieKamikaze) kamikaze(rc);
     }
 
     static void updateMap(RobotController rc) throws GameActionException {
@@ -645,6 +648,16 @@ class Common {
         return closest;
     }
 
+    static int numArchons(RobotInfo[] infos) {
+        int num = 0;
+        for(RobotInfo info : infos) {
+            if(info.type == RobotType.ARCHON) {
+                ++num;
+            }
+        }
+        return num;
+    }
+
     static int numScouts(RobotInfo[] infos) {
         int num = 0;
         for(RobotInfo info : infos) {
@@ -824,16 +837,17 @@ class Common {
         return available;
     }
 
-    static boolean kamikaze(RobotController rc, Direction dir) throws GameActionException {
+    static boolean kamikaze(RobotController rc) throws GameActionException {
         // bc bug: dieing on last turn of infection does not spawn zombie
         if(Common.rc.getInfectedTurns() > 1) {
             System.out.println("Zombie Kamikaze!");
-            Signals.addSelfZombieKamikaze(Common.rc, dir);
-            Common.rc.disintegrate();
+            // Signals.addSelfZombieKamikaze(Common.rc, Direction.NONE);
+            rc.disintegrate();
             return true;
         }
         else {
             System.out.println("Zombie Kamikaze FAILED");
+            zombieKamikaze = false;
             return false;
         }
     }
