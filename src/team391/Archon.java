@@ -108,7 +108,7 @@ class Archon extends Model {
         if(closestStandardZombie != null && loc.distanceSquaredTo(closestStandardZombie.location) <= 13 && nearbyRobots) avoidZombie = true;
         if(closestBigZombie != null && loc.distanceSquaredTo(closestBigZombie.location) <= 13 && nearbyRobots) avoidZombie = true;
         if(closestFastZombie != null && anyRobots) avoidZombie = true;
-        if(closestRangedZombie != null && anyRobots) avoidZombie = true;
+        if(closestRangedZombie != null) avoidZombie = true;
         if(avoidZombie
                 || dirPoints[DIR_NONE] < FORCED_MOVE_AWAY_THRESH
                 || dirPoints[moveDir.ordinal()] > FORCED_MOVE_TO_THRESH)
@@ -128,7 +128,7 @@ class Archon extends Model {
             }
             // rc.setIndicatorString(1, "Running fate");
             if(move(rc)) return true;
-        } else {
+        } else if(closestRangedZombie == null) {
             // Choose a unit to build
             RobotType typeToBuild = RobotType.SCOUT;
             if(rc.getRoundNum() > 40 && canBuildViper && !Common.hasViper)
