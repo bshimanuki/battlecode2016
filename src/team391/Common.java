@@ -35,8 +35,6 @@ class Common {
 
     // Map vars
     static double[][] mapParts = new double[MAP_MOD][MAP_MOD];
-    static MapLocation[] interestLocations = new MapLocation[MAX_ID];
-    static int interestLocationsSize = 0;
     static int[][] partsTimes = new int[MAP_MOD][MAP_MOD];
     static MapLocation[] partLocations = new MapLocation[MAX_ID];
     static int partLocationsSize = 0;
@@ -54,14 +52,9 @@ class Common {
     static Direction myBase;
     static Direction enemyBase;
 
-    // Map of robots, ignores id 0, mod ID_MOD
-    static int[][] mapRobots = new int[MAP_MOD][MAP_MOD];
-
     // Team vars
     static Team myTeam;
     static Team enemyTeam;
-    static int[] seenTimes = new int[MAX_ID];
-    static RobotInfo[] seenRobots = new RobotInfo[MAX_ID];
     static Team[] knownTeams = new Team[ID_MOD];
     static RobotType[] knownTypes = new RobotType[ID_MOD];
     static int[] knownTimes = new int[ID_MOD]; // for locations
@@ -77,13 +70,6 @@ class Common {
     static int enemyArchonIdsSize = 0;
     static int[] zombieDenIds = new int[MAX_ID];
     static int zombieDenIdsSize = 0;
-
-    static int[] neutralIds = new int[MAX_ID];
-    static int neutralIdsSize = 0;
-    static RobotType[] neutralTypes = new RobotType[MAX_ID];
-    static int neutralTypesSize = 0;
-    static MapLocation[] neutralLocations = new MapLocation[MAX_ID];
-    static int neutralLocationsSize = 0;
 
     static boolean hasViper = false;
     static double[] teamParts;
@@ -219,7 +205,6 @@ class Common {
                 break;
             case 2:
                 // Sense rubble a little after construction
-                // TODO: change to 3(?) to avoid overlapping with action
                 senseRubble(rc);
                 break;
             default:
@@ -230,6 +215,9 @@ class Common {
             sendRadius = 2 * sightRadius;
             sendBoundariesLow = false;
             sendBoundariesHigh = false;
+        }
+
+        if(robotType == RobotType.ARCHON) {
             senseParts(rc);
         }
 
@@ -278,9 +266,9 @@ class Common {
             if(sendBoundariesHigh) Signals.addBoundsHigh(rc);
         }
         sent += Signals.sendQueue(rc, sendRadius);
-        String str = "";
-        for(int i=0; i<enemyArchonIdsSize; ++i) str += enemyArchonIds[i] + ":" + knownLocations[enemyArchonIds[i]%ID_MOD] + " ";
-        rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d; %s", sent, read, xMin, yMin, xMax, yMax, str));
+        // String str = "";
+        // for(int i=0; i<enemyArchonIdsSize; ++i) str += enemyArchonIds[i] + ":" + knownLocations[enemyArchonIds[i]%ID_MOD] + " ";
+        // rc.setIndicatorString(0, String.format("sent %d received %d bounds %d %d %d %d; %s", sent, read, xMin, yMin, xMax, yMax, str));
 
         if(zombieKamikaze) kamikaze(rc);
     }
@@ -345,7 +333,6 @@ class Common {
      * @param dir
      */
     static void move(RobotController rc, Direction dir) throws GameActionException {
-        if(dir == null || dir == Direction.NONE || dir == Direction.OMNI) System.out.println("asdf");
         history[historySize++] = rc.getLocation();
         rc.move(dir);
         MapLocation loc = rc.getLocation();
@@ -456,8 +443,6 @@ class Common {
     }
 
     static void addInfo(RobotInfo info) throws GameActionException {
-        seenRobots[info.ID] = info;
-        seenTimes[info.ID] = rc.getRoundNum();
         if(robotType == RobotType.SCOUT && Scout.canBroadcastFull && rc.getRoundNum() > enrollment + 10) {
             switch(info.type) {
                 case ARCHON:
@@ -480,15 +465,8 @@ class Common {
         id = id % ID_MOD;
         knownTeams[id] = team;
         if(loc != null && !loc.equals(MAP_EMPTY)) {
-            if(knownLocations[id] != null) {
-                MapLocation oldLoc = knownLocations[id];
-                if(mapRobots[oldLoc.x%MAP_MOD][oldLoc.y%MAP_MOD] == id) {
-                    mapRobots[oldLoc.x%MAP_MOD][oldLoc.y%MAP_MOD] = 0;
-                }
-            }
             knownTimes[id] = rc.getRoundNum();
             knownLocations[id] = loc;
-            mapRobots[loc.x%MAP_MOD][loc.y%MAP_MOD] = id;
         }
     }
 
@@ -516,9 +494,6 @@ class Common {
                 SignalUnit s = new SignalUnit(id, team, robotType, loc);
                 s.add();
                 typeSignals[typeSignalsSize++] = s.toInt();
-                neutralIds[neutralIdsSize++] = id;
-                neutralTypes[neutralTypesSize++] = robotType;
-                neutralLocations[neutralLocationsSize++] = loc;
             } else {
                 // fallthrough intentional
                 switch(robotType) {

@@ -15,7 +15,7 @@ abstract class Model {
 
     abstract boolean runInner(RobotController rc) throws GameActionException;
     final boolean run(RobotController rc) throws GameActionException {
-        rc.setIndicatorString(2, toString());
+        // rc.setIndicatorString(2, toString());
         if(runInner(rc)) return true;
         if(trigger != null && trigger.apply(rc)) return true;
         return false;

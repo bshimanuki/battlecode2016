@@ -73,26 +73,14 @@ class Archon extends Model {
             Common.activate(rc, neutrals[0].location, neutrals[0].type, LowStrategy.NONE);
             return true;
         }
-        // if(fate < 200) {
-        // target = null;
-        // for(int i=0; i<Common.partLocationsSize; ++i) {
-        // MapLocation loc = Common.partLocations[i];
-        // if(Common.mapParts[loc.x%Common.MAP_MOD][loc.y%Common.MAP_MOD] != 0) {
-        // target = new Target(loc);
-        // target.weights.put(Target.TargetType.MOVE, Target.TargetType.Level.PRIORITY);
-        // break;
-        // }
-        // }
-        // if(target != null) rc.setIndicatorLine(rc.getLocation(), target.loc, 0,255,0);
-        // }
 
         computeMove(rc);
         relaxMove(0.5);
         moveDirection();
 
-        String str = "";
-        for(int i=0; i<dirPoints.length; ++i) str += String.format("%s:%.2f ", Common.DIRECTIONS[i].toString().charAt(0), dirPoints[i]);
-        rc.setIndicatorString(1, str);
+        // String str = "";
+        // for(int i=0; i<dirPoints.length; ++i) str += String.format("%s:%.2f ", Common.DIRECTIONS[i].toString().charAt(0), dirPoints[i]);
+        // rc.setIndicatorString(1, str);
 
         RobotInfo[] nearbyZombies = Common.closestZombies;
         RobotInfo[] nearbyAllies = rc.senseNearbyRobots(13, Common.myTeam);
@@ -315,7 +303,6 @@ class Archon extends Model {
                         && Common.mapRubble[iploc.x%MAP_MOD][iploc.y%MAP_MOD] < PARTS_RUBBLE_THRESH
                         && Common.mapRubble[iloc.x%MAP_MOD][iloc.y%MAP_MOD] < PARTS_RUBBLE_THRESH)
                 {
-                    // rc.setIndicatorDot(ploc, 255,0,0);
                     double sqrDist = loc.distanceSquaredTo(ploc);
                     dirPoints[loc.directionTo(ploc).ordinal()] += POINTS_PARTS * mapParts[ploc.x%MAP_MOD][ploc.y%MAP_MOD] / sqrDist;
                 }
@@ -451,7 +438,7 @@ class Archon extends Model {
         if(myTurns < minEnemyTurns - 5) {
             if(rc.getInfectedTurns() > 3) Common.zombieKamikaze = true;
         }
-        rc.setIndicatorString(1, String.format("%.2f %.2f", myTurns, minEnemyTurns));
+        // rc.setIndicatorString(1, String.format("%.2f %.2f", myTurns, minEnemyTurns));
     }
 
 }

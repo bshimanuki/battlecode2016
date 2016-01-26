@@ -153,7 +153,7 @@ class Target extends Model {
             MapLocation archon = null;
             int dist = Common.MAX_DIST;
             for(int i=0; i<Common.enemyArchonIdsSize; ++i) {
-                MapLocation newLoc = Common.knownLocations[Common.enemyArchonIds[i]%SignalUnit.ID_MOD];
+                MapLocation newLoc = Common.knownLocations[Common.enemyArchonIds[i]%Common.ID_MOD];
                 if(newLoc != null) {
                     int newDist = curLocation.distanceSquaredTo(newLoc);
                     if(newDist < dist) {
@@ -206,7 +206,7 @@ class Target extends Model {
 
         if(id != ID_NONE && loc == null) {
             // should not get here
-            System.out.println(String.format("Robot %d not found when targeting, breaking", id));
+            // System.out.println(String.format("Robot %d not found when targeting, breaking", id));
             return true;
         }
 
@@ -430,7 +430,7 @@ class Target extends Model {
                 fx -= zombieDir.dx;
                 fy -= zombieDir.dy;
                 nextDirection = new MapLocation(0, 0).directionTo(new MapLocation(fx, fy));
-                rc.setIndicatorString(1, fx + " " + fy + " " + targetDirection);
+                // rc.setIndicatorString(1, fx + " " + fy + " " + targetDirection);
                 if(nextDirection == Direction.OMNI) {
                     fx = closestZombie.location.x - curLocation.x;
                     fy = closestZombie.location.y - curLocation.y;
@@ -476,7 +476,7 @@ class Target extends Model {
                 forcedArchonMove |= crowded;
                 boolean underAttack = Common.underAttack(zombies, curLocation.add(nextDirection));
                 forcedArchonMove |= Common.underAttack(zombies, curLocation);
-                rc.setIndicatorString(1, String.format("<%.2f %.2f> %s %s %s", dx, dy, underAttack, crowded, targetDirection));
+                // rc.setIndicatorString(1, String.format("<%.2f %.2f> %s %s %s", dx, dy, underAttack, crowded, targetDirection));
                 if(!crowded && !underAttack) {
                     if(dx * dx + dy * dy < 0.25) nextDirection = Direction.NONE;
                     targetDirection = nextDirection;
@@ -571,8 +571,7 @@ class Target extends Model {
                 if(info != null && info.team == Team.ZOMBIE) {
                     for(int i=0; i<Common.archonIdsSize; ++i) {
                         if(rc.canSenseRobot(Common.archonIds[i])) {
-                            RobotInfo ainfo = Common.seenRobots[Common.archonIds[i]];
-                            if(testLoc.distanceSquaredTo(ainfo.location) <= 2) {
+                            if(testLoc.distanceSquaredTo(Common.knownLocations[Common.archonIds[i]%Common.ID_MOD]) <= 2) {
                                 toMove = false;
                             }
                         }

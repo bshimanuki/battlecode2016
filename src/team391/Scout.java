@@ -243,9 +243,9 @@ class Scout extends Model {
             if(archon != null && rc.getLocation().distanceSquaredTo(archon.location) > 24)
                 dir = rc.getLocation().directionTo(archon.location);
         } else {
-            String str = "";
-            for(int i=0; i<dirPoints.length; ++i) str += String.format("%s:%.2f ", Common.DIRECTIONS[i].toString().charAt(0), dirPoints[i]);
-            rc.setIndicatorString(1, str);
+            // String str = "";
+            // for(int i=0; i<dirPoints.length; ++i) str += String.format("%s:%.2f ", Common.DIRECTIONS[i].toString().charAt(0), dirPoints[i]);
+            // rc.setIndicatorString(1, str);
         }
         dir = Common.findPathDirection(rc, dir);
         if(rc.isCoreReady() && rc.canMove(dir)) {
