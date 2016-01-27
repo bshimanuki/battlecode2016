@@ -43,6 +43,7 @@ class Common {
     static int twiceCenterX = 0;
     static int twiceCenterY = 0;
     static boolean rotation = false; // else mirror
+    static boolean armageddon = false;
     // mod 100
     static int xMin = MAP_NONE;
     static int xMax = MAP_NONE;
@@ -120,7 +121,8 @@ class Common {
     final static int MAP_UPDATE_MESSAGE_FACTOR = 4;
 
     static void init(RobotController rc) {
-        int roundLimit = rc.getRoundLimit() + 1;
+        armageddon = rc.isArmageddon();
+        int roundLimit = rc.getRoundLimit() + 50; // must add largest buildDelay
         Common.rc = rc;
         rand = new Random(rc.getID());
         id = rc.getID();
@@ -166,7 +168,7 @@ class Common {
             twiceCenterY /= myArchonHometowns.length;
             x /= myArchonHometowns.length;
             y /= myArchonHometowns.length;
-            for(int i=0; i<myArchonHometowns.length; ++i) {
+            if(!armageddon) for(int i=0; i<myArchonHometowns.length; ++i) {
                 MapLocation loc = myArchonHometowns[i];
                 int xCoord = coordinates[loc.y] - 1;
                 coordinates[loc.y] /= MAP_MAX;
@@ -188,7 +190,7 @@ class Common {
     static void runBefore(RobotController rc) throws GameActionException {
         // -2 for build signals
         Signals.maxMessages = GameConstants.MESSAGE_SIGNALS_PER_TURN - 2;
-        read = Signals.readSignals(rc);
+        if(!armageddon) read = Signals.readSignals(rc);
         sent = 0;
         int turn = rc.getRoundNum();
         teamParts[turn] = rc.getTeamParts();
@@ -279,7 +281,7 @@ class Common {
             int x = -straightSight;
             while(!rc.onTheMap(loc.add(++x, 0)));
             xMin = loc.x + x;
-            xMax = twiceCenterX - xMin;
+            if(!armageddon) xMax = twiceCenterX - xMin;
             sendBoundariesLow = true;
             mapBoundUpdate = true;
         }
@@ -287,7 +289,7 @@ class Common {
             int x = straightSight;
             while(!rc.onTheMap(loc.add(--x, 0)));
             xMax = loc.x + x;
-            xMin = twiceCenterX - xMax;
+            if(!armageddon) xMin = twiceCenterX - xMax;
             sendBoundariesHigh = true;
             mapBoundUpdate = true;
         }
@@ -443,7 +445,7 @@ class Common {
     }
 
     static void addInfo(RobotInfo info) throws GameActionException {
-        if(robotType == RobotType.SCOUT && Scout.canBroadcastFull && rc.getRoundNum() > enrollment + 10) {
+        if(!armageddon && robotType == RobotType.SCOUT && Scout.canBroadcastFull && rc.getRoundNum() > enrollment + 10) {
             switch(info.type) {
                 case ARCHON:
                     if(SignalUnit.broadcastTurn[info.ID%ID_MOD] < rc.getRoundNum() - Signals.UNIT_SIGNAL_REFRESH)
@@ -649,6 +651,16 @@ class Common {
         int num = 0;
         for(RobotInfo info : infos) {
             if(info.type == RobotType.TURRET) {
+                ++num;
+            }
+        }
+        return num;
+    }
+
+    static int numStandard(RobotInfo[] infos) {
+        int num = 0;
+        for(RobotInfo info : infos) {
+            if(info.type.turnsInto == RobotType.STANDARDZOMBIE) {
                 ++num;
             }
         }

@@ -43,7 +43,7 @@ class SignalLocation {
                     int newx = x + Common.hometown.x / Common.MAP_MOD * Common.MAP_MOD;
                     if(newx > Common.hometown.x) newx -= Common.MAP_MOD;
                     Common.xMin = newx;
-                    Common.xMax = Common.twiceCenterX - Common.xMin;
+                    if(!Common.armageddon) Common.xMax = Common.twiceCenterX - Common.xMin;
                     if(Common.canMessageSignal) Common.sendBoundariesLow = true;
                 }
                 if(Common.yMin == Common.MAP_NONE && y != Signals.SIG_NONE) {
@@ -58,7 +58,7 @@ class SignalLocation {
                     int newx = x + Common.hometown.x / Common.MAP_MOD * Common.MAP_MOD;
                     if(newx < Common.hometown.x) newx += Common.MAP_MOD;
                     Common.xMax = newx;
-                    Common.xMin = Common.twiceCenterX - Common.xMax;
+                    if(!Common.armageddon) Common.xMin = Common.twiceCenterX - Common.xMax;
                     if(Common.canMessageSignal) Common.sendBoundariesHigh = true;
                 }
                 if(Common.yMax == Common.MAP_NONE && y != Signals.SIG_NONE) {

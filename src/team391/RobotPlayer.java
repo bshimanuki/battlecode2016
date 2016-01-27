@@ -16,7 +16,6 @@ public class RobotPlayer {
         if(rc.isArmageddon()) {
             robot = new Armageddon();
             if(rc.getRoundNum() == 0) {
-                if(rc.getRobotCount() > 1) rc.disintegrate();
                 Common.models.add(new Opening());
             }
         } else switch(robotType) {
@@ -68,10 +67,10 @@ public class RobotPlayer {
                 e.printStackTrace();
             }
             if(round == rc.getRoundNum()) Clock.yield();
-            // else {
-                // if(round == Common.enrollment) System.out.println("bytecode limit exceeded on initialization");
-                // else System.out.println("bytecode limit exceeded");
-            // }
+            else {
+                if(round == Common.enrollment) System.out.println("bytecode limit exceeded on initialization");
+                else System.out.println("bytecode limit exceeded");
+            }
         }
     }
 }
