@@ -268,7 +268,6 @@ class Armageddon extends Model {
                                 dir = Common.findPathDirection(rc, dir);
                                 MapLocation next = curLocation.add(dir);
                                 if(dir != Direction.NONE
-                                        && Math.abs(next.x - corner.x) != Math.abs(next.y - corner.y)
                                         && corner.distanceSquaredTo(next) < corner.distanceSquaredTo(curLocation))
                                 {
                                     if(corner.distanceSquaredTo(next) > 4)
